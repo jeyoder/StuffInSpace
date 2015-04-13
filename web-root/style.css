@@ -1,0 +1,60 @@
+body {
+  font-family: sans-serif;
+}
+
+#canvas {
+
+}
+
+#canvas-holder {
+  display: block;
+  padding: 0;
+  position: relative;
+}
+
+#sat-hoverbox {
+  background: black;
+  cursor:default;
+  color: white;
+  position: absolute;
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+#sat-infobox {
+  background: black;
+  cursor:default;
+  color: white;
+  position: absolute;
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  right: 0px;
+  top: 0;
+  bottom: 0;
+  margin-top: auto;
+  margin-bottom: auto;
+  height: 300px;
+  width: 200px;
+  
+}
+
+#sat-info-title{
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.sat-info-row {
+  text-align: center;
+  margin-bottom: 5px;
+}
+
+.sat-info-key,.sat-info-value {
+  display: inline-block;
+}
+
+.sat-info-key {
+  font-size: 14px;
+  color: #aaa;
+}

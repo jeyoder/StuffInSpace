@@ -1,0 +1,36 @@
+<!doctype html>
+<html>
+  <head>
+    <link rel="stylesheet" href="/style.css">
+    <script src="http://code.jquery.com/jquery-2.1.3.min.js"></script>
+    <script src="/gl-matrix-min.js"></script>
+    <script src="/satellite.js"></script>
+    <script src="/earth.js"></script>
+    <script src="/sat.js"></script>
+    <script src="/script.js"></script>
+    <title>Things in Space</title>
+  </head>
+  <body>
+  Things In Space
+  <div id="canvas-holder">
+    <canvas id="canvas" width="1900" height="900"></canvas>
+    <div id="sat-hoverbox">(none)</div>
+    <div id="sat-infobox">
+      <div id="sat-info-title">WAFFLESAT-5 R/B</div>
+      <div class="sat-info-row">
+        <div class="sat-info-key">Int'l Designator</div>
+        <div class="sat-info-value" id="sat-intl-des">1998-067A</div>
+      </div>
+      <div class="sat-info-row">
+        <div class="sat-info-key">Type</div>
+        <div class="sat-info-value" id="sat-type">PAYLOAD</div>
+      </div>
+      <div class="sat-info-row">
+        <div class="sat-info-key">Launch Site</div>
+        <div class="sat-info-value">??</div>
+      </div>
+    </div>
+  </div>
+  </body>
+</html>
+
