@@ -18,9 +18,11 @@
   var tleData;
   
   var hoveringSat = -1;
+  var selectedSat = -1;
   
   var defaultColor = [1.0, 0.1, 0.0];
   var hoverColor =   [0.1, 1.0, 0.0];
+  var selectedColor = [0.0, 1.0, 1.0];
   
   satSet.init = function() {
     
@@ -129,7 +131,7 @@ satSet.draw = function(pMatrix, camMatrix) {
       try{
         var x = pv.position.x; // translate axes from earth-centered inertial
         var y = pv.position.z; // to OpenGL
-        var z = pv.position.y;
+        var z = -pv.position.y;
       } catch(e) {
         var x = 0;
         var y = 0;
@@ -192,13 +194,25 @@ satSet.draw = function(pMatrix, camMatrix) {
   satSet.setHover = function(i) {
     if (i === hoveringSat) return;
     gl.bindBuffer(gl.ARRAY_BUFFER, satColorBuf);
-    if(hoveringSat != -1) {
+    if(hoveringSat != -1 && hoveringSat != selectedSat) {
       gl.bufferSubData(gl.ARRAY_BUFFER, hoveringSat * 3 * 4, new Float32Array(defaultColor));
     }
     if(i != -1) {
       gl.bufferSubData(gl.ARRAY_BUFFER, i * 3 * 4, new Float32Array(hoverColor));
     }
     hoveringSat = i; 
+  };
+  
+  satSet.selectSat = function(i) {
+    if(i === selectedSat) return;
+    gl.bindBuffer(gl.ARRAY_BUFFER, satColorBuf);
+    if(selectedSat != -1) {
+      gl.bufferSubData(gl.ARRAY_BUFFER, selectedSat * 3 * 4, new Float32Array(defaultColor));
+    }
+    if(i != -1) {
+      gl.bufferSubData(gl.ARRAY_BUFFER, i * 3 * 4, new Float32Array(selectedColor));
+    }
+    selectedSat = i; 
   };
   
   window.satSet = satSet;

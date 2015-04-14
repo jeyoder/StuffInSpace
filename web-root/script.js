@@ -79,6 +79,7 @@ $(document).ready(function() {
       if(clickedSat === -1) {
         $('#sat-infobox').fadeOut();
       } else {
+        satSet.selectSat(clickedSat);
         var sat = satSet.getSat(clickedSat);
         if(!sat) return;
         $('#sat-infobox').fadeIn();
