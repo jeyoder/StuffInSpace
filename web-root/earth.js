@@ -37,7 +37,7 @@ earth.init = function() {
       
       //mercator cylindrical projection (simple angle interpolation)
       var v = 1-(lat / NUM_LAT_SEGS);
-      var u = 1-(lon / NUM_LON_SEGS); //may need to change to move map
+      var u = 0.5 + (lon / NUM_LON_SEGS); //may need to change to move map
   //    console.log('u: ' + u + ' v: ' + v);
       //normals: should just be a vector from center to point (aka the point itself!
       
@@ -112,12 +112,26 @@ earth.init = function() {
 
 earth.draw = function() {
   if(!loaded) return;
+  
+  var now = new Date();   
+  var j = 	jday(now.getUTCFullYear(), 
+               now.getUTCMonth() + 1, // Note, this function requires months in range 1-12. 
+               now.getUTCDate(),
+               now.getUTCHours(), 
+               now.getUTCMinutes(), 
+               now.getUTCSeconds());
+  j += now.getUTCMilliseconds() * 1.15741e-8; //days per millisecond   
+  
+  var era = satellite.gstime_from_jday(j);
+  console.log(era);
+  
   gl.useProgram(gl.shaderProgram);
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
  // gl.bindFramebuffer(gl.FRAMEBUFFER, gl.pickFb);
   
   var mvMatrix = mat4.create();
   mat4.identity(mvMatrix);
+  mat4.rotateZ(mvMatrix, mvMatrix, era);
   mat4.translate(mvMatrix, mvMatrix, earth.pos);
   gl.setMvMatrix(mvMatrix);
   
@@ -154,6 +168,17 @@ earth.draw = function() {
       
 //gl.drawElements(gl.TRIANGLES, 64, gl.UNSIGNED_SHORT, 0);
 
+}
+
+function jday(year, mon, day, hr, minute, sec){ //from satellite.js
+  'use strict';
+  return (367.0 * year -
+        Math.floor((7 * (year + Math.floor((mon + 9) / 12.0))) * 0.25) +
+        Math.floor( 275 * mon / 9.0 ) +
+        day + 1721013.5 +
+        ((sec / 60.0 + minute) / 60.0 + hr) / 24.0  //  ut in days
+        //#  - 0.5*sgn(100.0*year + mon - 190002.5) + 0.5;
+        );
 }
 
 

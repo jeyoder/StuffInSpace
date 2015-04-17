@@ -285,7 +285,7 @@ function drawScene() {
     gl.uniformMatrix4fv(pMatrixUniform, false, pMatrix);
     gl.uniformMatrix4fv(camMatrixUniform, false, camMatrix);
     gl.uniform3fv(lightDirectionUnif, adjustedLightDirection);
-    gl.uniform3fv(ambientLightUnif, [0.05, 0.05, 0.05]); //RGB ambient light
+    gl.uniform3fv(ambientLightUnif, [0.5, 0.5, 0.5]); //RGB ambient light
     gl.uniform3fv(directionalLightUnif, [0.9, 0.9, 0.85]); //RGB directional light
     
   gl.useProgram(gl.pickShaderProgram);
@@ -311,6 +311,19 @@ function drawScene() {
   
  updateHover();
 }
+
+/*function getSunAngle() {
+  var now = new Date();   
+  var j = 	jday(now.getUTCFullYear(), 
+               now.getUTCMonth() + 1, // Note, this function requires months in range 1-12. 
+               now.getUTCDate(),
+               now.getUTCHours(), 
+               now.getUTCMinutes(), 
+               now.getUTCSeconds());
+  j += now.getUTCMilliseconds() * 1.15741e-8; //days per millisecond
+  var n = j - 245145.0;
+  var L = 
+}*/
 
 function updateHover() {
   mouseSat = getSatIdFromCoord(mouseX, mouseY);
