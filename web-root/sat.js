@@ -2,20 +2,19 @@
   var satSet = {};
   
   var dotSize = 1000;
-  var sats = [];
+
   var satVerts = [];
   var dotShader;
-  
- // var NUM_SATS = 2;
-  
+
   var satPosBuf;
   var satColorBuf;
   var pickColorBuf;
   
   var shadersReady = false;
   
-  var satPos = [];
-  var tleData;
+  var satPos;
+  var satVel;
+  var satData;
   
   var hoveringSat = -1;
   var selectedSat = -1;
@@ -23,6 +22,19 @@
   var defaultColor = [1.0, 0.1, 0.0];
   var hoverColor =   [0.1, 1.0, 0.0];
   var selectedColor = [0.0, 1.0, 1.0];
+  
+  var satCruncher = new Worker('sat-cruncher.js');
+  var cruncherReady = false;
+  var lastDrawTime = 0;
+  
+  satCruncher.onmessage = function(m) {
+    if(!cruncherReady) {
+      $('#load-cover').fadeOut();
+    }
+    cruncherReady = true;
+    satPos = new Float32Array(m.data.satPos);
+    satVel = new Float32Array(m.data.satVel);
+  };
   
   satSet.init = function() {
     
@@ -51,28 +63,27 @@
       dotShader.uMvMatrix = gl.getUniformLocation(dotShader, 'uMvMatrix');
       dotShader.uCamMatrix = gl.getUniformLocation(dotShader, 'uCamMatrix');
       dotShader.uPMatrix = gl.getUniformLocation(dotShader, 'uPMatrix');
-      console.log('sat.js loaded data');
+      console.log('sat.js downloaded data');
+      $('#loader-text').text('Crunching numbers...');
       
-      tleData = tleResp[0];
-      for(var i = 0; i < tleData.length; i++) {
-        sats.push(satellite.twoline2satrec(
-          tleData[i].TLE_LINE1, tleData[i].TLE_LINE2
-        ));
-        var year = tleData[i].INTLDES.substring(0,2); //clean up intl des for display
+      satData = tleResp[0];
+      
+      for(var i = 0; i < satData.length; i++) {     
+        var year = satData[i].INTLDES.substring(0,2); //clean up intl des for display
         var prefix = (year > 50) ? '19' : '20';
         year = prefix + year;
-        var rest = tleData[i].INTLDES.substring(2);
-        tleData[i].intlDes = year + '-' + rest;
+        var rest = satData[i].INTLDES.substring(2);
+        satData[i].intlDes = year + '-' + rest;      
       }
-      console.log('sat.js processed TLEs');
       
       satPosBuf = gl.createBuffer();
-      gl.bindBuffer(gl.ARRAY_BUFFER, satPosBuf);
-      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(satPos), gl.STREAM_DRAW);
+      satPos = new Float32Array(satData.length * 3);
+      /*gl.bindBuffer(gl.ARRAY_BUFFER, satPosBuf);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(satPos), gl.STREAM_DRAW);*/
       
       var pickColorData = [];
       pickColorBuf = gl.createBuffer();
-      for(var i = 0; i < sats.length; i++) {
+      for(var i = 0; i < satData.length; i++) {
         byteR = (i+1) & 0xff;
         byteG = ((i+1) & 0xff00) >> 8;
         byteB = ((i+1) & 0xff0000) >> 16;
@@ -84,7 +95,7 @@
       gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(pickColorData), gl.STATIC_DRAW);
       
       var satColorData = [];
-      for(var i = 0; i < sats.length; i++) {
+      for(var i = 0; i < satData.length; i++) {
         satColorData.push(defaultColor[0]);
         satColorData.push(defaultColor[1]);
         satColorData.push(defaultColor[2]);
@@ -93,45 +104,33 @@
       gl.bindBuffer(gl.ARRAY_BUFFER, satColorBuf);
       gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(satColorData), gl.STATIC_DRAW);
       
+      satSet.numSats = satData.length;
+      
       var end = new Date().getTime();
       console.log('sat.js init: ' + (end - startTime) + ' ms');
       shadersReady = true;
+      satCruncher.postMessage({ //kick off the BG sat propagation
+        satData: satData
+      });
+      
     });
   };
 
-  function jday(year, mon, day, hr, minute, sec){ //from satellite.js
-      'use strict';
-      return (367.0 * year -
-            Math.floor((7 * (year + Math.floor((mon + 9) / 12.0))) * 0.25) +
-            Math.floor( 275 * mon / 9.0 ) +
-            day + 1721013.5 +
-            ((sec / 60.0 + minute) / 60.0 + hr) / 24.0  //  ut in days
-            //#  - 0.5*sgn(100.0*year + mon - 190002.5) + 0.5;
-            );
-  }
 
   
 satSet.draw = function(pMatrix, camMatrix) {
-    if(!shadersReady) return;
-    
-    var now = new Date();   
-    var j = jday(now.getUTCFullYear(), 
-                 now.getUTCMonth() + 1, // Note, this function requires months in range 1-12. 
-                 now.getUTCDate(),
-                 now.getUTCHours(), 
-                 now.getUTCMinutes(), 
-                 now.getUTCSeconds());
-    j += now.getUTCMilliseconds() * 1.15741e-8; //days per millisecond     
-    
-    for(var i=0; i < sats.length; i++) {
-      
-      var m = (j - sats[i].jdsatepoch) * 1440.0; //minutes_per_day
-      var pv = satellite.sgp4(sats[i], m);
-      
+  if(!shadersReady || !cruncherReady) return;
+  
+  var now = Date.now();
+  var dt = (now - lastDrawTime) / 1000.0;
+  for(var i=0; i<(satData.length*3); i++) {
+    satPos[i] += satVel[i] * dt;
+  }
+  /*    
       try{
-        var x = pv.position.x; // translate axes from earth-centered inertial
-        var y = pv.position.z; // to OpenGL
-        var z = -pv.position.y;
+        var x = pv.position.x; // translation of axes from earth-centered inertial
+        var y = pv.position.y; // to OpenGL is done in shader with projection matrix
+        var z = pv.position.z; // so we don't have to worry about it
       } catch(e) {
         var x = 0;
         var y = 0;
@@ -141,7 +140,7 @@ satSet.draw = function(pMatrix, camMatrix) {
       satPos[i*3] = x;
       satPos[i*3+1] = y;
       satPos[i*3+2] = z;
-    }
+    }*/
     
     gl.useProgram(dotShader);
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
@@ -152,7 +151,7 @@ satSet.draw = function(pMatrix, camMatrix) {
     gl.uniformMatrix4fv(dotShader.uPMatrix, false, pMatrix);
     
     gl.bindBuffer(gl.ARRAY_BUFFER, satPosBuf);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(satPos), gl.STREAM_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, satPos, gl.STREAM_DRAW);
     gl.vertexAttribPointer(dotShader.aPos, 3, gl.FLOAT, false, 0, 0);
     
     gl.bindBuffer(gl.ARRAY_BUFFER, satColorBuf);
@@ -163,7 +162,7 @@ satSet.draw = function(pMatrix, camMatrix) {
     gl.enable(gl.BLEND);
     gl.depthMask(false);
     
-     gl.drawArrays(gl.POINTS, 0, sats.length); //draw 
+     gl.drawArrays(gl.POINTS, 0, satData.length); //draw 
      
     gl.depthMask(true);
     gl.disable(gl.BLEND);
@@ -183,12 +182,14 @@ satSet.draw = function(pMatrix, camMatrix) {
       gl.bindBuffer(gl.ARRAY_BUFFER, pickColorBuf);
       gl.vertexAttribPointer(gl.pickShaderProgram.aColor, 3, gl.FLOAT, false, 0, 0);
       
-    gl.drawArrays(gl.POINTS, 0, sats.length); //draw pick
+    gl.drawArrays(gl.POINTS, 0, satData.length); //draw pick
+    
+    lastDrawTime = now;
   };
   
   satSet.getSat = function(i) {
-    if(!tleData) return null;
-    return tleData[i];
+    if(!satData) return null;
+    return satData[i];
   };
   
   satSet.setHover = function(i) {

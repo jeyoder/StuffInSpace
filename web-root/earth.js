@@ -17,7 +17,7 @@ earth.pos = [0, 0, 0];
 var loaded = false;
 
 earth.init = function() {
-  var startTime = new Date().getTime();
+  var startTime = new Date().getTime();	
   
   //generate a uvsphere bottom up, CCW order
   var vertPos = [];
@@ -27,13 +27,13 @@ earth.init = function() {
   for (var lat = 0; lat <= NUM_LAT_SEGS; lat++) { 
     var latAngle = (Math.PI / NUM_LAT_SEGS) * lat - (Math.PI / 2);
     var diskRadius = Math.cos(Math.abs(latAngle));
-    var y = Math.sin(latAngle);
- //   console.log('LAT: ' + latAngle * R2D + ' , Y: ' + y);
+    var z = Math.sin(latAngle);
+ //   console.log('LAT: ' + latAngle * R2D + ' , Z: ' + z);
     for(var lon = 0; lon <= NUM_LON_SEGS; lon++) { //add an extra vertex for texture funness
       var lonAngle = (Math.PI * 2 / NUM_LON_SEGS) * lon;
       var x = Math.cos(lonAngle) * diskRadius;
-      var z = Math.sin(lonAngle) * diskRadius;
-  //      console.log('i: ' + i + '    LON: ' + lonAngle * R2D + ' X: ' + x + ' Z: ' + z)
+      var y = Math.sin(lonAngle) * diskRadius;
+  //      console.log('i: ' + i + '    LON: ' + lonAngle * R2D + ' X: ' + x + ' Y: ' + y)
       
       //mercator cylindrical projection (simple angle interpolation)
       var v = 1-(lat / NUM_LAT_SEGS);
@@ -101,6 +101,7 @@ earth.init = function() {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT	);
   //  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     console.log('earth.js loaded texture');
+    $('#loader-text').text('Downloading satellites...');
     loaded = true;
   };
   img.src = '/mercator-tex.jpg';

@@ -12,6 +12,47 @@ body {
   position: relative;
 }
 
+#load-cover {
+  background: rgba(0, 0, 0, 0.8);
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0
+}
+
+#loader {
+  background: black;
+  cursor:default;
+  color: white;
+  position: absolute;
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  width: 250px;
+  height: 50px;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin: auto;
+  text-align: center;
+}
+
+#loader-text {
+  display: inline-block;
+  vertical-align: text-bottom;
+  line-height: 50px;
+}
+
+#spinner {
+  display: inline-block;
+  height: 50px;
+  width: 50px;
+  position: relative;
+  float: left;
+}
+
 #sat-hoverbox {
   background: black;
   cursor:default;

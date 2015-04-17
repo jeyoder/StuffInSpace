@@ -1,9 +1,8 @@
 var gl;
-var rotAngle = 0;
 var cubeVertIndexBuffer;
 var camX = 0;
-var camY = 0;
-var camZ = 10000;
+var camY = -10000;
+var camZ = 0;
 var camSpeedX = 0;
 var camSpeedY = 0;
 var camSpeedZ = 0;
@@ -26,7 +25,29 @@ var mouseX = 0, mouseY = 0, mouseSat = -1;
 
 var debugContext, debugImageData;
 
+var spinner;
 $(document).ready(function() {
+  var opts = {
+    lines: 11, // The number of lines to draw
+    length: 8, // The length of each line
+    width: 5, // The line thickness
+    radius: 8, // The radius of the inner circle
+    corners: 1, // Corner roundness (0..1)
+    rotate: 0, // The rotation offset
+    direction: 1, // 1: clockwise, -1: counterclockwise
+    color: '#fff', // #rgb or #rrggbb or array of colors
+    speed: 1, // Rounds per second
+    trail: 50, // Afterglow percentage
+    shadow: false, // Whether to render a shadow
+    hwaccel: false, // Whether to use hardware acceleration
+    className: 'spinner', // The CSS class to assign to the spinner
+    zIndex: 2e9, // The z-index (defaults to 2000000000)
+    top: '50%', // Top position relative to parent
+    left: '50%' // Left position relative to parent
+  };
+  var target = document.getElementById('spinner');
+  spinner = new Spinner(opts).spin(target);
+  
     var can = $('#canvas')[0];
     var fragGet = $.get('/fragment.glsl');
     var vertGet = $.get('/vertex.glsl');
@@ -40,31 +61,31 @@ $(document).ready(function() {
     
     });
     
-    var keySpeed = 400;
+    var keySpeed = 250;
     var rotSpeed = 0.05;
     $(document).keydown(function(evt) {
-      if(evt.which === 69) camSpeedY = keySpeed; //E
-      if(evt.which === 81) camSpeedY = -keySpeed; //Q
-      if(evt.which === 83) camSpeedZ = keySpeed; //S
-      if(evt.which === 87) camSpeedZ = -keySpeed; //W
+      if(evt.which === 69) camSpeedZ = keySpeed; //E
+      if(evt.which === 81) camSpeedZ = -keySpeed; //Q
+      if(evt.which === 83) camSpeedY = -keySpeed; //S
+      if(evt.which === 87) camSpeedY = keySpeed; //W
       if(evt.which === 68) camSpeedX = keySpeed; //D
       if(evt.which === 65) camSpeedX = -keySpeed; //A
-      if(evt.which === 37) camRotSpeedY = -rotSpeed; //Left
-      if(evt.which === 39) camRotSpeedY =  rotSpeed; //Right
+      if(evt.which === 37) camRotSpeedZ = -rotSpeed; //Left
+      if(evt.which === 39) camRotSpeedZ =  rotSpeed; //Right
       if(evt.which === 38) camRotSpeedX = -rotSpeed; //Up
       if(evt.which === 40) camRotSpeedX =  rotSpeed; //Down
  //     console.log(evt.which);
     });
     
     $(document).keyup(function (evt) {
-      if(evt.which === 69) camSpeedY = 0 //E
-      if(evt.which === 81) camSpeedY = 0 //Q
-      if(evt.which === 87) camSpeedZ = 0//W
-      if(evt.which === 83) camSpeedZ = 0 //S
+      if(evt.which === 69) camSpeedZ = 0 //E
+      if(evt.which === 81) camSpeedZ = 0 //Q
+      if(evt.which === 87) camSpeedY = 0//W
+      if(evt.which === 83) camSpeedY = 0 //S
       if(evt.which === 65) camSpeedX = 0 //D
       if(evt.which === 68) camSpeedX = 0 //A
-      if(evt.which === 37) camRotSpeedY = 0; //Left
-      if(evt.which === 39) camRotSpeedY = 0; //Right
+      if(evt.which === 37) camRotSpeedZ = 0; //Left
+      if(evt.which === 39) camRotSpeedZ = 0; //Right
       if(evt.which === 38) camRotSpeedX = 0; //Up
       if(evt.which === 40) camRotSpeedX = 0; //Down
     });
@@ -202,14 +223,14 @@ function loadTexture() {
 }
 
 function drawLoop() {
+ // console.log('th: ' + camYaw + ' x: ' + camX + ' y: ' + camY + ' sy: ' + camSpeedY);
   drawScene();
-  rotAngle += 0.05;
-  camX += (camSpeedX * Math.cos(camYaw)) + (camSpeedZ * Math.sin(camYaw) * -1); //need to rotate somewhere
-  camY += camSpeedY
-  camZ += (camSpeedZ * Math.cos(camYaw)) + (camSpeedX * Math.sin(camYaw));
+  camX += (camSpeedX * Math.cos(camYaw)) + (camSpeedY * Math.sin(camYaw)); //need to rotate somewhere
+  camY += (camSpeedY * Math.cos(camYaw)) - (camSpeedX * Math.sin(camYaw));
+  camZ += camSpeedZ
   camPitch += camRotSpeedX;
-  camYaw += camRotSpeedY;
-  camRoll += camRotSpeedZ;
+  camYaw += camRotSpeedZ;
+  camRoll += camRotSpeedY;
   requestAnimationFrame(drawLoop);
 }
 
@@ -232,12 +253,27 @@ function drawScene() {
   
   var pMatrix = mat4.create();
   mat4.perspective(pMatrix, 1.01, gl.drawingBufferWidth / gl.drawingBufferHeight, 20.0, 150000.0);
- 
+ /* var eciToOpenGlMat = [   OpenGL Matrix memory layout is very dumb
+  1,  0,  0,  0,
+  0,  0,  1,  0,
+  0, -1,  0,  0,
+  0,  0,  0,  1
+  ];*/
+  
+  var eciToOpenGlMat = [
+    1,  0,  0,  0,
+    0,  0, -1,  0,
+    0,  1,  0,  0,
+    0,  0,  0,  1
+  ];
+  
+  var eciToOpenGLMat
+  mat4.mul(pMatrix, pMatrix, eciToOpenGlMat); //pMat = pMat * oglMat 
   var camMatrix = mat4.create();
   mat4.identity(camMatrix);
   mat4.rotateX(camMatrix, camMatrix, camPitch);
-  mat4.rotateY(camMatrix, camMatrix, camYaw);
-  mat4.rotateZ(camMatrix, camMatrix, camRoll);
+  mat4.rotateZ(camMatrix, camMatrix, camYaw);
+  mat4.rotateY(camMatrix, camMatrix, camRoll);
   mat4.translate(camMatrix, camMatrix, [-camX, -camY, -camZ]);
  
   var adjustedLightDirection = vec3.create();
