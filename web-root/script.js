@@ -20,7 +20,6 @@ var vertexPositionAttrib, vertexColorAttrib, texCoordAttrib;
 var pickFb, pickTex;
 var pickColorMap;
 
-var groundTexture, groundImage;
 var mouseX = 0, mouseY = 0, mouseSat = -1;
 
 var debugContext, debugImageData;
@@ -117,7 +116,7 @@ $(document).ready(function() {
 
 
 function webGlInit(can, fragCode, vertCode, pFragCode, pVertCode) {
-  var gl = can.getContext('webgl') || can.getContext('experimental-webgl');
+  var gl = can.getContext('webgl', {alpha: false}) || can.getContext('experimental-webgl', {alpha: false});
   if(!gl) {
       alert('No Webgl!');
   }
@@ -149,11 +148,6 @@ function webGlInit(can, fragCode, vertCode, pFragCode, pVertCode) {
   vertexNormalAttrib = gl.getAttribLocation(shaderProgram, 'aVertexNormal');
   gl.vertexNormalAttrib = vertexNormalAttrib;
   gl.enableVertexAttribArray(vertexNormalAttrib);
-  
-  groundTexture = gl.createTexture();
-  groundImage = new Image();
-  groundImage.onload = loadTexture;
-  groundImage.src = '/ground.jpg';
   
   gl.enable(gl.DEPTH_TEST);
   
@@ -243,8 +237,6 @@ function drawScene() {
  // gl.bindFramebuffer(gl.FRAMEBUFFER, gl.pickFb);
   var pMatrixUniform = gl.getUniformLocation(gl.shaderProgram, 'pMatrix'); 
   var camMatrixUniform = gl.getUniformLocation(gl.shaderProgram, 'camMatrix');
-  var texAmountUniform = gl.getUniformLocation(gl.shaderProgram, 'texAmount');
-  var samplerUniform = gl.getUniformLocation(gl.shaderProgram, 'sampler');
  
   var ambientLightUnif = gl.getUniformLocation(gl.shaderProgram, 'ambientLightColor');
   var directionalLightUnif = gl.getUniformLocation(gl.shaderProgram, 'directionalLightColor');
@@ -276,17 +268,18 @@ function drawScene() {
   mat4.rotateY(camMatrix, camMatrix, camRoll);
   mat4.translate(camMatrix, camMatrix, [-camX, -camY, -camZ]);
  
-  var adjustedLightDirection = vec3.create();
-  vec3.normalize(adjustedLightDirection, [1, 0, 0]); //light direction
-  vec3.scale(adjustedLightDirection, adjustedLightDirection, -1); //light vector according to gl points TOWARDS the light
+  var adjustedLightDirection = sun.currentDirection();
+ // console.log(sun.currentDirection());
+  vec3.normalize(adjustedLightDirection, adjustedLightDirection); //light direction
+ // vec3.scale(adjustedLightDirection, adjustedLightDirection, -1); //light vector according to gl points TOWARDS the light
 
   
   gl.useProgram(gl.shaderProgram);
     gl.uniformMatrix4fv(pMatrixUniform, false, pMatrix);
     gl.uniformMatrix4fv(camMatrixUniform, false, camMatrix);
     gl.uniform3fv(lightDirectionUnif, adjustedLightDirection);
-    gl.uniform3fv(ambientLightUnif, [0.5, 0.5, 0.5]); //RGB ambient light
-    gl.uniform3fv(directionalLightUnif, [0.9, 0.9, 0.85]); //RGB directional light
+    gl.uniform3fv(ambientLightUnif, [0.03, 0.03, 0.03]); //RGB ambient light
+    gl.uniform3fv(directionalLightUnif, [1, 1, 0.9]); //RGB directional light
     
   gl.useProgram(gl.pickShaderProgram);
     gl.uniformMatrix4fv(gl.pickShaderProgram.uPMatrix, false, pMatrix);

@@ -8,8 +8,9 @@ uniform mat4 uPMatrix;
 varying vec3 vColor;
 
 void main(void) {
-  gl_PointSize = 16.0;
+ // gl_PointSize = 16.0;
   vec4 position = uPMatrix * uCamMatrix *  uMvMatrix * vec4(aPos, 1.0);
+  gl_PointSize = min(max(320000.0 / position.w, 10.0), 20.0);
   gl_Position = position;
   vColor = aColor;
 }

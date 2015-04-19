@@ -2,7 +2,8 @@
 (function() {
 var earth = {};
 
-var R2D = 180 / Math.PI
+var R2D = 180 / Math.PI;
+var D2R = Math.PI / 180;
 
 var NUM_LAT_SEGS = 32;
 var NUM_LON_SEGS = 32;
@@ -14,10 +15,50 @@ var vertCount;
 
 earth.pos = [0, 0, 0];
 
+var texture, nightTexture;
+
+var texLoaded = false, nightLoaded = false;
 var loaded = false;
+
+function onImageLoaded() {
+  if (texLoaded && nightLoaded) {
+    loaded = true;
+    $('#loader-text').text('Downloading satellites...');
+  }
+}
 
 earth.init = function() {
   var startTime = new Date().getTime();	
+  
+  texture = gl.createTexture();
+  var img = new Image();
+  img.onload = function() {
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT	);
+  //  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    console.log('earth.js loaded texture');
+    texLoaded = true;
+    onImageLoaded();
+  };
+  img.src = '/mercator-tex.jpg';
+  
+  nightTexture = gl.createTexture();
+  var nightImg = new Image();
+  nightImg.onload = function() {
+    gl.bindTexture(gl.TEXTURE_2D, nightTexture);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, nightImg);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT	);
+  //  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    console.log('earth.js loaded nightearth');
+    nightLoaded = true;
+    onImageLoaded();
+  };
+  nightImg.src = '/nightearth-4096.png';
   
   //generate a uvsphere bottom up, CCW order
   var vertPos = [];
@@ -90,21 +131,7 @@ earth.init = function() {
   vertIndexBuf = gl.createBuffer();
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, vertIndexBuf);
   gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(vertIndex), gl.STATIC_DRAW);
-  
-  this.texture = gl.createTexture();
-  var img = new Image();
-  img.onload = function() {
-    gl.bindTexture(gl.TEXTURE_2D, earth.texture);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT	);
-  //  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    console.log('earth.js loaded texture');
-    $('#loader-text').text('Downloading satellites...');
-    loaded = true;
-  };
-  img.src = '/mercator-tex.jpg';
+ 
   
   var end = new Date().getTime() - startTime;
   console.log('earth init: ' + end + ' ms');
@@ -123,7 +150,7 @@ earth.draw = function() {
   j += now.getUTCMilliseconds() * 1.15741e-8; //days per millisecond   
   
   var era = satellite.gstime_from_jday(j);
-  console.log(era);
+//  console.log(era);
   
   gl.useProgram(gl.shaderProgram);
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
@@ -135,13 +162,15 @@ earth.draw = function() {
   mat4.translate(mvMatrix, mvMatrix, earth.pos);
   gl.setMvMatrix(mvMatrix);
   
-  var texAmountUniform = gl.getUniformLocation(gl.shaderProgram, 'texAmount');
-  gl.uniform1f(texAmountUniform, 1.0);
-  
   var samplerUniform = gl.getUniformLocation(gl.shaderProgram, 'sampler');
   gl.uniform1i(samplerUniform, 0); 
   gl.activeTexture(gl.TEXTURE0);
-  gl.bindTexture(gl.TEXTURE_2D, this.texture);
+  gl.bindTexture(gl.TEXTURE_2D, texture);
+  
+  var nightSamplerUniform = gl.getUniformLocation(gl.shaderProgram, 'nightSampler');
+  gl.uniform1i(nightSamplerUniform, 1); 
+  gl.activeTexture(gl.TEXTURE1);
+  gl.bindTexture(gl.TEXTURE_2D, nightTexture);
   
   gl.enableVertexAttribArray(gl.texCoordAttrib);
   gl.bindBuffer(gl.ARRAY_BUFFER, texCoordBuf);

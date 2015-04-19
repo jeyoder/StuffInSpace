@@ -19,7 +19,7 @@
   var hoveringSat = -1;
   var selectedSat = -1;
   
-  var defaultColor = [1.0, 0.1, 0.0];
+  var defaultColor = [1.0, 0.2, 0.0];
   var hoverColor =   [0.1, 1.0, 0.0];
   var selectedColor = [0.0, 1.0, 1.0];
   
@@ -158,7 +158,7 @@ satSet.draw = function(pMatrix, camMatrix) {
     gl.enableVertexAttribArray(dotShader.aColor);
     gl.vertexAttribPointer(dotShader.aColor, 3, gl.FLOAT, false, 0, 0);
     
-    gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     gl.enable(gl.BLEND);
     gl.depthMask(false);
     

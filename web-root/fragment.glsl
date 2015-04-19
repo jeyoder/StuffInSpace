@@ -1,14 +1,24 @@
 precision mediump float;
 
-varying vec2 texCoord;
-varying vec3 lightColor;
+uniform vec3 ambientLightColor;
+uniform vec3 directionalLightColor;
+uniform vec3 lightDirection;
 
-uniform float texAmount; 
+varying vec2 texCoord;
+varying vec3 normal;
+
 uniform sampler2D sampler;
+uniform sampler2D nightSampler;
+
+
 
 void main(void) {
-  vec4 origColor = (texture2D(sampler, texCoord) * texAmount);
-  gl_FragColor = vec4(origColor.rgb * lightColor, origColor.a);
- // gl_FragColor = vec4(texture2D(sampler, texCoord).rgb, 1.0);
+  float directionalLightAmount = max(dot(normal, lightDirection), 0.0);
+  vec3 lightColor = ambientLightColor + (directionalLightColor * directionalLightAmount);
+  
+  vec3 litTexColor = texture2D(sampler, texCoord).rgb * lightColor * 2.0;
+  
+  vec3 nightLightColor = texture2D(nightSampler, texCoord).rgb * (1.0 - directionalLightAmount);
 
+  gl_FragColor = vec4(litTexColor + nightLightColor, 1.0);
 }
