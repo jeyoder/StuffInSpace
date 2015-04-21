@@ -99,3 +99,38 @@ body {
   font-size: 14px;
   color: #aaa;
 }
+
+#search-results {
+  display: block;
+  position: absolute;
+  width: 300px;
+  background: black;
+  color: white;
+  border-radius: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  z-index: 10;
+}
+
+.search-hilight {
+  font-weight: bold;
+  color: #aaf;
+}
+
+.search-result {
+  padding: 5px;
+  height: 28px;
+  line-height: 28px;
+}
+
+.search-result:hover {
+  color: #aaf;
+  background: #222;
+  cursor: pointer;
+}
+
+.search-result-intldes {
+  font-size: 12px;
+  display: inline-block;
+  float: right;
+  height: 28px;
+}

@@ -27,6 +27,8 @@
   var cruncherReady = false;
   var lastDrawTime = 0;
   
+  var satDataCallback;
+  
   satCruncher.onmessage = function(m) {
     if(!cruncherReady) {
       $('#load-cover').fadeOut();
@@ -36,7 +38,7 @@
     satVel = new Float32Array(m.data.satVel);
   };
   
-  satSet.init = function() {
+  satSet.init = function(satsReadyCallback) {
     
     dotShader = gl.createProgram();
     
@@ -74,6 +76,8 @@
         year = prefix + year;
         var rest = satData[i].INTLDES.substring(2);
         satData[i].intlDes = year + '-' + rest;      
+        
+        satData[i].id = i;
       }
       
       satPosBuf = gl.createBuffer();
@@ -108,6 +112,10 @@
       
       var end = new Date().getTime();
       console.log('sat.js init: ' + (end - startTime) + ' ms');
+      if(satDataCallback) {
+        satDataCallback(satData);
+      }
+      
       shadersReady = true;
       satCruncher.postMessage({ //kick off the BG sat propagation
         satData: satData
@@ -215,6 +223,11 @@ satSet.draw = function(pMatrix, camMatrix) {
     }
     selectedSat = i; 
   };
+  
+  satSet.onLoadSatData = function(callback) {
+    satDataCallback = callback;
+    if(shadersReady) callback(satData);
+  }
   
   window.satSet = satSet;
  

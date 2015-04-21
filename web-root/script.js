@@ -47,21 +47,23 @@ $(document).ready(function() {
   var target = document.getElementById('spinner');
   spinner = new Spinner(opts).spin(target);
   
-    var can = $('#canvas')[0];
-    var fragGet = $.get('/fragment.glsl');
-    var vertGet = $.get('/vertex.glsl');
-    var pFragGet = $.get('/pick-fragment.glsl');
-    var pVertGet = $.get('/pick-vertex.glsl');
-    $.when(fragGet, vertGet, pFragGet, pVertGet).done(function(fragData, vertData, pFragData, pVertData) {
-            gl = webGlInit(can, fragData[0], vertData[0], pFragData[0], pVertData[0]);
-            earth.init();
-            satSet.init();
-            drawLoop();
+	satSet.onLoadSatData(searchBox.init);
+  
+  var can = $('#canvas')[0];
+  var fragGet = $.get('/fragment.glsl');
+  var vertGet = $.get('/vertex.glsl');
+  var pFragGet = $.get('/pick-fragment.glsl');
+  var pVertGet = $.get('/pick-vertex.glsl');
+  $.when(fragGet, vertGet, pFragGet, pVertGet).done(function(fragData, vertData, pFragData, pVertData) {
+    console.log('loaded initial shaders');
+    gl = webGlInit(can, fragData[0], vertData[0], pFragData[0], pVertData[0]);
+    earth.init();
+    satSet.init();
+    drawLoop();
+  });
     
-    });
-    
-    var keySpeed = 250;
-    var rotSpeed = 0.05;
+    var keySpeed = 15;
+    var rotSpeed = 0.0025;
     $(document).keydown(function(evt) {
       if(evt.which === 69) camSpeedZ = keySpeed; //E
       if(evt.which === 81) camSpeedZ = -keySpeed; //Q
@@ -96,23 +98,27 @@ $(document).ready(function() {
     
     $('#canvas').click(function(evt) {
       var clickedSat = getSatIdFromCoord(evt.offsetX, evt.offsetY);
-      if(clickedSat === -1) {
-        $('#sat-infobox').fadeOut();
-      } else {
-        satSet.selectSat(clickedSat);
-        var sat = satSet.getSat(clickedSat);
-        if(!sat) return;
-        $('#sat-infobox').fadeIn();
-        $('#sat-info-title').html(sat.OBJECT_NAME);
-        $('#sat-intl-des').html(sat.intlDes);
-        $('#sat-type').html(sat.OBJECT_TYPE);
-      }
+      selectSat(clickedSat);
+      $('#search-results').slideUp();
     });
     
  //   debugContext = $('#debug-canvas')[0].getContext('2d');
  //   debugImageData = debugContext.createImageData(debugContext.canvas.width, debugContext.canvas.height);
 });
 
+function selectSat(satId) {
+  if(satId === -1) {
+    $('#sat-infobox').fadeOut();
+  } else {
+    satSet.selectSat(satId);
+    var sat = satSet.getSat(satId);
+    if(!sat) return;
+    $('#sat-infobox').fadeIn();
+    $('#sat-info-title').html(sat.OBJECT_NAME);
+    $('#sat-intl-des').html(sat.intlDes);
+    $('#sat-type').html(sat.OBJECT_TYPE);
+  }
+}
 
 
 function webGlInit(can, fragCode, vertCode, pFragCode, pVertCode) {
@@ -216,15 +222,20 @@ function loadTexture() {
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
 }
 
+var oldT = new Date();
 function drawLoop() {
+  var newT = new Date();
+  var dt = newT - oldT;
+  oldT = newT;
+  
  // console.log('th: ' + camYaw + ' x: ' + camX + ' y: ' + camY + ' sy: ' + camSpeedY);
   drawScene();
-  camX += (camSpeedX * Math.cos(camYaw)) + (camSpeedY * Math.sin(camYaw)); //need to rotate somewhere
-  camY += (camSpeedY * Math.cos(camYaw)) - (camSpeedX * Math.sin(camYaw));
-  camZ += camSpeedZ
-  camPitch += camRotSpeedX;
-  camYaw += camRotSpeedZ;
-  camRoll += camRotSpeedY;
+  camX += ((camSpeedX * Math.cos(camYaw)) + (camSpeedY * Math.sin(camYaw))) * dt; //need to rotate somewhere
+  camY += ((camSpeedY * Math.cos(camYaw)) - (camSpeedX * Math.sin(camYaw))) * dt;
+  camZ += camSpeedZ * dt;
+  camPitch += camRotSpeedX * dt;
+  camYaw += camRotSpeedZ * dt;
+  camRoll += camRotSpeedY * dt;
   requestAnimationFrame(drawLoop);
 }
 
