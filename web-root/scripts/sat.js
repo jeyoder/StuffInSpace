@@ -23,62 +23,86 @@
   var hoverColor =   [0.1, 1.0, 0.0];
   var selectedColor = [0.0, 1.0, 1.0];
   
-  var satCruncher = new Worker('sat-cruncher.js');
+  var satCruncher = new Worker('/scripts/sat-cruncher.js');
   var cruncherReady = false;
   var lastDrawTime = 0;
   
   var satDataCallback;
   
+  var gotExtraData = false;
   satCruncher.onmessage = function(m) {
+    
+    if(!gotExtraData) { // get data that comes from crunching
+      
+      var start = performance.now();
+      
+      for(var i=0; i < m.data.length; i++) {
+        for(key in m.data[i]) {
+          if(m.data[i].hasOwnProperty(key)) {
+            satData[i][key] = m.data[i][key];
+          }
+        }
+      }
+      
+      console.log('sat.js got extra data in ' + (performance.now() - start) + ' ms');
+      gotExtraData = true;
+      return;
+      
+    }
+    
     if(!cruncherReady) {
       $('#load-cover').fadeOut();
     }
     cruncherReady = true;
     satPos = new Float32Array(m.data.satPos);
     satVel = new Float32Array(m.data.satVel);
+    
   };
   
   satSet.init = function(satsReadyCallback) {
     
     dotShader = gl.createProgram();
+   
+    var vertShader = gl.createShader(gl.VERTEX_SHADER);
+    gl.shaderSource(vertShader, shaderLoader.getShaderCode('dot-vertex.glsl'));
+    gl.compileShader(vertShader);
     
-    var vertGet = $.get('/dot-vertex.glsl');
-    var fragGet = $.get('/dot-fragment.glsl');
-    var tleGet = $.get('/TLE.json', null, null, 'json');
-    $.when(vertGet, fragGet, tleGet).done(function(vertData, fragData, tleResp) { //defer shader compilation until shader code has loaded.
+    var fragShader = gl.createShader(gl.FRAGMENT_SHADER);
+    gl.shaderSource(fragShader, shaderLoader.getShaderCode('dot-fragment.glsl'));
+    gl.compileShader(fragShader);
+    
+    gl.attachShader(dotShader, vertShader);
+    gl.attachShader(dotShader, fragShader);
+    gl.linkProgram(dotShader);
+   
+    dotShader.aPos = gl.getAttribLocation(dotShader, 'aPos');
+    dotShader.aColor = gl.getAttribLocation(dotShader, 'aColor');
+    dotShader.uMvMatrix = gl.getUniformLocation(dotShader, 'uMvMatrix');
+    dotShader.uCamMatrix = gl.getUniformLocation(dotShader, 'uCamMatrix');
+    dotShader.uPMatrix = gl.getUniformLocation(dotShader, 'uPMatrix');
+    
+    var tleGet = $.get('/TLE.json', function(resp) {
       var startTime = new Date().getTime();
       
-      var vertShader = gl.createShader(gl.VERTEX_SHADER);
-      gl.shaderSource(vertShader, vertData[0]);
-      gl.compileShader(vertShader);
-      
-      var fragShader = gl.createShader(gl.FRAGMENT_SHADER);
-      gl.shaderSource(fragShader, fragData[0]);
-      gl.compileShader(fragShader);
-      
-      gl.attachShader(dotShader, vertShader);
-      gl.attachShader(dotShader, fragShader);
-      gl.linkProgram(dotShader);
      
-      dotShader.aPos = gl.getAttribLocation(dotShader, 'aPos');
-      dotShader.aColor = gl.getAttribLocation(dotShader, 'aColor');
-      dotShader.uMvMatrix = gl.getUniformLocation(dotShader, 'uMvMatrix');
-      dotShader.uCamMatrix = gl.getUniformLocation(dotShader, 'uCamMatrix');
-      dotShader.uPMatrix = gl.getUniformLocation(dotShader, 'uPMatrix');
       console.log('sat.js downloaded data');
       $('#loader-text').text('Crunching numbers...');
       
-      satData = tleResp[0];
+      satData = resp;
       
+      //do some processing on our satData response
       for(var i = 0; i < satData.length; i++) {     
+      
         var year = satData[i].INTLDES.substring(0,2); //clean up intl des for display
         var prefix = (year > 50) ? '19' : '20';
         year = prefix + year;
         var rest = satData[i].INTLDES.substring(2);
-        satData[i].intlDes = year + '-' + rest;      
+        satData[i].intlDes = year + '-' + rest;   
         
         satData[i].id = i;
       }
+      
+      //populate GPU mem buffers, now that we know how many sats there are
       
       satPosBuf = gl.createBuffer();
       satPos = new Float32Array(satData.length * 3);

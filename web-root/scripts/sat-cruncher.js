@@ -1,4 +1,4 @@
-importScripts('/satellite.js');
+importScripts('/scripts/satellite.js');
 
 var satCache = [];
 var satPos, satVel;
@@ -8,15 +8,32 @@ onmessage = function(m) {
   var start = performance.now();
   var len = m.data.satData.length;
   
+  var extraData = [];
   for(var i = 0; i < len; i++) {
-    satCache.push(satellite.twoline2satrec( //perform and store sat init calcs
-      m.data.satData[i].TLE_LINE1, m.data.satData[i].TLE_LINE2
-    ));
-  }
+    var ei = {};
+    var satrec = satellite.twoline2satrec( //perform and store sat init calcs
+      m.data.satData[i].TLE_LINE1, m.data.satData[i].TLE_LINE2);
+    
+    //keplerian elements
+    ei.inclination  = satrec.inclo;  //rads
+    ei.eccentricity = satrec.ecco;
+    ei.raan         = satrec.nodeo;   //rads
+    ei.argPe        = satrec.argpo;  //rads
+    ei.meanMotion   = satrec.no * 60 * 24 / (2 * Math.PI);     // convert rads/minute to rev/day
+    
+    //fun other data
+    ei.semiMajorAxis = Math.pow(8681663.653 / ei.meanMotion, (2/3));   
+    ei.apogee = ei.semiMajorAxis * (1 + ei.eccentricity) - 6371;
+    ei.perigee = ei.semiMajorAxis * (1 - ei.eccentricity) - 6371;
+    
+    extraData.push(ei);
+    satCache.push(satrec);
+  }	
   
   satPos = new Float32Array(len * 3);
   satVel = new Float32Array(len * 3);
   
+  postMessage(extraData);
   console.log('sat-cruncher init: ' + (performance.now() - start) + ' ms');
   propagate();
 };
@@ -60,7 +77,7 @@ function propagate() {
     satVel[i*3+1] = vy;
     satVel[i*3+2] = vz;
   }
-  
+ 
   postMessage({satPos: satPos.buffer, satVel: satVel.buffer}, [satPos.buffer, satVel.buffer]);
   satPos = new Float32Array(satCache.length * 3);
   satVel = new Float32Array(satCache.length * 3);

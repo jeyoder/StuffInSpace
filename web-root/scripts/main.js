@@ -49,18 +49,11 @@ $(document).ready(function() {
   
 	satSet.onLoadSatData(searchBox.init);
   
-  var can = $('#canvas')[0];
-  var fragGet = $.get('/fragment.glsl');
-  var vertGet = $.get('/vertex.glsl');
-  var pFragGet = $.get('/pick-fragment.glsl');
-  var pVertGet = $.get('/pick-vertex.glsl');
-  $.when(fragGet, vertGet, pFragGet, pVertGet).done(function(fragData, vertData, pFragData, pVertData) {
-    console.log('loaded initial shaders');
-    gl = webGlInit(can, fragData[0], vertData[0], pFragData[0], pVertData[0]);
-    earth.init();
-    satSet.init();
-    drawLoop();
-  });
+  var can = $('#canvas')[0];    
+  gl = webGlInit(can);
+  earth.init();
+  satSet.init();
+  orbitDisplay.init();
     
     var keySpeed = 15;
     var rotSpeed = 0.0025;
@@ -104,6 +97,7 @@ $(document).ready(function() {
     
  //   debugContext = $('#debug-canvas')[0].getContext('2d');
  //   debugImageData = debugContext.createImageData(debugContext.canvas.width, debugContext.canvas.height);
+  drawLoop(); //kick off the animationFrame()s
 });
 
 function selectSat(satId) {
@@ -121,7 +115,7 @@ function selectSat(satId) {
 }
 
 
-function webGlInit(can, fragCode, vertCode, pFragCode, pVertCode) {
+function webGlInit(can) {
   var gl = can.getContext('webgl', {alpha: false}) || can.getContext('experimental-webgl', {alpha: false});
   if(!gl) {
       alert('No Webgl!');
@@ -129,10 +123,12 @@ function webGlInit(can, fragCode, vertCode, pFragCode, pVertCode) {
   gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
   // init shaders
   var fragShader = gl.createShader(gl.FRAGMENT_SHADER);
+  var fragCode = shaderLoader.getShaderCode('earth-fragment.glsl');
   gl.shaderSource(fragShader, fragCode);
   gl.compileShader(fragShader);
   
   var vertShader = gl.createShader(gl.VERTEX_SHADER);
+  var vertCode = shaderLoader.getShaderCode('earth-vertex.glsl');
   gl.shaderSource(vertShader, vertCode);
   gl.compileShader(vertShader);
   
@@ -169,10 +165,12 @@ function webGlInit(can, fragCode, vertCode, pFragCode, pVertCode) {
   };
   
   var pFragShader = gl.createShader(gl.FRAGMENT_SHADER);
+  var pFragCode = shaderLoader.getShaderCode('pick-fragment.glsl');
   gl.shaderSource(pFragShader, pFragCode);
   gl.compileShader(pFragShader);
   
   var pVertShader = gl.createShader(gl.VERTEX_SHADER);
+  var pVertCode = shaderLoader.getShaderCode('pick-vertex.glsl');
   gl.shaderSource(pVertShader, pVertCode);
   gl.compileShader(pVertShader);
   
@@ -271,7 +269,7 @@ function drawScene() {
   ];
   
   var eciToOpenGLMat
-  mat4.mul(pMatrix, pMatrix, eciToOpenGlMat); //pMat = pMat * oglMat 
+  mat4.mul(pMatrix, pMatrix, eciToOpenGlMat); //pMat = pMat * ecioglMat 
   var camMatrix = mat4.create();
   mat4.identity(camMatrix);
   mat4.rotateX(camMatrix, camMatrix, camPitch);
@@ -303,6 +301,8 @@ function drawScene() {
   earth.draw();
 
   satSet.draw(pMatrix, camMatrix);
+  
+  orbitDisplay.draw(pMatrix, camMatrix);
   
   gl.bindFramebuffer(gl.FRAMEBUFFER, gl.pickFb);
   

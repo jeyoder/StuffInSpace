@@ -1,16 +1,12 @@
+<?php
+// why is this a php file? lolidk
+?>
 <!doctype html>
 <html>
   <head>
     <link rel="stylesheet" href="/style.css">
     <script src="http://code.jquery.com/jquery-2.1.3.min.js"></script>
-    <script src="/gl-matrix-min.js"></script>
-    <script src="/spin.min.js"></script>
-    <script src="/search-box.js"></script>
-    <script src="/satellite.js"></script>
-    <script src="/earth.js"></script>
-    <script src="/sun.js"></script>
-    <script src="/sat.js"></script>
-    <script src="/script.js"></script>
+    <script src="/script-loader.php"></script>
     <title>Things in Space</title>
   </head>
   <body>
