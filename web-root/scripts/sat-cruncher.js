@@ -1,3 +1,4 @@
+/* global satellite */
 importScripts('/scripts/satellite.js');
 
 var satCache = [];
@@ -22,9 +23,11 @@ onmessage = function(m) {
     ei.meanMotion   = satrec.no * 60 * 24 / (2 * Math.PI);     // convert rads/minute to rev/day
     
     //fun other data
-    ei.semiMajorAxis = Math.pow(8681663.653 / ei.meanMotion, (2/3));   
+    ei.semiMajorAxis = Math.pow(8681663.653 / ei.meanMotion, (2/3));
+    ei.semiMinorAxis = ei.semiMajorAxis * Math.sqrt(1 - Math.pow(ei.eccentricity, 2));   
     ei.apogee = ei.semiMajorAxis * (1 + ei.eccentricity) - 6371;
     ei.perigee = ei.semiMajorAxis * (1 - ei.eccentricity) - 6371;
+    ei.period = 1440.0 / ei.meanMotion;
     
     extraData.push(ei);
     satCache.push(satrec);

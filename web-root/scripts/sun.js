@@ -59,6 +59,7 @@ function jday(year, mon, day, hr, minute, sec){ //from satellite.js
         ((sec / 60.0 + minute) / 60.0 + hr) / 24.0  //  ut in days
         //#  - 0.5*sgn(100.0*year + mon - 190002.5) + 0.5;
         );
+
 }
 
 window.sun = {

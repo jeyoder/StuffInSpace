@@ -1,3 +1,10 @@
+/* global vec3 */
+/* global mat3 */
+/* global earth */
+/* global searchBox */
+/* global Spinner */
+/* global sun */
+/* global orbitDisplay */
 var gl;
 var cubeVertIndexBuffer;
 var camX = 0;
@@ -15,7 +22,7 @@ var camRoll = 0;
 
 var groundVertPositionBuffer, groundTexCoordBuffer;
 var cubeVertPositionBuffer, cubeVertIndexBuffer, cubeVertColorBuffer, cubeVertNormalBuffer;
-var vertexPositionAttrib, vertexColorAttrib, texCoordAttrib;
+var vertexPositionAttrib, vertexColorAttrib, texCoordAttrib, vertexNormalAttrib;
 
 var pickFb, pickTex;
 var pickColorMap;
@@ -72,12 +79,12 @@ $(document).ready(function() {
     });
     
     $(document).keyup(function (evt) {
-      if(evt.which === 69) camSpeedZ = 0 //E
-      if(evt.which === 81) camSpeedZ = 0 //Q
-      if(evt.which === 87) camSpeedY = 0//W
-      if(evt.which === 83) camSpeedY = 0 //S
-      if(evt.which === 65) camSpeedX = 0 //D
-      if(evt.which === 68) camSpeedX = 0 //A
+      if(evt.which === 69) camSpeedZ = 0; //E
+      if(evt.which === 81) camSpeedZ = 0; //Q
+      if(evt.which === 87) camSpeedY = 0;//lW
+      if(evt.which === 83) camSpeedY = 0; //S
+      if(evt.which === 65) camSpeedX = 0; //D
+      if(evt.which === 68) camSpeedX = 0; //A
       if(evt.which === 37) camRotSpeedZ = 0; //Left
       if(evt.which === 39) camRotSpeedZ = 0; //Right
       if(evt.which === 38) camRotSpeedX = 0; //Up
@@ -103,14 +110,17 @@ $(document).ready(function() {
 function selectSat(satId) {
   if(satId === -1) {
     $('#sat-infobox').fadeOut();
+     orbitDisplay.clearSelectOrbit();
   } else {
     satSet.selectSat(satId);
     var sat = satSet.getSat(satId);
     if(!sat) return;
+    orbitDisplay.setSelectOrbit(satId);
     $('#sat-infobox').fadeIn();
     $('#sat-info-title').html(sat.OBJECT_NAME);
     $('#sat-intl-des').html(sat.intlDes);
     $('#sat-type').html(sat.OBJECT_TYPE);
+       
   }
 }
 
@@ -253,7 +263,7 @@ function drawScene() {
  
   
   var pMatrix = mat4.create();
-  mat4.perspective(pMatrix, 1.01, gl.drawingBufferWidth / gl.drawingBufferHeight, 20.0, 150000.0);
+  mat4.perspective(pMatrix, 1.01, gl.drawingBufferWidth / gl.drawingBufferHeight, 20.0, 300000.0);
  /* var eciToOpenGlMat = [   OpenGL Matrix memory layout is very dumb
   1,  0,  0,  0,
   0,  0,  1,  0,
@@ -267,8 +277,7 @@ function drawScene() {
     0,  1,  0,  0,
     0,  0,  0,  1
   ];
-  
-  var eciToOpenGLMat
+ 
   mat4.mul(pMatrix, pMatrix, eciToOpenGlMat); //pMat = pMat * ecioglMat 
   var camMatrix = mat4.create();
   mat4.identity(camMatrix);
@@ -338,6 +347,7 @@ function updateHover() {
     $('#sat-hoverbox').html('(none)');
     $('#sat-hoverbox').css({display: 'none'});
     $('#canvas').css({cursor : 'default'});
+    orbitDisplay.clearHoverOrbit();
   } else {
    try{
       $('#sat-hoverbox').html(satSet.getSat(mouseSat).OBJECT_NAME);
@@ -349,6 +359,7 @@ function updateHover() {
         top: mouseY - 10
       });
       $('#canvas').css({cursor : 'pointer'});
+      orbitDisplay.setHoverOrbit(mouseSat);
     } catch(e){}
   }
 }

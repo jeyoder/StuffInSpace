@@ -1,3 +1,4 @@
+/* global $ */
 (function() {
   var satSet = {};
   
@@ -37,11 +38,22 @@
       var start = performance.now();
       
       for(var i=0; i < m.data.length; i++) {
-        for(key in m.data[i]) {
+       /* for(var key in m.data[i]) {
           if(m.data[i].hasOwnProperty(key)) {
             satData[i][key] = m.data[i][key];
           }
-        }
+        }*/
+        satData[i].inclination = m.data[i].inclination;
+        satData[i].eccentricity = m.data[i].eccentricity;
+        satData[i].raan = m.data[i].raan;
+        satData[i].argPe = m.data[i].argPe;
+        satData[i].meanMotion = m.data[i].meanMotion;
+        
+        satData[i].semiMajorAxis = m.data[i].semiMajorAxis;
+        satData[i].semiMinorAxis = m.data[i].semiMinorAxis;
+        satData[i].apogee = m.data[i].apogee;
+        satData[i].perigee = m.data[i].perigee;
+        satData[i].period = m.data[i].period;
       }
       
       console.log('sat.js got extra data in ' + (performance.now() - start) + ' ms');
@@ -81,7 +93,7 @@
     dotShader.uCamMatrix = gl.getUniformLocation(dotShader, 'uCamMatrix');
     dotShader.uPMatrix = gl.getUniformLocation(dotShader, 'uPMatrix');
     
-    var tleGet = $.get('/TLE.json', function(resp) {
+    $.get('/TLE.json', function(resp) {
       var startTime = new Date().getTime();
       
      
@@ -100,6 +112,7 @@
         satData[i].intlDes = year + '-' + rest;   
         
         satData[i].id = i;
+      
       }
       
       //populate GPU mem buffers, now that we know how many sats there are
@@ -112,9 +125,9 @@
       var pickColorData = [];
       pickColorBuf = gl.createBuffer();
       for(var i = 0; i < satData.length; i++) {
-        byteR = (i+1) & 0xff;
-        byteG = ((i+1) & 0xff00) >> 8;
-        byteB = ((i+1) & 0xff0000) >> 16;
+        var byteR = (i+1) & 0xff;
+        var byteG = ((i+1) & 0xff00) >> 8;
+        var byteB = ((i+1) & 0xff0000) >> 16;
         pickColorData.push(byteR / 255.0);
         pickColorData.push(byteG / 255.0);
         pickColorData.push(byteB / 255.0);
@@ -251,7 +264,7 @@ satSet.draw = function(pMatrix, camMatrix) {
   satSet.onLoadSatData = function(callback) {
     satDataCallback = callback;
     if(shadersReady) callback(satData);
-  }
+  };
   
   window.satSet = satSet;
  
