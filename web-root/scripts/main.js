@@ -56,7 +56,11 @@ $(document).ready(function() {
   
 	satSet.onLoadSatData(searchBox.init);
   
-  var can = $('#canvas')[0];    
+  resizeCanvas();
+  $(window).resize(resizeCanvas);
+  
+  var can = $('#canvas')[0];   
+   
   gl = webGlInit(can);
   earth.init();
   satSet.init();
@@ -99,13 +103,36 @@ $(document).ready(function() {
     $('#canvas').click(function(evt) {
       var clickedSat = getSatIdFromCoord(evt.offsetX, evt.offsetY);
       selectSat(clickedSat);
-      $('#search-results').slideUp();
+      searchBox.hideResults();
+    
+    });se
+    
+    $('#canvas').contextmenu(function() {
+     return false; //stop right-click menu
+    });
+    
+    $('#canvas').mousedown(function(evt){
+      if(evt.which === 3) {//RMB
+        evt.preventDefault();
+      }
+    });
+    
+    $('#canvas').mouseup(function(evt){
+      if(evt.which === 3) {//RMB
+        evt.preventDefault();
+      }
     });
     
  //   debugContext = $('#debug-canvas')[0].getContext('2d');
  //   debugImageData = debugContext.createImageData(debugContext.canvas.width, debugContext.canvas.height);
   drawLoop(); //kick off the animationFrame()s
 });
+
+function resizeCanvas() {
+  var can = $('#canvas')[0];
+  can.width = window.innerWidth;
+  can.height = window.innerHeight;
+}
 
 function selectSat(satId) {
   if(satId === -1) {

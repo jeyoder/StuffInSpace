@@ -3,12 +3,20 @@
   var SEARCH_LIMIT = 20;
   var satData;
   
+  function hideResults() {
+    var sr = $('#search-results');
+    sr.slideUp();
+  }
+  
+  searchBox.hideResults = hideResults;
+  
   searchBox.init = function(_satData) {
     satData = _satData;
     $('#search-results').on('click', '.search-result', function(evt) {
       var satId = $(this).data('sat-id');
       console.log(satId);
       selectSat(satId);
+      hideResults();
     });
     
     $('#search').on('input', function() {
@@ -19,7 +27,7 @@
         var resultBox = $('#search-results');
         resultBox.empty();
         if(searchStr.length === 0) {
-          resultBox.slideUp();
+          hideResults();
           return;
         }
         resultBox.slideDown();

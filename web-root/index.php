@@ -10,11 +10,11 @@
     <title>Things in Space</title>
   </head>
   <body>
-  Things In Space
-  <input type="text" id="search"></input>
+
   <div id="search-results"></div>
   <div id="canvas-holder">
-    <canvas id="canvas" width="1900" height="900"></canvas>
+    <canvas id="canvas"></canvas>
+    <input type="text" id="search"></input>
     <div id="sat-hoverbox">(none)</div>
     <div id="sat-infobox">
       <div id="sat-info-title">WAFFLESAT-5 R/B</div>

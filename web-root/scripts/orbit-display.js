@@ -130,7 +130,7 @@ orbitDisplay.setSelectOrbit = function(satId) {
   gl.bindBuffer(gl.ARRAY_BUFFER, selectOrbitBuf);
   gl.bufferData(gl.ARRAY_BUFFER, pointsOut, gl.DYNAMIC_DRAW);
   
-  console.log('setOrbit(): ' + (performance.now() - start) + ' ms');
+ // console.log('setOrbit(): ' + (performance.now() - start) + ' ms');
 };
 
 orbitDisplay.clearSelectOrbit = function() {
@@ -148,7 +148,7 @@ orbitDisplay.setHoverOrbit = function(satId) {
   gl.bindBuffer(gl.ARRAY_BUFFER, hoverOrbitBuf);
   gl.bufferData(gl.ARRAY_BUFFER, pointsOut, gl.DYNAMIC_DRAW);
   
-  console.log('setOrbit(): ' + (performance.now() - start) + ' ms');
+ // console.log('setOrbit(): ' + (performance.now() - start) + ' ms');
 };
 
 orbitDisplay.clearHoverOrbit = function(satId) {
