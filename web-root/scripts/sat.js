@@ -171,21 +171,6 @@ satSet.draw = function(pMatrix, camMatrix) {
   for(var i=0; i<(satData.length*3); i++) {
     satPos[i] += satVel[i] * dt;
   }
-  /*    
-      try{
-        var x = pv.position.x; // translation of axes from earth-centered inertial
-        var y = pv.position.y; // to OpenGL is done in shader with projection matrix
-        var z = pv.position.z; // so we don't have to worry about it
-      } catch(e) {
-        var x = 0;
-        var y = 0;
-        var z = 0;
-      }
-  //    console.log('x: ' + x + ' y: ' + y + ' z: ' + z);
-      satPos[i*3] = x;
-      satPos[i*3+1] = y;
-      satPos[i*3+2] = z;
-    }*/
     
     gl.useProgram(dotShader);
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);

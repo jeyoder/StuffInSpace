@@ -6,7 +6,7 @@ var satPos, satVel;
 
 
 onmessage = function(m) {
-  var start = performance.now();
+  var start = Date.now();
   var len = m.data.satData.length;
   
   var extraData = [];
@@ -37,12 +37,12 @@ onmessage = function(m) {
   satVel = new Float32Array(len * 3);
   
   postMessage(extraData);
-  console.log('sat-cruncher init: ' + (performance.now() - start) + ' ms');
+  console.log('sat-cruncher init: ' + (Date.now() - start) + ' ms');
   propagate();
 };
 
 function propagate() {
-  var start = performance.now();
+//  var start = Date.now();
   
   var now = new Date();   
   var j = jday(now.getUTCFullYear(), 

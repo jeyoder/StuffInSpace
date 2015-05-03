@@ -1,3 +1,6 @@
+/* global Line */
+/* global vec4 */
+/* global mat4 */
 /* global vec3 */
 /* global mat3 */
 /* global earth */
@@ -7,30 +10,36 @@
 /* global orbitDisplay */
 var gl;
 var cubeVertIndexBuffer;
-var camX = 0;
-var camY = -10000;
-var camZ = 0;
-var camSpeedX = 0;
-var camSpeedY = 0;
-var camSpeedZ = 0;
-var camRotSpeedX = 0;
-var camRotSpeedY = 0;
-var camRotSpeedZ = 0;
-var camPitch = 0;
-var camYaw = 0;
-var camRoll = 0;
 
-var groundVertPositionBuffer, groundTexCoordBuffer;
-var cubeVertPositionBuffer, cubeVertIndexBuffer, cubeVertColorBuffer, cubeVertNormalBuffer;
-var vertexPositionAttrib, vertexColorAttrib, texCoordAttrib, vertexNormalAttrib;
+var R2D = 180 / Math.PI;
+
+var camYaw = 0;
+var camPitch = 0;
+
+var camDistTarget = 10000;
+var zoomLevel = 0.3;
+var zoomTarget = 0.3;
+var ZOOM_EXP = 3;
+var DIST_MIN = 6400;
+var DIST_MAX = 200000;
+
+var camPitchSpeed = 0;
+var camYawSpeed = 0;
 
 var pickFb, pickTex;
 var pickColorMap;
 
+var pMatrix, camMatrix;
+
 var mouseX = 0, mouseY = 0, mouseSat = -1;
+var isDragging = false;
+var dragPoint = [0,0,0];
+var dragStartPitch = 0;
+var dragStartYaw = 0;
 
 var debugContext, debugImageData;
 
+var debugLine, debugLine2, debugLine3;
 var spinner;
 $(document).ready(function() {
   var opts = {
@@ -60,52 +69,47 @@ $(document).ready(function() {
   $(window).resize(resizeCanvas);
   
   var can = $('#canvas')[0];   
-   
+  
   gl = webGlInit(can);
+  debugLine = new Line();
+  debugLine2 = new Line();
+  debugLine3 = new Line();
   earth.init();
   satSet.init();
   orbitDisplay.init();
-    
-    var keySpeed = 15;
-    var rotSpeed = 0.0025;
+
+   /* var rotSpeed = 0.001;
     $(document).keydown(function(evt) {
-      if(evt.which === 69) camSpeedZ = keySpeed; //E
-      if(evt.which === 81) camSpeedZ = -keySpeed; //Q
-      if(evt.which === 83) camSpeedY = -keySpeed; //S
-      if(evt.which === 87) camSpeedY = keySpeed; //W
-      if(evt.which === 68) camSpeedX = keySpeed; //D
-      if(evt.which === 65) camSpeedX = -keySpeed; //A
-      if(evt.which === 37) camRotSpeedZ = -rotSpeed; //Left
-      if(evt.which === 39) camRotSpeedZ =  rotSpeed; //Right
-      if(evt.which === 38) camRotSpeedX = -rotSpeed; //Up
-      if(evt.which === 40) camRotSpeedX =  rotSpeed; //Down
- //     console.log(evt.which);
+      if(evt.which === 83) camPitchSpeed = -rotSpeed; //S
+      if(evt.which === 87) camPitchSpeed = rotSpeed; //W
+      if(evt.which === 68) camYawSpeed = rotSpeed; //D
+      if(evt.which === 65) camYawSpeed = -rotSpeed; //A
     });
     
     $(document).keyup(function (evt) {
-      if(evt.which === 69) camSpeedZ = 0; //E
-      if(evt.which === 81) camSpeedZ = 0; //Q
-      if(evt.which === 87) camSpeedY = 0;//lW
-      if(evt.which === 83) camSpeedY = 0; //S
-      if(evt.which === 65) camSpeedX = 0; //D
-      if(evt.which === 68) camSpeedX = 0; //A
-      if(evt.which === 37) camRotSpeedZ = 0; //Left
-      if(evt.which === 39) camRotSpeedZ = 0; //Right
-      if(evt.which === 38) camRotSpeedX = 0; //Up
-      if(evt.which === 40) camRotSpeedX = 0; //Down
-    });
+       if(evt.which === 83) camPitchSpeed = 0; //S
+      if(evt.which === 87) camPitchSpeed =0; //W
+      if(evt.which === 68) camYawSpeed = 0; //D
+      if(evt.which === 65) camYawSpeed = 0; //A
+    });*/
     
     $('#canvas').mousemove(function(evt) {
-      mouseX = evt.offsetX;
-      mouseY = evt.offsetY;
+      mouseX = evt.clientX;
+      mouseY = evt.clientY;
+    });
+    
+    $('#canvas').on('wheel', function (evt) {
+      zoomTarget += evt.originalEvent.deltaY * 0.0002;
+      if(zoomTarget > 1) zoomTarget = 1;
+      if(zoomTarget < 0) zoomTarget = 0;
     });
     
     $('#canvas').click(function(evt) {
-      var clickedSat = getSatIdFromCoord(evt.offsetX, evt.offsetY);
+      var clickedSat = getSatIdFromCoord(evt.clientX, evt.clientY);
       selectSat(clickedSat);
       searchBox.hideResults();
     
-    });se
+    });
     
     $('#canvas').contextmenu(function() {
      return false; //stop right-click menu
@@ -113,13 +117,17 @@ $(document).ready(function() {
     
     $('#canvas').mousedown(function(evt){
       if(evt.which === 3) {//RMB
-        evt.preventDefault();
+        dragPoint = getEarthScreenPoint(evt.clientX, evt.clientY);
+        dragStartPitch = camPitch;
+        dragStartYaw = camYaw;
+     //   debugLine.set(dragPoint, getCamPos());
+        isDragging = true;
       }
     });
     
     $('#canvas').mouseup(function(evt){
       if(evt.which === 3) {//RMB
-        evt.preventDefault();
+        isDragging = false;
       }
     });
     
@@ -159,47 +167,8 @@ function webGlInit(can) {
   }
   gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
   // init shaders
-  var fragShader = gl.createShader(gl.FRAGMENT_SHADER);
-  var fragCode = shaderLoader.getShaderCode('earth-fragment.glsl');
-  gl.shaderSource(fragShader, fragCode);
-  gl.compileShader(fragShader);
-  
-  var vertShader = gl.createShader(gl.VERTEX_SHADER);
-  var vertCode = shaderLoader.getShaderCode('earth-vertex.glsl');
-  gl.shaderSource(vertShader, vertCode);
-  gl.compileShader(vertShader);
-  
-  var shaderProgram = gl.createProgram();
-  gl.attachShader(shaderProgram, vertShader);
-  gl.attachShader(shaderProgram, fragShader);
-  gl.linkProgram(shaderProgram);
-  gl.useProgram(shaderProgram);
-  gl.shaderProgram = shaderProgram;
-  
-  vertexPositionAttrib = gl.getAttribLocation(shaderProgram, 'aVertexPosition');
-  gl.vertexPositionAttrib = vertexPositionAttrib;
-  gl.enableVertexAttribArray(vertexPositionAttrib);
-  
-  texCoordAttrib = gl.getAttribLocation(shaderProgram, 'aTexCoord');
-  gl.texCoordAttrib = texCoordAttrib;
-  gl.enableVertexAttribArray(texCoordAttrib);
-  
-  vertexNormalAttrib = gl.getAttribLocation(shaderProgram, 'aVertexNormal');
-  gl.vertexNormalAttrib = vertexNormalAttrib;
-  gl.enableVertexAttribArray(vertexNormalAttrib);
   
   gl.enable(gl.DEPTH_TEST);
-  
-  gl.setMvMatrix = function(mvMatrix) {
-    var mvMatrixUniform = gl.getUniformLocation(gl.shaderProgram, 'mvMatrix');
-    var normalMatrixUnif = gl.getUniformLocation(gl.shaderProgram, 'normalMatrix');
-    
-    var nMatrix = mat3.create();
-    mat3.normalFromMat4(nMatrix, mvMatrix);
-    
-    gl.uniformMatrix4fv(mvMatrixUniform, false, mvMatrix);
-    gl.uniformMatrix3fv(normalMatrixUnif, false, nMatrix);
-  };
   
   var pFragShader = gl.createShader(gl.FRAGMENT_SHADER);
   var pFragCode = shaderLoader.getShaderCode('pick-fragment.glsl');
@@ -235,7 +204,7 @@ function webGlInit(can) {
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.drawingBufferWidth, gl.drawingBufferHeight, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
   
-  var rb = gl.createRenderbuffer();
+  var rb = gl.createRenderbuffer(); //create RB to store the depth buffer
   gl.bindRenderbuffer(gl.RENDERBUFFER, rb);
   gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, gl.drawingBufferWidth, gl.drawingBufferHeight);
   
@@ -246,33 +215,126 @@ function webGlInit(can) {
   
   pickColorMap = new Uint8Array(gl.drawingBufferWidth * gl.drawingBufferHeight * 4);
   
+  pMatrix = mat4.create();
+  mat4.perspective(pMatrix, 1.01, gl.drawingBufferWidth / gl.drawingBufferHeight, 20.0, 300000.0);
+  var eciToOpenGlMat = [
+    1,  0,  0,  0,
+    0,  0, -1,  0,
+    0,  1,  0,  0,
+    0,  0,  0,  1
+  ];
+  mat4.mul(pMatrix, pMatrix, eciToOpenGlMat); //pMat = pMat * ecioglMat 
+  
   return gl;
 }
- 
 
-function loadTexture() {
-  gl.bindTexture(gl.TEXTURE_2D, groundTexture);
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, groundImage);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+function getCamPos() {
+  var r = getCamDist();
+  var z = r * Math.sin(camPitch);
+  var rYaw = r * Math.cos(camPitch);
+  var x = rYaw * Math.sin(camYaw);
+  var y = rYaw * Math.cos(camYaw) * -1;
+  return [x, y, z];
 }
+
+function unProject(mx, my) {
+  var glScreenX = (mx / gl.drawingBufferWidth * 2) - 1.0;
+  var glScreenY = 1.0 - (my / gl.drawingBufferHeight * 2);
+  var screenVec = [glScreenX, glScreenY, -0.01, 1.0]; //gl screen coords
+ 
+  var comboPMat = mat4.create();
+  mat4.mul(comboPMat, pMatrix, camMatrix);
+  var invMat = mat4.create();
+  mat4.invert(invMat, comboPMat);
+  var worldVec = vec4.create();
+  vec4.transformMat4(worldVec, screenVec, invMat);
+ 
+  return [worldVec[0] / worldVec[3], worldVec[1] / worldVec[3], worldVec[2] / worldVec[3]];
+}
+
+function getEarthScreenPoint(x, y) {
+//  var start = performance.now();
+  
+  var rayOrigin = getCamPos();
+  var ptThru = unProject(x, y);
+
+  var rayDir = vec3.create();
+  vec3.subtract(rayDir, ptThru, rayOrigin); //rayDir = ptThru - rayOrigin
+  vec3.normalize(rayDir, rayDir);
+
+  var toCenterVec = vec3.create();
+  vec3.scale(toCenterVec, rayOrigin, -1); //toCenter is just -camera pos because center is at [0,0,0]
+  var dParallel = vec3.dot(rayDir, toCenterVec);
+  
+  var longDir = vec3.create();
+  vec3.scale(longDir, rayDir, dParallel); //longDir = rayDir * distParallel
+  vec3.add(ptThru, rayOrigin, longDir); //ptThru is now on the plane going through the center of sphere
+  var dPerp = vec3.len(ptThru);
+  
+  var dSubSurf = Math.sqrt(6371*6371 - dPerp*dPerp);
+  var dSurf = dParallel - dSubSurf;
+  
+  var ptSurf = vec3.create();
+  vec3.scale(ptSurf, rayDir, dSurf);
+  vec3.add(ptSurf, ptSurf, rayOrigin);
+  
+ // console.log('earthscreenpt: ' + (performance.now() - start) + ' ms');
+  
+  return ptSurf;
+}
+
+
+function getCamDist() {
+  return Math.pow(zoomLevel, ZOOM_EXP) * (DIST_MAX - DIST_MIN) + DIST_MIN;
+}
+
 
 var oldT = new Date();
 function drawLoop() {
   var newT = new Date();
   var dt = newT - oldT;
   oldT = newT;
+
+  if(isDragging) {
+    var dragTarget = getEarthScreenPoint(mouseX, mouseY);
+   
+    if(isNaN(dragTarget[0]) || isNaN(dragTarget[1]) || isNaN(dragTarget[2])
+       || isNaN(dragPoint[0]) || isNaN(dragPoint[1]) || isNaN(dragPoint[2])) {
+      camPitchSpeed -= (camPitchSpeed * dt * 0.005);
+      camYawSpeed -= (camYawSpeed * dt * 0.005);
+    } else {
+      var dragPointR = Math.sqrt(dragPoint[0]*dragPoint[0] + dragPoint[1]*dragPoint[1]);
+      var dragTargetR = Math.sqrt(dragTarget[0]*dragTarget[0] + dragTarget[1]*dragTarget[1]);
+      
+      var dragPointLon =  Math.atan2(dragPoint[1], dragPoint[0]);
+      var dragTargetLon = Math.atan2(dragTarget[1], dragTarget[0]);
+      
+      var dragPointLat = Math.atan2(dragPoint[2] , dragPointR);
+      var dragTargetLat = Math.atan2(dragTarget[2] , dragTargetR);
   
- // console.log('th: ' + camYaw + ' x: ' + camX + ' y: ' + camY + ' sy: ' + camSpeedY);
+      var pitchDif = dragPointLat - dragTargetLat;
+      var yawDif = dragPointLon - dragTargetLon;
+      
+      camPitchSpeed = pitchDif * 0.015;
+      camYawSpeed = yawDif * 0.015;
+    }
+ //  console.log('pointLat: ' + dragPointLat *R2D + ' targetLat: ' + dragTargetLat * R2D);
+  // console.log(' pointLon: ' + dragPointLon*R2D + 'targetLon: ' + dragTargetLon*R2D);
+  // console.log('pitchDif: ' + pitchDif * R2D + ' yawDif: ' + yawDif * R2D);
+  } else {
+    camPitchSpeed -= (camPitchSpeed * dt * 0.005);
+    camYawSpeed -= (camYawSpeed * dt * 0.005);
+  }
+  camPitch += camPitchSpeed * dt;
+  camYaw += camYawSpeed * dt;
+  if(camPitch > Math.PI/2) camPitch = Math.PI/2;
+  if(camPitch < -Math.PI/2) camPitch = -Math.PI/2;
+  zoomLevel = zoomLevel + (zoomTarget - zoomLevel)*dt*0.0075;
   drawScene();
-  camX += ((camSpeedX * Math.cos(camYaw)) + (camSpeedY * Math.sin(camYaw))) * dt; //need to rotate somewhere
-  camY += ((camSpeedY * Math.cos(camYaw)) - (camSpeedX * Math.sin(camYaw))) * dt;
-  camZ += camSpeedZ * dt;
-  camPitch += camRotSpeedX * dt;
-  camYaw += camRotSpeedZ * dt;
-  camRoll += camRotSpeedY * dt;
+  updateHover();
   requestAnimationFrame(drawLoop);
 }
+
 
 function drawScene() {
   gl.bindFramebuffer(gl.FRAMEBUFFER, gl.pickFb);
@@ -281,51 +343,13 @@ function drawScene() {
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
  // gl.bindFramebuffer(gl.FRAMEBUFFER, gl.pickFb);
-  var pMatrixUniform = gl.getUniformLocation(gl.shaderProgram, 'pMatrix'); 
-  var camMatrixUniform = gl.getUniformLocation(gl.shaderProgram, 'camMatrix');
  
-  var ambientLightUnif = gl.getUniformLocation(gl.shaderProgram, 'ambientLightColor');
-  var directionalLightUnif = gl.getUniformLocation(gl.shaderProgram, 'directionalLightColor');
-  var lightDirectionUnif = gl.getUniformLocation(gl.shaderProgram, 'lightDirection');
- 
-  
-  var pMatrix = mat4.create();
-  mat4.perspective(pMatrix, 1.01, gl.drawingBufferWidth / gl.drawingBufferHeight, 20.0, 300000.0);
- /* var eciToOpenGlMat = [   OpenGL Matrix memory layout is very dumb
-  1,  0,  0,  0,
-  0,  0,  1,  0,
-  0, -1,  0,  0,
-  0,  0,  0,  1
-  ];*/
-  
-  var eciToOpenGlMat = [
-    1,  0,  0,  0,
-    0,  0, -1,  0,
-    0,  1,  0,  0,
-    0,  0,  0,  1
-  ];
- 
-  mat4.mul(pMatrix, pMatrix, eciToOpenGlMat); //pMat = pMat * ecioglMat 
-  var camMatrix = mat4.create();
+  camMatrix = mat4.create();
   mat4.identity(camMatrix);
+  mat4.translate(camMatrix, camMatrix, [0, getCamDist(), 0]);
   mat4.rotateX(camMatrix, camMatrix, camPitch);
-  mat4.rotateZ(camMatrix, camMatrix, camYaw);
-  mat4.rotateY(camMatrix, camMatrix, camRoll);
-  mat4.translate(camMatrix, camMatrix, [-camX, -camY, -camZ]);
- 
-  var adjustedLightDirection = sun.currentDirection();
- // console.log(sun.currentDirection());
-  vec3.normalize(adjustedLightDirection, adjustedLightDirection); //light direction
- // vec3.scale(adjustedLightDirection, adjustedLightDirection, -1); //light vector according to gl points TOWARDS the light
-
+  mat4.rotateZ(camMatrix, camMatrix, -camYaw);
   
-  gl.useProgram(gl.shaderProgram);
-    gl.uniformMatrix4fv(pMatrixUniform, false, pMatrix);
-    gl.uniformMatrix4fv(camMatrixUniform, false, camMatrix);
-    gl.uniform3fv(lightDirectionUnif, adjustedLightDirection);
-    gl.uniform3fv(ambientLightUnif, [0.03, 0.03, 0.03]); //RGB ambient light
-    gl.uniform3fv(directionalLightUnif, [1, 1, 0.9]); //RGB directional light
-    
   gl.useProgram(gl.pickShaderProgram);
     gl.uniformMatrix4fv(gl.pickShaderProgram.uPMatrix, false, pMatrix);
     gl.uniformMatrix4fv(gl.pickShaderProgram.camMatrix, false,camMatrix);
@@ -334,10 +358,11 @@ function drawScene() {
   gl.clearColor(0.0, 0.0, 0.0, 1.0);
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-  earth.draw();
-
+  debugLine.draw();
+  debugLine2.draw();
+  debugLine3.draw();
+  earth.draw(pMatrix, camMatrix);
   satSet.draw(pMatrix, camMatrix);
-  
   orbitDisplay.draw(pMatrix, camMatrix);
   
   gl.bindFramebuffer(gl.FRAMEBUFFER, gl.pickFb);
@@ -348,22 +373,7 @@ function drawScene() {
  // debugImageData.data = pickColorMap;
  /* debugImageData.data.set(pickColorMap);
   debugContext.putImageData(debugImageData, 0, 0);*/
-  
- updateHover();
 }
-
-/*function getSunAngle() {
-  var now = new Date();   
-  var j = 	jday(now.getUTCFullYear(), 
-               now.getUTCMonth() + 1, // Note, this function requires months in range 1-12. 
-               now.getUTCDate(),
-               now.getUTCHours(), 
-               now.getUTCMinutes(), 
-               now.getUTCSeconds());
-  j += now.getUTCMilliseconds() * 1.15741e-8; //days per millisecond
-  var n = j - 245145.0;
-  var L = 
-}*/
 
 function updateHover() {
   mouseSat = getSatIdFromCoord(mouseX, mouseY);

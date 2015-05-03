@@ -178,5 +178,9 @@ orbitDisplay.draw = function(pMatrix, camMatrix) { //lol what do I do here
   gl.drawArrays(gl.LINE_STRIP, 0, NUM_SEGS + 1);
 };
 
+orbitDisplay.getPathShader = function() {
+  return pathShader;
+}
+
 window.orbitDisplay = orbitDisplay;
 })();

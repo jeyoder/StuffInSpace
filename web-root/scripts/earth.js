@@ -1,3 +1,4 @@
+/* global satellite */
 //earth.js
 (function() {
 var earth = {};
@@ -5,13 +6,15 @@ var earth = {};
 var R2D = 180 / Math.PI;
 var D2R = Math.PI / 180;
 
-var NUM_LAT_SEGS = 32;
-var NUM_LON_SEGS = 32;
+var NUM_LAT_SEGS = 64;
+var NUM_LON_SEGS = 64;
 var pos = [3.0, 0.0, 1.0];
 var radius = 6371.0;
 
 var vertPosBuf, vertNormBuf, texCoordBuf, vertIndexBuf; //GPU mem buffers, data and stuff?
 var vertCount;
+
+var earthShader;
 
 earth.pos = [0, 0, 0];
 
@@ -29,6 +32,34 @@ function onImageLoaded() {
 
 earth.init = function() {
   var startTime = new Date().getTime();	
+ 
+  var fragShader = gl.createShader(gl.FRAGMENT_SHADER);
+  var fragCode = shaderLoader.getShaderCode('earth-fragment.glsl');
+  gl.shaderSource(fragShader, fragCode);
+  gl.compileShader(fragShader);
+  
+  var vertShader = gl.createShader(gl.VERTEX_SHADER);
+  var vertCode = shaderLoader.getShaderCode('earth-vertex.glsl');
+  gl.shaderSource(vertShader, vertCode);
+  gl.compileShader(vertShader);
+  
+  earthShader = gl.createProgram();
+  gl.attachShader(earthShader, vertShader);
+  gl.attachShader(earthShader, fragShader);
+  gl.linkProgram(earthShader);
+  
+  earthShader.aVertexPosition  = gl.getAttribLocation(earthShader, 'aVertexPosition');
+  earthShader.aTexCoord = gl.getAttribLocation(earthShader, 'aTexCoord');
+  earthShader.aVertexNormal = gl.getAttribLocation(earthShader, 'aVertexNormal');
+  earthShader.uPMatrix = gl.getUniformLocation(earthShader, 'uPMatrix');
+  earthShader.uCamMatrix = gl.getUniformLocation(earthShader, 'uCamMatrix');
+  earthShader.uMvMatrix = gl.getUniformLocation(earthShader, 'uMvMatrix');
+  earthShader.uNormalMatrix = gl.getUniformLocation(earthShader, 'uNormalMatrix');
+  earthShader.uLightDirection = gl.getUniformLocation(earthShader, 'uLightDirection');
+  earthShader.uAmbientLightColor = gl.getUniformLocation(earthShader, 'uAmbientLightColor');
+  earthShader.uDirectionalLightColor = gl.getUniformLocation(earthShader, 'uDirectionalLightColor');
+  earthShader.uSampler = gl.getUniformLocation(earthShader, 'uSampler');
+  earthShader.uNightSampler = gl.getUniformLocation(earthShader, 'uNightSampler');
   
   texture = gl.createTexture();
   var img = new Image();
@@ -137,7 +168,7 @@ earth.init = function() {
   console.log('earth init: ' + end + ' ms');
 };
 
-earth.draw = function() {
+earth.draw = function(pMatrix, camMatrix) {
   if(!loaded) return;
   
   var now = new Date();   
@@ -150,39 +181,48 @@ earth.draw = function() {
   j += now.getUTCMilliseconds() * 1.15741e-8; //days per millisecond   
   
   var era = satellite.gstime_from_jday(j);
-//  console.log(era);
   
-  gl.useProgram(gl.shaderProgram);
-  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
- // gl.bindFramebuffer(gl.FRAMEBUFFER, gl.pickFb);
+  var lightDirection = sun.currentDirection();
+  vec3.normalize(lightDirection, lightDirection);
   
   var mvMatrix = mat4.create();
   mat4.identity(mvMatrix);
   mat4.rotateZ(mvMatrix, mvMatrix, era);
   mat4.translate(mvMatrix, mvMatrix, earth.pos);
-  gl.setMvMatrix(mvMatrix);
+  var nMatrix = mat3.create();
+  mat3.normalFromMat4(nMatrix, mvMatrix);
   
-  var samplerUniform = gl.getUniformLocation(gl.shaderProgram, 'sampler');
-  gl.uniform1i(samplerUniform, 0); 
+  gl.useProgram(earthShader);
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  
+  gl.uniformMatrix3fv(earthShader.uNormalMatrix, false, nMatrix);
+  gl.uniformMatrix4fv(earthShader.uMvMatrix, false, mvMatrix);
+  gl.uniformMatrix4fv(earthShader.uPMatrix, false, pMatrix);
+  gl.uniformMatrix4fv(earthShader.uCamMatrix, false, camMatrix);
+  gl.uniform3fv(earthShader.uLightDirection, lightDirection);
+  gl.uniform3fv(earthShader.uAmbientLightColor, [0.03, 0.03, 0.03]); //RGB ambient light
+  gl.uniform3fv(earthShader.uDirectionalLightColor, [1, 1, 0.9]); //RGB directional light
+  
+  gl.uniform1i(earthShader.uSampler, 0); //point sampler to TEXTURE0
   gl.activeTexture(gl.TEXTURE0);
-  gl.bindTexture(gl.TEXTURE_2D, texture);
+  gl.bindTexture(gl.TEXTURE_2D, texture); //bind texture to TEXTURE0
   
-  var nightSamplerUniform = gl.getUniformLocation(gl.shaderProgram, 'nightSampler');
-  gl.uniform1i(nightSamplerUniform, 1); 
+  gl.uniform1i(earthShader.uNightSampler, 1);  //point sampler to TEXTURE1
   gl.activeTexture(gl.TEXTURE1);
-  gl.bindTexture(gl.TEXTURE_2D, nightTexture);
+  gl.bindTexture(gl.TEXTURE_2D, nightTexture); //bind tex to TEXTURE1
   
-  gl.enableVertexAttribArray(gl.texCoordAttrib);
   gl.bindBuffer(gl.ARRAY_BUFFER, texCoordBuf);
-  gl.vertexAttribPointer(gl.texCoordAttrib, 2, gl.FLOAT, false, 0, 0);
+  gl.enableVertexAttribArray(earthShader.aTexCoord);
+  gl.vertexAttribPointer(earthShader.aTexCoord, 2, gl.FLOAT, false, 0, 0);
   
-  gl.enableVertexAttribArray(gl.vertexPositionAttrib);
   gl.bindBuffer(gl.ARRAY_BUFFER, vertPosBuf);
-  gl.vertexAttribPointer(gl.vertexPositionAttrib, 3, gl.FLOAT, false, 0, 0);
+  gl.enableVertexAttribArray(earthShader.aVertexPosition);
+  gl.vertexAttribPointer(earthShader.aVertexPosition, 3, gl.FLOAT, false, 0, 0);
   gl.vertexAttribPointer(gl.pickShaderProgram.aPos, 3, gl.FLOAT, false, 0, 0);
   
   gl.bindBuffer(gl.ARRAY_BUFFER, vertNormBuf);
-  gl.vertexAttribPointer(gl.vertexNormalAttrib, 3, gl.FLOAT, false, 0, 0);
+   gl.enableVertexAttribArray(earthShader.aVertexNormal);
+  gl.vertexAttribPointer(earthShader.aVertexNormal, 3, gl.FLOAT, false, 0, 0);
   
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, vertIndexBuf);
   gl.drawElements(gl.TRIANGLES, vertCount, gl.UNSIGNED_SHORT, 0);
@@ -195,8 +235,6 @@ earth.draw = function() {
   gl.enableVertexAttribArray(gl.pickShaderProgram.aPos);
   gl.drawElements(gl.TRIANGLES, vertCount, gl.UNSIGNED_SHORT, 0);
       
-//gl.drawElements(gl.TRIANGLES, 64, gl.UNSIGNED_SHORT, 0);
-
 }
 
 function jday(year, mon, day, hr, minute, sec){ //from satellite.js

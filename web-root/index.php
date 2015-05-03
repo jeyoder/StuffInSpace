@@ -4,6 +4,8 @@
 <!doctype html>
 <html>
   <head>
+    <link href='http://fonts.googleapis.com/css?family=Droid+Sans' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="/icomoon.css">
     <link rel="stylesheet" href="/style.css">
     <script src="http://code.jquery.com/jquery-2.1.3.min.js"></script>
     <script src="/script-loader.php"></script>
@@ -11,10 +13,14 @@
   </head>
   <body>
 
-  <div id="search-results"></div>
+ 
   <div id="canvas-holder">
     <canvas id="canvas"></canvas>
-    <input type="text" id="search"></input>
+    <div id="search-holder">
+      <span class="icon-search"></span>
+      <input type="text" id="search"></input>
+    </div>
+    <div id="search-results"></div>
     <div id="sat-hoverbox">(none)</div>
     <div id="sat-infobox">
       <div id="sat-info-title">WAFFLESAT-5 R/B</div>

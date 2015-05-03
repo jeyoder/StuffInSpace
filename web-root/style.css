@@ -1,5 +1,6 @@
 body {
-  font-family: sans-serif;
+  font-family: 'Droid Sans', sans-serif;
+  color: white;
 }
 
 #canvas {
@@ -68,6 +69,7 @@ body {
   padding: 10px;
   border-radius: 5px;
   border: 1px solid rgba(255, 255, 255, 0.2);
+  pointer-events: none;
 }
 
 #sat-infobox {
@@ -108,7 +110,7 @@ body {
 }
 
 #search-results {
-  display: block;
+  display: none;
   position: absolute;
   width: 300px;
   background: black;
@@ -116,8 +118,7 @@ body {
   border-radius: 5px;
   border: 1px solid rgba(255, 255, 255, 0.2);
   z-index: 10;
-  top: 20px;
-  visibility: hidden;
+  top: 30px;
 }
 
 .search-hilight {
@@ -145,7 +146,17 @@ body {
 }
 
 #search {
+  background: rgba(0, 0, 0, 0);
+  border: none;
+  border-bottom: 1px solid white;
+  color: white;
+  font-family: 'Droid Sans', sans-serif;
+  font-size: 16px;
+  outline: none;
+}
+
+#search-holder {
   position: absolute;
-  top: 0;
-  left: 0;
+  top: 2px;
+  left: 5px;
 }

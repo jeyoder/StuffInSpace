@@ -12,6 +12,7 @@ $scriptFiles = [
 'shader-loader.js',
 'search-box.js',
 'orbit-display.js',
+'line.js',
 'earth.js',
 'sun.js',
 'sat.js',
