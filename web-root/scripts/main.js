@@ -84,6 +84,7 @@ $(document).ready(function() {
   debugLine2 = new Line();
   debugLine3 = new Line();
   earth.init();
+  ColorScheme.init();
   satSet.init();
   orbitDisplay.init();
 
@@ -168,7 +169,8 @@ function selectSat(satId) {
     $('#sat-intl-des').html(sat.intlDes);
     $('#sat-type').html(sat.OBJECT_TYPE);
     $('#sat-apogee').html(sat.apogee.toFixed(0) + ' km');
-    $('#sat-perigee').html(sat.perigee.toFixed(0) + ' km');   
+    $('#sat-perigee').html(sat.perigee.toFixed(0) + ' km');
+    $('#sat-inclination').html((sat.inclination * R2D).toFixed(2));  
   }
 }
 

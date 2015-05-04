@@ -1,3 +1,4 @@
+/* global ColorScheme */
 /* global $ */
 (function() {
   var satSet = {};
@@ -10,6 +11,8 @@
   var satPosBuf;
   var satColorBuf;
   var pickColorBuf;
+  
+  var currentColorScheme;
   
   var shadersReady = false;
   
@@ -136,17 +139,9 @@
       gl.bindBuffer(gl.ARRAY_BUFFER, pickColorBuf);
       gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(pickColorData), gl.STATIC_DRAW);
       
-      var satColorData = [];
-      for(var i = 0; i < satData.length; i++) {
-        satColorData.push(defaultColor[0]);
-        satColorData.push(defaultColor[1]);
-        satColorData.push(defaultColor[2]);
-      }
-      satColorBuf = gl.createBuffer();
-      gl.bindBuffer(gl.ARRAY_BUFFER, satColorBuf);
-      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(satColorData), gl.STATIC_DRAW);
-      
       satSet.numSats = satData.length;
+      
+      satSet.setColorScheme(ColorScheme.default);
       
       var end = new Date().getTime();
       console.log('sat.js init: ' + (end - startTime) + ' ms');
@@ -162,7 +157,11 @@
     });
   };
 
-  
+satSet.setColorScheme = function(scheme) {
+  currentColorScheme = scheme;
+  satColorBuf = scheme.calculateColorBuffer();
+} 
+ 
 satSet.draw = function(pMatrix, camMatrix) {
   if(!shadersReady || !cruncherReady) return;
   
@@ -220,17 +219,19 @@ satSet.draw = function(pMatrix, camMatrix) {
   satSet.getSat = function(i) {
     if(!satData) return null;
     var ret = satData[i]
-    ret.altitude = satAlt[i];
-    ret.velocity = Math.sqrt(
-      satVel[i*3] * satVel[i*3] +
-      satVel[i*3+1] * satVel[i*3+1] +
-      satVel[i*3+2] * satVel[i*3+2]
-    );
-    ret.position = {
-      x : satPos[i*3],
-      y : satPos[i*3+1],
-      z : satPos[i*3+2]
-    };
+    if(gotExtraData) {
+      ret.altitude = satAlt[i];
+      ret.velocity = Math.sqrt(
+        satVel[i*3] * satVel[i*3] +
+        satVel[i*3+1] * satVel[i*3+1] +
+        satVel[i*3+2] * satVel[i*3+2]
+      );
+      ret.position = {
+        x : satPos[i*3],
+        y : satPos[i*3+1],
+        z : satPos[i*3+2]
+      };
+    }
     return ret;
   };
   
@@ -239,7 +240,7 @@ satSet.draw = function(pMatrix, camMatrix) {
     if (i === hoveringSat) return;
     gl.bindBuffer(gl.ARRAY_BUFFER, satColorBuf);
     if(hoveringSat != -1 && hoveringSat != selectedSat) {
-      gl.bufferSubData(gl.ARRAY_BUFFER, hoveringSat * 3 * 4, new Float32Array(defaultColor));
+      gl.bufferSubData(gl.ARRAY_BUFFER, hoveringSat * 3 * 4, new Float32Array(currentColorScheme.colorizer(hoveringSat)));
     }
     if(i != -1) {
       gl.bufferSubData(gl.ARRAY_BUFFER, i * 3 * 4, new Float32Array(hoverColor));
@@ -251,7 +252,7 @@ satSet.draw = function(pMatrix, camMatrix) {
     if(i === selectedSat) return;
     gl.bindBuffer(gl.ARRAY_BUFFER, satColorBuf);
     if(selectedSat != -1) {
-      gl.bufferSubData(gl.ARRAY_BUFFER, selectedSat * 3 * 4, new Float32Array(defaultColor));
+      gl.bufferSubData(gl.ARRAY_BUFFER, selectedSat * 3 * 4, new Float32Array(currentColorScheme.colorizer(selectedSat)));
     }
     if(i != -1) {
       gl.bufferSubData(gl.ARRAY_BUFFER, i * 3 * 4, new Float32Array(selectedColor));

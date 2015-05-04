@@ -87,7 +87,7 @@ body {
   margin-bottom: auto;
   height: 300px;
   width: 200px;
-  
+  display: none;
 }
 
 #sat-info-title{

@@ -1,5 +1,5 @@
 <?php
-// why is this a php file? lolidk
+header('Content-Type: text/html; charset=utf-8');
 ?>
 <!doctype html>
 <html>
@@ -39,6 +39,10 @@
       <div class="sat-info-row">
         <div class="sat-info-key">Perigee</div>
         <div class="sat-info-value" id="sat-perigee">100 km</div>
+      </div>
+       <div class="sat-info-row">
+        <div class="sat-info-key">Inclination</div>
+        <div class="sat-info-value" id="sat-inclination">123.45</div>°
       </div>
       <div class="sat-info-row">
         <div class="sat-info-key">Altitude</div>
