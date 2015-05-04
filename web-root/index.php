@@ -33,8 +33,20 @@
         <div class="sat-info-value" id="sat-type">PAYLOAD</div>
       </div>
       <div class="sat-info-row">
-        <div class="sat-info-key">Launch Site</div>
-        <div class="sat-info-value">??</div>
+        <div class="sat-info-key">Apogee</div>
+        <div class="sat-info-value" id="sat-apogee">100 km</div>
+      </div>
+      <div class="sat-info-row">
+        <div class="sat-info-key">Perigee</div>
+        <div class="sat-info-value" id="sat-perigee">100 km</div>
+      </div>
+      <div class="sat-info-row">
+        <div class="sat-info-key">Altitude</div>
+        <div class="sat-info-value" id="sat-altitude">100</div> km
+      </div>
+      <div class="sat-info-row">
+        <div class="sat-info-key">Velocity</div>
+        <div class="sat-info-value" id="sat-velocity">100</div> km/s
       </div>
     </div>
     <div id="load-cover">

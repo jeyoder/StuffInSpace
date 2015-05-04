@@ -92,7 +92,8 @@ body {
 
 #sat-info-title{
   text-align: center;
-  margin-bottom: 10px;
+  margin-bottom: 5px;
+  font-size: 18px;
 }
 
 .sat-info-row {

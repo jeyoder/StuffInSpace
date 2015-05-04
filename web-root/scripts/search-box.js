@@ -20,8 +20,7 @@
     });
     
     $('#search').on('input', function() {
-        var start = performance.now();
-
+        var initStart = performance.now();
         var searchStr = $('#search').val().toUpperCase();
         var results = [];
         var resultBox = $('#search-results');
@@ -31,6 +30,8 @@
           return;
         }
         resultBox.slideDown();
+        var searchStart = performance.now();
+    
         
         for(var i=0; i < satData.length; i++) {
           if(satData[i].OBJECT_NAME.indexOf(searchStr) !== -1) {
@@ -41,6 +42,7 @@
             if(results.length > SEARCH_LIMIT) break;
           }
         }
+        var resultStart = performance.now();
         
         var html = '';
         for(var i=0; i < results.length; i++) {
@@ -56,7 +58,8 @@
         }
         resultBox.append(html);
         
-        console.log('search: ' + (performance.now() - start) + ' ms');
+        var now = performance.now();
+        console.log('searchInit: ' + (searchStart - initStart) + ' ms Search: ' + (resultStart - searchStart) + ' ms Results: ' + (now - resultStart) + ' ms');
     });
   };
   

@@ -15,6 +15,7 @@
   
   var satPos;
   var satVel;
+  var satAlt;
   var satData;
   
   var hoveringSat = -1;
@@ -68,7 +69,7 @@
     cruncherReady = true;
     satPos = new Float32Array(m.data.satPos);
     satVel = new Float32Array(m.data.satVel);
-    
+    satAlt = new Float32Array(m.data.satAlt);
   };
   
   satSet.init = function(satsReadyCallback) {
@@ -161,7 +162,6 @@
     });
   };
 
-
   
 satSet.draw = function(pMatrix, camMatrix) {
   if(!shadersReady || !cruncherReady) return;
@@ -219,8 +219,21 @@ satSet.draw = function(pMatrix, camMatrix) {
   
   satSet.getSat = function(i) {
     if(!satData) return null;
-    return satData[i];
+    var ret = satData[i]
+    ret.altitude = satAlt[i];
+    ret.velocity = Math.sqrt(
+      satVel[i*3] * satVel[i*3] +
+      satVel[i*3+1] * satVel[i*3+1] +
+      satVel[i*3+2] * satVel[i*3+2]
+    );
+    ret.position = {
+      x : satPos[i*3],
+      y : satPos[i*3+1],
+      z : satPos[i*3+2]
+    };
+    return ret;
   };
+  
   
   satSet.setHover = function(i) {
     if (i === hoveringSat) return;

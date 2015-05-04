@@ -1,3 +1,6 @@
+/* global satSet */
+/* global $ */
+/* global shaderLoader */
 /* global Line */
 /* global vec4 */
 /* global mat4 */
@@ -16,6 +19,10 @@ var R2D = 180 / Math.PI;
 var camYaw = 0;
 var camPitch = 0;
 
+var camYawTarget = 0;
+var camPitchTarget = 0;
+var camSnapMode = false;
+
 var camDistTarget = 10000;
 var zoomLevel = 0.3;
 var zoomTarget = 0.3;
@@ -27,9 +34,11 @@ var camPitchSpeed = 0;
 var camYawSpeed = 0;
 
 var pickFb, pickTex;
-var pickColorMap;
+var pickColorBuf;
 
-var pMatrix, camMatrix;
+var pMatrix = mat4.create(), camMatrix = mat4.create();
+
+var selectedSat = -1;
 
 var mouseX = 0, mouseY = 0, mouseSat = -1;
 var isDragging = false;
@@ -122,6 +131,7 @@ $(document).ready(function() {
         dragStartYaw = camYaw;
      //   debugLine.set(dragPoint, getCamPos());
         isDragging = true;
+        camSnapMode = false;
       }
     });
     
@@ -143,11 +153,13 @@ function resizeCanvas() {
 }
 
 function selectSat(satId) {
+  selectedSat = satId;
   if(satId === -1) {
     $('#sat-infobox').fadeOut();
      orbitDisplay.clearSelectOrbit();
   } else {
     satSet.selectSat(satId);
+    camSnapToSat(satId);
     var sat = satSet.getSat(satId);
     if(!sat) return;
     orbitDisplay.setSelectOrbit(satId);
@@ -155,7 +167,8 @@ function selectSat(satId) {
     $('#sat-info-title').html(sat.OBJECT_NAME);
     $('#sat-intl-des').html(sat.intlDes);
     $('#sat-type').html(sat.OBJECT_TYPE);
-       
+    $('#sat-apogee').html(sat.apogee.toFixed(0) + ' km');
+    $('#sat-perigee').html(sat.perigee.toFixed(0) + ' km');   
   }
 }
 
@@ -213,7 +226,7 @@ function webGlInit(can) {
   
   gl.pickFb = pickFb;
   
-  pickColorMap = new Uint8Array(gl.drawingBufferWidth * gl.drawingBufferHeight * 4);
+  pickColorBuf = new Uint8Array(4);
   
   pMatrix = mat4.create();
   mat4.perspective(pMatrix, 1.01, gl.drawingBufferWidth / gl.drawingBufferHeight, 20.0, 300000.0);
@@ -288,50 +301,71 @@ function getCamDist() {
   return Math.pow(zoomLevel, ZOOM_EXP) * (DIST_MAX - DIST_MIN) + DIST_MIN;
 }
 
+function camSnapToSat(satId) {
+  var sat = satSet.getSat(satId);
+  var pos = sat.position;
+  var r = Math.sqrt(pos.x * pos.x + pos.y * pos.y);
+  var yaw = Math.atan2(pos.y, pos.x) + Math.PI/2;
+  var pitch = Math.atan2(pos.z, r);
+  camSnap(pitch, yaw);
+  
+  var camDistTarget = sat.altitude + 6371 + 2000;
+  zoomTarget = Math.pow((camDistTarget - DIST_MIN) / (DIST_MAX - DIST_MIN), 1/ZOOM_EXP);
+}
+
+function camSnap(pitch, yaw) {
+  camPitchTarget = pitch;
+  camYawTarget = yaw;
+  camSnapMode = true;
+}
+
 
 var oldT = new Date();
 function drawLoop() {
   var newT = new Date();
   var dt = newT - oldT;
   oldT = newT;
-
-  if(isDragging) {
-    var dragTarget = getEarthScreenPoint(mouseX, mouseY);
-   
-    if(isNaN(dragTarget[0]) || isNaN(dragTarget[1]) || isNaN(dragTarget[2])
-       || isNaN(dragPoint[0]) || isNaN(dragPoint[1]) || isNaN(dragPoint[2])) {
-      camPitchSpeed -= (camPitchSpeed * dt * 0.005);
-      camYawSpeed -= (camYawSpeed * dt * 0.005);
-    } else {
-      var dragPointR = Math.sqrt(dragPoint[0]*dragPoint[0] + dragPoint[1]*dragPoint[1]);
-      var dragTargetR = Math.sqrt(dragTarget[0]*dragTarget[0] + dragTarget[1]*dragTarget[1]);
-      
-      var dragPointLon =  Math.atan2(dragPoint[1], dragPoint[0]);
-      var dragTargetLon = Math.atan2(dragTarget[1], dragTarget[0]);
-      
-      var dragPointLat = Math.atan2(dragPoint[2] , dragPointR);
-      var dragTargetLat = Math.atan2(dragTarget[2] , dragTargetR);
+  var dragTarget = getEarthScreenPoint(mouseX, mouseY);
+  if(isDragging && 
+      !(isNaN(dragTarget[0]) || isNaN(dragTarget[1]) || isNaN(dragTarget[2])
+       || isNaN(dragPoint[0]) || isNaN(dragPoint[1]) || isNaN(dragPoint[2]))) { 
+         
+    var dragPointR = Math.sqrt(dragPoint[0]*dragPoint[0] + dragPoint[1]*dragPoint[1]);
+    var dragTargetR = Math.sqrt(dragTarget[0]*dragTarget[0] + dragTarget[1]*dragTarget[1]);
+    
+    var dragPointLon =  Math.atan2(dragPoint[1], dragPoint[0]);
+    var dragTargetLon = Math.atan2(dragTarget[1], dragTarget[0]);
+    
+    var dragPointLat = Math.atan2(dragPoint[2] , dragPointR);
+    var dragTargetLat = Math.atan2(dragTarget[2] , dragTargetR);
   
-      var pitchDif = dragPointLat - dragTargetLat;
-      var yawDif = dragPointLon - dragTargetLon;
-      
-      camPitchSpeed = pitchDif * 0.015;
-      camYawSpeed = yawDif * 0.015;
-    }
- //  console.log('pointLat: ' + dragPointLat *R2D + ' targetLat: ' + dragTargetLat * R2D);
-  // console.log(' pointLon: ' + dragPointLon*R2D + 'targetLon: ' + dragTargetLon*R2D);
-  // console.log('pitchDif: ' + pitchDif * R2D + ' yawDif: ' + yawDif * R2D);
+    var pitchDif = dragPointLat - dragTargetLat;
+    var yawDif = dragPointLon - dragTargetLon;
+    
+    camPitchSpeed = pitchDif * 0.015;
+    camYawSpeed = yawDif * 0.015;
   } else {
     camPitchSpeed -= (camPitchSpeed * dt * 0.005);
     camYawSpeed -= (camYawSpeed * dt * 0.005);
   }
   camPitch += camPitchSpeed * dt;
   camYaw += camYawSpeed * dt;
+  if(camSnapMode) {
+    camPitch += (camPitchTarget - camPitch) * 0.003 * dt;
+    camYaw += (camYawTarget - camYaw) * 0.003 * dt;
+    if(Math.abs(camPitchTarget - camPitch) < 0.002 && Math.abs(camYawTarget - camYaw) < 0.002) {
+      camSnapMode = false;
+    }
+     zoomLevel = zoomLevel + (zoomTarget - zoomLevel)*dt*0.0025;
+  } else {
+     zoomLevel = zoomLevel + (zoomTarget - zoomLevel)*dt*0.0075;
+  }
   if(camPitch > Math.PI/2) camPitch = Math.PI/2;
   if(camPitch < -Math.PI/2) camPitch = -Math.PI/2;
-  zoomLevel = zoomLevel + (zoomTarget - zoomLevel)*dt*0.0075;
+ 
   drawScene();
   updateHover();
+  updateSelectBox();
   requestAnimationFrame(drawLoop);
 }
 
@@ -365,14 +399,17 @@ function drawScene() {
   satSet.draw(pMatrix, camMatrix);
   orbitDisplay.draw(pMatrix, camMatrix);
   
-  gl.bindFramebuffer(gl.FRAMEBUFFER, gl.pickFb);
-  
-  gl.readPixels(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight, gl.RGBA, gl.UNSIGNED_BYTE, pickColorMap);
-  
   /* DEBUG - show the pickbuffer on a canvas */
  // debugImageData.data = pickColorMap;
  /* debugImageData.data.set(pickColorMap);
   debugContext.putImageData(debugImageData, 0, 0);*/
+}
+
+function updateSelectBox() {
+  if(selectedSat === -1) return;
+  var satData = satSet.getSat(selectedSat);
+  $('#sat-altitude').html(satData.altitude.toFixed(2));
+  $('#sat-velocity').html(satData.velocity.toFixed(2));
 }
 
 function updateHover() {
@@ -402,10 +439,16 @@ function updateHover() {
 }
 
 function getSatIdFromCoord(x, y) {
-  var pixelAddress = ((gl.drawingBufferHeight - 1 - y) * gl.drawingBufferWidth + x) * 4;
-  var pickR = pickColorMap[pixelAddress];
-  var pickG = pickColorMap[pixelAddress+1];
-  var pickB = pickColorMap[pixelAddress+2];
+ // var start = performance.now();
+
+  gl.bindFramebuffer(gl.FRAMEBUFFER, gl.pickFb);
+  gl.readPixels(x, gl.drawingBufferHeight - y, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pickColorBuf);
+  
+  var pickR = pickColorBuf[0];
+  var pickG = pickColorBuf[1];
+  var pickB = pickColorBuf[2];
+  
+ // console.log('picking op: ' + (performance.now() - start) + ' ms');
   return((pickB << 16) | (pickG << 8) | (pickR)) - 1;
 }
 

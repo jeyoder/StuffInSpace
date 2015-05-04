@@ -2,7 +2,7 @@
 importScripts('/scripts/satellite.js');
 
 var satCache = [];
-var satPos, satVel;
+var satPos, satVel, satAlt;
 
 
 onmessage = function(m) {
@@ -35,6 +35,7 @@ onmessage = function(m) {
   
   satPos = new Float32Array(len * 3);
   satVel = new Float32Array(len * 3);
+  satAlt = new Float32Array(len);
   
   postMessage(extraData);
   console.log('sat-cruncher init: ' + (Date.now() - start) + ' ms');
@@ -52,6 +53,7 @@ function propagate() {
                now.getUTCMinutes(), 
                now.getUTCSeconds());
   j += now.getUTCMilliseconds() * 1.15741e-8; //days per millisecond     
+  var gmst = satellite.gstime_from_jday(j);
   
   for(var i=0; i < satCache.length; i++) {
     var m = (j - satCache[i].jdsatepoch) * 1440.0; //1440 = minutes_per_day
@@ -63,6 +65,7 @@ function propagate() {
       var vx = pv.velocity.x;
       var vy = pv.velocity.y;
       var vz = pv.velocity.z;
+      var alt = satellite.eci_to_geodetic(pv.position, gmst).height;
     } catch(e) {
       var x = 0;
       var y = 0;
@@ -70,6 +73,7 @@ function propagate() {
       var vx = 0;
       var vy = 0;
       var vz = 0;
+      var alt = 0;
     }
   //    console.log('x: ' + x + ' y: ' + y + ' z: ' + z);
     satPos[i*3] = x;
@@ -79,12 +83,14 @@ function propagate() {
     satVel[i*3] = vx;
     satVel[i*3+1] = vy;
     satVel[i*3+2] = vz;
+    
+    satAlt[i] = alt;
   }
  
-  postMessage({satPos: satPos.buffer, satVel: satVel.buffer}, [satPos.buffer, satVel.buffer]);
+  postMessage({satPos: satPos.buffer, satVel: satVel.buffer, satAlt: satAlt.buffer}, [satPos.buffer, satVel.buffer, satAlt.buffer]);
   satPos = new Float32Array(satCache.length * 3);
   satVel = new Float32Array(satCache.length * 3);
-  
+  satAlt = new Float32Array(satCache.length);
  // console.log('sat-cruncher propagate: ' + (performance.now() - start) + ' ms');
   
   setTimeout(propagate, 1000);
