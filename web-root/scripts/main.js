@@ -317,8 +317,14 @@ function camSnapToSat(satId) {
 
 function camSnap(pitch, yaw) {
   camPitchTarget = pitch;
-  camYawTarget = yaw;
+  camYawTarget = normalizeAngle(yaw);
   camSnapMode = true;
+}
+
+function normalizeAngle(angle) {
+  angle %= Math.PI * 2;
+  if(angle > Math.PI) angle -= Math.PI*2;
+  return angle;
 }
 
 
@@ -342,7 +348,7 @@ function drawLoop() {
     var dragTargetLat = Math.atan2(dragTarget[2] , dragTargetR);
   
     var pitchDif = dragPointLat - dragTargetLat;
-    var yawDif = dragPointLon - dragTargetLon;
+    var yawDif = normalizeAngle(dragPointLon - dragTargetLon);
     
     camPitchSpeed = pitchDif * 0.015;
     camYawSpeed = yawDif * 0.015;
@@ -350,21 +356,29 @@ function drawLoop() {
     camPitchSpeed -= (camPitchSpeed * dt * 0.005);
     camYawSpeed -= (camYawSpeed * dt * 0.005);
   }
+  
   camPitch += camPitchSpeed * dt;
   camYaw += camYawSpeed * dt;
-  if(camSnapMode) {
+  
+  if(camSnapMode) { 
     camPitch += (camPitchTarget - camPitch) * 0.003 * dt;
-    camYaw += (camYawTarget - camYaw) * 0.003 * dt;
-    if(Math.abs(camPitchTarget - camPitch) < 0.002 && Math.abs(camYawTarget - camYaw) < 0.002) {
+    
+    var yawErr = normalizeAngle(camYawTarget - camYaw);
+    camYaw += yawErr * 0.003 * dt;
+    
+    if(Math.abs(camPitchTarget - camPitch) < 0.002 && Math.abs(camYawTarget - camYaw) < 0.002 && Math.abs(zoomTarget - zoomLevel) < 0.002) {
       camSnapMode = false;
     }
      zoomLevel = zoomLevel + (zoomTarget - zoomLevel)*dt*0.0025;
   } else {
      zoomLevel = zoomLevel + (zoomTarget - zoomLevel)*dt*0.0075;
   }
+  
   if(camPitch > Math.PI/2) camPitch = Math.PI/2;
   if(camPitch < -Math.PI/2) camPitch = -Math.PI/2;
- 
+ // camYaw = (camYaw % (Math.PI*2));
+ camYaw = normalizeAngle(camYaw);
+// console.log(camYaw * R2D);
   drawScene();
   updateHover();
   updateSelectBox();

@@ -93,7 +93,7 @@ function propagate() {
   satAlt = new Float32Array(satCache.length);
  // console.log('sat-cruncher propagate: ' + (performance.now() - start) + ' ms');
   
-  setTimeout(propagate, 1000);
+  setTimeout(propagate, 500);
 }
 
 function jday(year, mon, day, hr, minute, sec){ //from satellite.js

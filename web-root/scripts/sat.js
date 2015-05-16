@@ -64,15 +64,17 @@
       gotExtraData = true;
       return;
       
-    }
-    
-    if(!cruncherReady) {
-      $('#load-cover').fadeOut();
-    }
-    cruncherReady = true;
+    } 
     satPos = new Float32Array(m.data.satPos);
     satVel = new Float32Array(m.data.satVel);
     satAlt = new Float32Array(m.data.satAlt);
+       
+    if(!cruncherReady) {
+      $('#load-cover').fadeOut();
+      satColorBuf = currentColorScheme.calculateColorBuffer();
+       cruncherReady = true;
+    }
+    
   };
   
   satSet.init = function(satsReadyCallback) {
@@ -142,7 +144,8 @@
       satSet.numSats = satData.length;
       
       satSet.setColorScheme(ColorScheme.default);
-      
+     // satSet.setColorScheme(ColorScheme.apogee);
+   //  satSet.setColorScheme(ColorScheme.velocity);
       var end = new Date().getTime();
       console.log('sat.js init: ' + (end - startTime) + ' ms');
       if(satDataCallback) {

@@ -26,11 +26,24 @@
 				return [1.0, 0.2, 0.0];
 			} else if (sat.OBJECT_TYPE === 'ROCKET BODY'){
 				return [0.2, 0.5, 1.0];
+			//	return [0.6, 0.6, 0.6];
 			} else if (sat.OBJECT_TYPE === 'DEBRIS') {
 				return [0.5, 0.5, 0.5];
 			} else {
 				return [1.0, 1.0, 0.0];
 			}
+		});
+		
+		ColorScheme.apogee = new ColorScheme(function(satId) {
+			var ap = satSet.getSat(satId).apogee;
+			var gradientAmt = Math.min(ap / 45000, 1.0);
+			return[1.0 - gradientAmt, gradientAmt, 0.0];
+		});
+		
+		ColorScheme.velocity = new ColorScheme(function(satId) {
+			var vel = satSet.getSat(satId).velocity;
+			var gradientAmt = Math.min(vel / 15, 1.0);
+			return[1.0 - gradientAmt, gradientAmt, 0.0];
 		});
 	};
 	
