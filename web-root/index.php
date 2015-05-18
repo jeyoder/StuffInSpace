@@ -9,7 +9,7 @@ header('Content-Type: text/html; charset=utf-8');
     <link rel="stylesheet" href="/style.css">
     <script src="http://code.jquery.com/jquery-2.1.3.min.js"></script>
     <script src="/script-loader.php"></script>
-    <title>Things in Space</title>
+    <title>Stuff in Space</title>
   </head>
   <body>
 
@@ -51,6 +51,10 @@ header('Content-Type: text/html; charset=utf-8');
       <div class="sat-info-row">
         <div class="sat-info-key">Velocity</div>
         <div class="sat-info-value" id="sat-velocity">100</div> km/s
+      </div>
+      <div class="sat-info-row">
+        <div class="sat-info-key">Period</div>
+        <div class="sat-info-value" id="sat-period">100</div> min
       </div>
     </div>
     <div id="load-cover">

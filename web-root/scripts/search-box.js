@@ -51,7 +51,7 @@
             });
           }
           
-     //     if(results.length > SEARCH_LIMIT) break;
+         if(results.length > SEARCH_LIMIT) break;
         }
         var resultStart = performance.now();
         

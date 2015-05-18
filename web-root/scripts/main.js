@@ -171,6 +171,7 @@ function selectSat(satId) {
     $('#sat-apogee').html(sat.apogee.toFixed(0) + ' km');
     $('#sat-perigee').html(sat.perigee.toFixed(0) + ' km');
     $('#sat-inclination').html((sat.inclination * R2D).toFixed(2));  
+    $('#sat-period').html(sat.period.toFixed(2));
   }
 }
 
