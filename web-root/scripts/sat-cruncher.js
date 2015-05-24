@@ -1,5 +1,5 @@
 /* global satellite */
-importScripts('/scripts/satellite.js');
+importScripts('/scripts/satellite.min.js');
 
 var satCache = [];
 var satPos, satVel, satAlt;

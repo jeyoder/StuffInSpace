@@ -6,7 +6,7 @@ $scriptFiles = [
 //libraries
 'gl-matrix-min.js',
 'spin.min.js',
-'satellite.js',
+//'satellite.js',
 
 //our script files
 'shader-loader.js',

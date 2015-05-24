@@ -8,6 +8,7 @@ header('Content-Type: text/html; charset=utf-8');
     <link rel="stylesheet" href="/icomoon.css">
     <link rel="stylesheet" href="/style.css">
     <script src="http://code.jquery.com/jquery-2.1.3.min.js"></script>
+    <script src="/scripts/satellite.min.js"></script>
     <script src="/script-loader.php"></script>
     <title>Stuff in Space</title>
   </head>
