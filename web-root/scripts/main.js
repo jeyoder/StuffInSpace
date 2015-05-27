@@ -1,3 +1,5 @@
+/* global groups */
+/* global ColorScheme */
 /* global satSet */
 /* global $ */
 /* global shaderLoader */
@@ -85,7 +87,10 @@ $(document).ready(function() {
   debugLine3 = new Line();
   earth.init();
   ColorScheme.init();
-  satSet.init();
+  satSet.init(function(satData) {
+    groups.init();
+    searchBox.init(satData);
+  });
   orbitDisplay.init();
 
    /* var rotSpeed = 0.001;

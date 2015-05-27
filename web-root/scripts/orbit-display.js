@@ -14,6 +14,7 @@ var hoverOrbitBuf;
 
 var selectColor = [0.0, 1.0, 0.0, 1.0];
 var hoverColor =  [0.5, 0.5, 1.0, 1.0];
+var groupColor = [0.3, 0.5, 1.0, 0.4];
 
 var currentHoverId = -1;
 var currentSelectId = -1;
@@ -78,7 +79,7 @@ function calcOrbitPoints(satId) {
   var nowDate = new Date();
   var nowJ = jday(nowDate.getUTCFullYear(), 
                nowDate.getUTCMonth() + 1, 
-               nowDate.getUTCDate(),
+               nowDate.getUTCDate(), 
                nowDate.getUTCHours(), 
                nowDate.getUTCMinutes(), 
                nowDate.getUTCSeconds());
@@ -90,13 +91,25 @@ function calcOrbitPoints(satId) {
   for(var i=0; i<NUM_SEGS+1; i++) {
     var t = now + i*timeslice;
     var p = satellite.sgp4(satrec, t).position;
-    pointsOut[i*3] = p.x;
-    pointsOut[i*3+1] = p.y;
-    pointsOut[i*3+2] = p.z;
+    try {
+      pointsOut[i*3] = p.x;
+      pointsOut[i*3+1] = p.y;
+      pointsOut[i*3+2] = p.z;
+    } catch (ex) {
+      pointsOut[i*3] = 0;
+      pointsOut[i*3+1] = 0;
+      pointsOut[i*3+2] = 0;
+    }
   }
   
   return pointsOut;
 }
+
+orbitDisplay.updateOrbitBuffer = function(buffer, satId) {
+  var pointsOut = calcOrbitPoints(satId);
+  gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+  gl.bufferData(gl.ARRAY_BUFFER, pointsOut, gl.DYNAMIC_DRAW);
+};
 
 /*orbitDisplay.setOrbit = function(satId) {
   var sat = satSet.getSat(satId);
@@ -124,12 +137,7 @@ orbitDisplay.clearOrbit = function() {
 orbitDisplay.setSelectOrbit = function(satId) {
   var start = performance.now();
   currentSelectId = satId;
-  
-  var sat = satSet.getSat(satId);
-  var pointsOut = calcOrbitPoints(satId);
-  gl.bindBuffer(gl.ARRAY_BUFFER, selectOrbitBuf);
-  gl.bufferData(gl.ARRAY_BUFFER, pointsOut, gl.DYNAMIC_DRAW);
-  
+  orbitDisplay.updateOrbitBuffer(selectOrbitBuf, satId);
  // console.log('setOrbit(): ' + (performance.now() - start) + ' ms');
 };
 
@@ -143,12 +151,7 @@ orbitDisplay.setHoverOrbit = function(satId) {
   if(satId === currentHoverId) return;
   currentHoverId = satId;
   var start = performance.now();
-  
-  var pointsOut = calcOrbitPoints(satId);
-  gl.bindBuffer(gl.ARRAY_BUFFER, hoverOrbitBuf);
-  gl.bufferData(gl.ARRAY_BUFFER, pointsOut, gl.DYNAMIC_DRAW);
-  
- // console.log('setOrbit(): ' + (performance.now() - start) + ' ms');
+  orbitDisplay.updateOrbitBuffer(hoverOrbitBuf, satId);
 };
 
 orbitDisplay.clearHoverOrbit = function(satId) {
@@ -162,6 +165,11 @@ orbitDisplay.clearHoverOrbit = function(satId) {
 orbitDisplay.draw = function(pMatrix, camMatrix) { //lol what do I do here
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
   gl.useProgram(pathShader);
+  
+  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+  gl.enable(gl.BLEND);
+ // gl.depthMask(false);
+  
   gl.uniformMatrix4fv(pathShader.uMvMatrix, false, orbitMvMat); 
   gl.uniformMatrix4fv(pathShader.uCamMatrix, false, camMatrix);
   gl.uniformMatrix4fv(pathShader.uPMatrix, false, pMatrix);
@@ -171,12 +179,30 @@ orbitDisplay.draw = function(pMatrix, camMatrix) { //lol what do I do here
   gl.vertexAttribPointer(pathShader.aPos, 3, gl.FLOAT, false, 0, 0);
   gl.drawArrays(gl.LINE_STRIP, 0, NUM_SEGS + 1);
   
-  if(currentHoverId === currentSelectId) return; //avoid z-fighting
   gl.uniform4fv(pathShader.uColor, hoverColor);
   gl.bindBuffer(gl.ARRAY_BUFFER, hoverOrbitBuf);
   gl.vertexAttribPointer(pathShader.aPos, 3, gl.FLOAT, false, 0, 0);
-  gl.drawArrays(gl.LINE_STRIP, 0, NUM_SEGS + 1);
+  if(currentHoverId !== currentSelectId) gl.drawArrays(gl.LINE_STRIP, 0, NUM_SEGS + 1); //avoid z-fighting
+   
+  if(groups.selectedGroup !== null) {
+    gl.uniform4fv(pathShader.uColor, groupColor);
+    groups.selectedGroup.forEachBuffer(function(buf){
+      gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+      gl.vertexAttribPointer(pathShader.aPos, 3, gl.FLOAT, false, 0, 0);
+      gl.drawArrays(gl.LINE_STRIP, 0, NUM_SEGS + 1);
+    });    
+  }
+  
+  //  gl.depthMask(true);
+    gl.disable(gl.BLEND);
 };
+
+orbitDisplay.allocateBuffer = function() {
+  var buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array((NUM_SEGS+1)*3), gl.STATIC_DRAW);
+  return buf;
+}
 
 orbitDisplay.getPathShader = function() {
   return pathShader;

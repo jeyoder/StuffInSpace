@@ -9,36 +9,39 @@ onmessage = function(m) {
   var start = Date.now();
   var len = m.data.satData.length;
   
+
+  
   var extraData = [];
   for(var i = 0; i < len; i++) {
-    var ei = {};
+    var extra = {};
     var satrec = satellite.twoline2satrec( //perform and store sat init calcs
       m.data.satData[i].TLE_LINE1, m.data.satData[i].TLE_LINE2);
     
     //keplerian elements
-    ei.inclination  = satrec.inclo;  //rads
-    ei.eccentricity = satrec.ecco;
-    ei.raan         = satrec.nodeo;   //rads
-    ei.argPe        = satrec.argpo;  //rads
-    ei.meanMotion   = satrec.no * 60 * 24 / (2 * Math.PI);     // convert rads/minute to rev/day
+    extra.inclination  = satrec.inclo;  //rads
+    extra.eccentricity = satrec.ecco;
+    extra.raan         = satrec.nodeo;   //rads
+    extra.argPe        = satrec.argpo;  //rads
+    extra.meanMotion   = satrec.no * 60 * 24 / (2 * Math.PI);     // convert rads/minute to rev/day
     
     //fun other data
-    ei.semiMajorAxis = Math.pow(8681663.653 / ei.meanMotion, (2/3));
-    ei.semiMinorAxis = ei.semiMajorAxis * Math.sqrt(1 - Math.pow(ei.eccentricity, 2));   
-    ei.apogee = ei.semiMajorAxis * (1 + ei.eccentricity) - 6371;
-    ei.perigee = ei.semiMajorAxis * (1 - ei.eccentricity) - 6371;
-    ei.period = 1440.0 / ei.meanMotion;
+    extra.semiMajorAxis = Math.pow(8681663.653 / extra.meanMotion, (2/3));
+    extra.semiMinorAxis = extra.semiMajorAxis * Math.sqrt(1 - Math.pow(extra.eccentricity, 2));   
+    extra.apogee = extra.semiMajorAxis * (1 + extra.eccentricity) - 6371;
+    extra.perigee = extra.semiMajorAxis * (1 - extra.eccentricity) - 6371;
+    extra.period = 1440.0 / extra.meanMotion;
     
-    extraData.push(ei);
+    extraData.push(extra);
     satCache.push(satrec);
-  }	
+  }
   
   satPos = new Float32Array(len * 3);
   satVel = new Float32Array(len * 3);
   satAlt = new Float32Array(len);
   
+  var postStart = Date.now();
   postMessage(extraData);
-  console.log('sat-cruncher init: ' + (Date.now() - start) + ' ms');
+  console.log('sat-cruncher init: ' + (Date.now() - start) + ' ms  (incl post: ' + (Date.now() - postStart) + ' ms)');
   propagate();
 };
 
@@ -58,22 +61,23 @@ function propagate() {
   for(var i=0; i < satCache.length; i++) {
     var m = (j - satCache[i].jdsatepoch) * 1440.0; //1440 = minutes_per_day
     var pv = satellite.sgp4(satCache[i], m); 
+    var x,y,z,vx,vy,vz,alt;
     try{
-      var x = pv.position.x; // translation of axes from earth-centered inertial
-      var y = pv.position.y; // to OpenGL is done in shader with projection matrix
-      var z = pv.position.z; // so we don't have to worry about it
-      var vx = pv.velocity.x;
-      var vy = pv.velocity.y;
-      var vz = pv.velocity.z;
-      var alt = satellite.eci_to_geodetic(pv.position, gmst).height;
+       x = pv.position.x; // translation of axes from earth-centered inertial
+       y = pv.position.y; // to OpenGL is done in shader with projection matrix
+       z = pv.position.z; // so we don't have to worry about it
+       vx = pv.velocity.x;
+       vy = pv.velocity.y;
+       vz = pv.velocity.z;
+       alt = satellite.eci_to_geodetic(pv.position, gmst).height;
     } catch(e) {
-      var x = 0;
-      var y = 0;
-      var z = 0;
-      var vx = 0;
-      var vy = 0;
-      var vz = 0;
-      var alt = 0;
+       x = 0;
+       y = 0;
+       z = 0;
+       vx = 0;
+       vy = 0;
+       vz = 0;
+       alt = 0;
     }
   //    console.log('x: ' + x + ' y: ' + y + ' z: ' + z);
     satPos[i*3] = x;

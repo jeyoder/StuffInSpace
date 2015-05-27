@@ -11,6 +11,7 @@ $scriptFiles = [
 //our script files
 'shader-loader.js',
 'color-scheme.js',
+'groups.js',
 'search-box.js',
 'orbit-display.js',
 'line.js',

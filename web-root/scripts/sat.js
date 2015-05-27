@@ -1,3 +1,4 @@
+/* global gl */
 /* global ColorScheme */
 /* global $ */
 (function() {
@@ -19,14 +20,17 @@
   var satPos;
   var satVel;
   var satAlt;
+  
   var satData;
+  var satExtraData;
+  var satrec;
   
   var hoveringSat = -1;
   var selectedSat = -1;
   
-  var defaultColor = [1.0, 0.2, 0.0];
-  var hoverColor =   [0.1, 1.0, 0.0];
-  var selectedColor = [0.0, 1.0, 1.0];
+  var defaultColor = [1.0, 0.2, 0.0, 1.0];
+  var hoverColor =   [0.1, 1.0, 0.0, 1.0];
+  var selectedColor = [0.0, 1.0, 1.0, 1.0];
   
   var satCruncher = new Worker('/scripts/sat-cruncher.js');
   var cruncherReady = false;
@@ -37,34 +41,19 @@
   var gotExtraData = false;
   satCruncher.onmessage = function(m) {
     
-    if(!gotExtraData) { // get data that comes from crunching
+    if(!gotExtraData) { // store extra data that comes from crunching
       
       var start = performance.now();
       
-      for(var i=0; i < m.data.length; i++) {
-       /* for(var key in m.data[i]) {
-          if(m.data[i].hasOwnProperty(key)) {
-            satData[i][key] = m.data[i][key];
-          }
-        }*/
-        satData[i].inclination = m.data[i].inclination;
-        satData[i].eccentricity = m.data[i].eccentricity;
-        satData[i].raan = m.data[i].raan;
-        satData[i].argPe = m.data[i].argPe;
-        satData[i].meanMotion = m.data[i].meanMotion;
-        
-        satData[i].semiMajorAxis = m.data[i].semiMajorAxis;
-        satData[i].semiMinorAxis = m.data[i].semiMinorAxis;
-        satData[i].apogee = m.data[i].apogee;
-        satData[i].perigee = m.data[i].perigee;
-        satData[i].period = m.data[i].period;
-      }
+      satExtraData = m.data.extraData;
+      satrec = m.data.satrec;
       
-      console.log('sat.js got extra data in ' + (performance.now() - start) + ' ms');
+      console.log('sat.js stored extra data in ' + (performance.now() - start) + ' ms');
       gotExtraData = true;
       return;
       
-    } 
+    }
+     
     satPos = new Float32Array(m.data.satPos);
     satVel = new Float32Array(m.data.satVel);
     satAlt = new Float32Array(m.data.satAlt);
@@ -145,17 +134,21 @@
       
       satSet.setColorScheme(ColorScheme.default);
      // satSet.setColorScheme(ColorScheme.apogee);
-   //  satSet.setColorScheme(ColorScheme.velocity);
-      var end = new Date().getTime();
-      console.log('sat.js init: ' + (end - startTime) + ' ms');
-      if(satDataCallback) {
-        satDataCallback(satData);
-      }
+   //  satSet.setColorScheme(ColorScheme.velocity);   
       
-      shadersReady = true;
+      var postStart = new Date().getTime();
+      
       satCruncher.postMessage({ //kick off the BG sat propagation
         satData: satData
       });
+      
+       var end = new Date().getTime();
+      console.log('sat.js init: ' + (end - startTime) + ' ms (incl post: ' + (end - postStart) + ' ms)');
+      
+      shadersReady = true;
+      if(satsReadyCallback) {
+        satsReadyCallback(satData);
+      }
       
     });
   };
@@ -188,7 +181,7 @@ satSet.draw = function(pMatrix, camMatrix) {
     
     gl.bindBuffer(gl.ARRAY_BUFFER, satColorBuf);
     gl.enableVertexAttribArray(dotShader.aColor);
-    gl.vertexAttribPointer(dotShader.aColor, 3, gl.FLOAT, false, 0, 0);
+    gl.vertexAttribPointer(dotShader.aColor, 4, gl.FLOAT, false, 0, 0);
     
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     gl.enable(gl.BLEND);
@@ -221,7 +214,8 @@ satSet.draw = function(pMatrix, camMatrix) {
   
   satSet.getSat = function(i) {
     if(!satData) return null;
-    var ret = satData[i]
+    var ret = satData[i];
+    if(!ret) return null;
     if(gotExtraData) {
       ret.altitude = satAlt[i];
       ret.velocity = Math.sqrt(
@@ -238,15 +232,34 @@ satSet.draw = function(pMatrix, camMatrix) {
     return ret;
   };
   
+  satSet.getIdFromIntlDes = function(intlDes) {
+    for(var i=0; i <satData.length; i++) {
+      if(satData[i].INTLDES === intlDes || satData[i].intlDes === intlDes) {
+        return i;
+      }
+    }
+    return null;
+  };
+  
+  satSet.searchNameRegex = function(regex) {
+    var res = [];
+    for(var i=0; i<satData.length; i++) {
+      if(regex.test(satData[i].OBJECT_NAME)) {
+        res.push(i);
+      }
+    }
+    return res;
+  };
+  
   
   satSet.setHover = function(i) {
     if (i === hoveringSat) return;
     gl.bindBuffer(gl.ARRAY_BUFFER, satColorBuf);
     if(hoveringSat != -1 && hoveringSat != selectedSat) {
-      gl.bufferSubData(gl.ARRAY_BUFFER, hoveringSat * 3 * 4, new Float32Array(currentColorScheme.colorizer(hoveringSat)));
+      gl.bufferSubData(gl.ARRAY_BUFFER, hoveringSat * 4 * 4, new Float32Array(currentColorScheme.colorizer(hoveringSat)));
     }
     if(i != -1) {
-      gl.bufferSubData(gl.ARRAY_BUFFER, i * 3 * 4, new Float32Array(hoverColor));
+      gl.bufferSubData(gl.ARRAY_BUFFER, i * 4 * 4, new Float32Array(hoverColor));
     }
     hoveringSat = i; 
   };
@@ -255,10 +268,10 @@ satSet.draw = function(pMatrix, camMatrix) {
     if(i === selectedSat) return;
     gl.bindBuffer(gl.ARRAY_BUFFER, satColorBuf);
     if(selectedSat != -1) {
-      gl.bufferSubData(gl.ARRAY_BUFFER, selectedSat * 3 * 4, new Float32Array(currentColorScheme.colorizer(selectedSat)));
+      gl.bufferSubData(gl.ARRAY_BUFFER, selectedSat * 4 * 4, new Float32Array(currentColorScheme.colorizer(selectedSat)));
     }
     if(i != -1) {
-      gl.bufferSubData(gl.ARRAY_BUFFER, i * 3 * 4, new Float32Array(selectedColor));
+      gl.bufferSubData(gl.ARRAY_BUFFER, i * 4 * 4, new Float32Array(selectedColor));
     }
     selectedSat = i; 
   };

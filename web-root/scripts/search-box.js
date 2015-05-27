@@ -1,6 +1,6 @@
 (function() {
   var searchBox = {};
-  var SEARCH_LIMIT = 20;
+  var SEARCH_LIMIT = 2000;
   var satData;
   
   function hideResults() {
@@ -53,7 +53,7 @@
           
          if(results.length > SEARCH_LIMIT) break;
         }
-        var resultStart = performance.now();
+
         
         var html = '';
         for(var i=0; i < results.length; i++) {
@@ -80,6 +80,7 @@
           }
           html += '</div></div>';
         }
+                var resultStart = performance.now();
       //  resultBox.append(html);
         resultBox[0].innerHTML = html;
        if(html === 'unicorn') alert('!'); 

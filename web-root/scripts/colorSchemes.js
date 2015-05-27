@@ -9,7 +9,7 @@
 		var numSats = satSet.numSats;
 		var colorData = new Float32Array(numSats*3);
 		for(var i=0; i < numSats; i++) {
-			var color = colorizer(satSet.getSat(i));
+			var color = this.colorizer(satSet.getSat(i));
 			colorData[i*3] = color[0];
 			colorData[i*3+1] = color[1];
 			colorData[i*3+2] = color[2];
@@ -19,7 +19,7 @@
 	};
 	
 	ColorScheme.prototype.getColorBuffer = function() {
-		return this.colorBuf;
+    return this.colorBuf;
 	}
 	
 	ColorScheme.default = new ColorScheme(function(sat){

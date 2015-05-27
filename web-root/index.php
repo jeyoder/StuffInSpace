@@ -17,9 +17,23 @@ header('Content-Type: text/html; charset=utf-8');
  
   <div id="canvas-holder">
     <canvas id="canvas"></canvas>
-    <div id="search-holder">
-      <span class="icon-search"></span>
-      <input type="text" id="search"></input>
+    <div id="menubar">
+      <div id="search-holder" class="menu-item">
+        <span class="icon-search"></span>
+        <input type="text" id="search"></input>
+      </div>
+      <div id="menu-groups" class="menu-item">
+        Groups
+        <ul id="groups-display" class="submenu">
+          <li data-group="GPSGroup">GPSs</li>
+          <li data-group="IridiumGroup">Iridium</li>
+          <li data-group="GlonassGroup">GLONASS</li>
+          <li data-group="Iridium33DebrisGroup">Iridium 33 Debris</li>
+        </ul>
+      </div>
+      <div id="menu-groups" class="menu-item">
+         Color Schemes
+      </div>
     </div>
     <div id="search-results"></div>
     <div id="sat-hoverbox">(none)</div>

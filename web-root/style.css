@@ -18,6 +18,7 @@ body {
   left: 0;
   right: 0;
   bottom: 0;
+  overflow: hidden;
 }
 
 #load-cover {
@@ -156,8 +157,46 @@ body {
   outline: none;
 }
 
-#search-holder {
+#menubar {
+  height: 30px;
   position: absolute;
   top: 2px;
-  left: 5px;
+  left: 0px;
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: stretch;
+  align-content: stretch;
+}
+.menu-item {
+  cursor: pointer;
+  margin: 0px 10px;
+}
+
+.menu-item:first-child {
+  margin-left: 2px;
+}
+
+.submenu {
+  display: none;
+  background: red;
+  height: 500px;
+  border-radius: 5px;
+  margin: 0;
+  list-style-type: none;
+  padding: 0;
+  overflow: hidden;
+}
+
+.submenu>li {
+  display: block;
+  padding: 5px 10px;
+}
+
+.submenu>li:hover {
+  background: #c33;
+}
+
+.menu-item:hover .submenu, .submenu:hover {
+  display: block;
 }
