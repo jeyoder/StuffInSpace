@@ -1,9 +1,14 @@
+/* global groups */
 /* global satSet */
 /* global mat4 */
 /* global shaderLoader */
 /* global gl */
 (function() {
 var NUM_SEGS = 255;
+
+var glBuffers = [];
+var inProgress = [];
+
 
 var orbitDisplay = {};
 
@@ -20,6 +25,10 @@ var currentHoverId = -1;
 var currentSelectId = -1;
 
 var orbitMvMat = mat4.create();
+
+var orbitWorker = new Worker('/scripts/orbit-calculation-worker.js');
+
+var initialized = false;
 
 orbitDisplay.init = function() {
   
@@ -52,63 +61,39 @@ orbitDisplay.init = function() {
   gl.bindBuffer(gl.ARRAY_BUFFER, hoverOrbitBuf);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array((NUM_SEGS+1)*3), gl.STATIC_DRAW);
   
+  for(var i=0; i<satSet.numSats; i++) {
+    glBuffers.push(allocateBuffer());
+  }
+  orbitWorker.postMessage({
+    isInit : true,
+    satData : satSet.satDataString,
+    numSegs : NUM_SEGS
+  });
+  
+  initialized = true;
+  
   var time = performance.now() - startTime;
   console.log('orbitDisplay init: ' + time + ' ms');
 };
 
-function jday(year, mon, day, hr, minute, sec){ //from satellite.js
-  'use strict';
-  return (367.0 * year -
-        Math.floor((7 * (year + Math.floor((mon + 9) / 12.0))) * 0.25) +
-        Math.floor( 275 * mon / 9.0 ) +
-        day + 1721013.5 +
-        ((sec / 60.0 + minute) / 60.0 + hr) / 24.0  //  ut in days
-        //#  - 0.5*sgn(100.0*year + mon - 190002.5) + 0.5;
-        );
-}
 
-function calcOrbitPoints(satId) {
-  //TODO: figure out how to calculate the orbit points on constant 
-  // position slices, not timeslices (ugly perigees on HEOs)
-  var satData = satSet.getSat(satId);
-  var satrec = satellite.twoline2satrec(
-    satData.TLE_LINE1, satData.TLE_LINE2
-  );
-  var pointsOut = new Float32Array((NUM_SEGS + 1) * 3);
-  
-  var nowDate = new Date();
-  var nowJ = jday(nowDate.getUTCFullYear(), 
-               nowDate.getUTCMonth() + 1, 
-               nowDate.getUTCDate(), 
-               nowDate.getUTCHours(), 
-               nowDate.getUTCMinutes(), 
-               nowDate.getUTCSeconds());
-  nowJ += nowDate.getUTCMilliseconds() * 1.15741e-8; //days per millisecond    
-  var now = (nowJ - satrec.jdsatepoch) * 1440.0; //in minutes 
-  
-  var timeslice = satData.period / NUM_SEGS;
-  
-  for(var i=0; i<NUM_SEGS+1; i++) {
-    var t = now + i*timeslice;
-    var p = satellite.sgp4(satrec, t).position;
-    try {
-      pointsOut[i*3] = p.x;
-      pointsOut[i*3+1] = p.y;
-      pointsOut[i*3+2] = p.z;
-    } catch (ex) {
-      pointsOut[i*3] = 0;
-      pointsOut[i*3+1] = 0;
-      pointsOut[i*3+2] = 0;
-    }
+
+orbitDisplay.updateOrbitBuffer = function(satId) {
+  if(!inProgress[satId]) {
+    orbitWorker.postMessage({
+      isInit : false,
+      satId : satId
+    });
+    inProgress[satId] = true;
   }
-  
-  return pointsOut;
-}
+};
 
-orbitDisplay.updateOrbitBuffer = function(buffer, satId) {
-  var pointsOut = calcOrbitPoints(satId);
-  gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+orbitWorker.onmessage = function(m) {
+  var satId = m.data.satId;
+  var pointsOut = new Float32Array(m.data.pointsOut);
+  gl.bindBuffer(gl.ARRAY_BUFFER, glBuffers[satId]);
   gl.bufferData(gl.ARRAY_BUFFER, pointsOut, gl.DYNAMIC_DRAW);
+  inProgress[satId] = false
 };
 
 /*orbitDisplay.setOrbit = function(satId) {
@@ -137,7 +122,7 @@ orbitDisplay.clearOrbit = function() {
 orbitDisplay.setSelectOrbit = function(satId) {
   var start = performance.now();
   currentSelectId = satId;
-  orbitDisplay.updateOrbitBuffer(selectOrbitBuf, satId);
+  orbitDisplay.updateOrbitBuffer(satId);
  // console.log('setOrbit(): ' + (performance.now() - start) + ' ms');
 };
 
@@ -151,7 +136,7 @@ orbitDisplay.setHoverOrbit = function(satId) {
   if(satId === currentHoverId) return;
   currentHoverId = satId;
   var start = performance.now();
-  orbitDisplay.updateOrbitBuffer(hoverOrbitBuf, satId);
+  orbitDisplay.updateOrbitBuffer(satId);
 };
 
 orbitDisplay.clearHoverOrbit = function(satId) {
@@ -163,6 +148,8 @@ orbitDisplay.clearHoverOrbit = function(satId) {
 }
 
 orbitDisplay.draw = function(pMatrix, camMatrix) { //lol what do I do here
+  if(!initialized) return;
+  
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
   gl.useProgram(pathShader);
   
@@ -174,20 +161,23 @@ orbitDisplay.draw = function(pMatrix, camMatrix) { //lol what do I do here
   gl.uniformMatrix4fv(pathShader.uCamMatrix, false, camMatrix);
   gl.uniformMatrix4fv(pathShader.uPMatrix, false, pMatrix);
   
-  gl.uniform4fv(pathShader.uColor, selectColor);
-  gl.bindBuffer(gl.ARRAY_BUFFER, selectOrbitBuf);
-  gl.vertexAttribPointer(pathShader.aPos, 3, gl.FLOAT, false, 0, 0);
-  gl.drawArrays(gl.LINE_STRIP, 0, NUM_SEGS + 1);
+  if(currentSelectId !== -1) {
+    gl.uniform4fv(pathShader.uColor, selectColor);
+    gl.bindBuffer(gl.ARRAY_BUFFER, glBuffers[currentSelectId]);
+    gl.vertexAttribPointer(pathShader.aPos, 3, gl.FLOAT, false, 0, 0);
+    gl.drawArrays(gl.LINE_STRIP, 0, NUM_SEGS + 1);
+  }
   
-  gl.uniform4fv(pathShader.uColor, hoverColor);
-  gl.bindBuffer(gl.ARRAY_BUFFER, hoverOrbitBuf);
-  gl.vertexAttribPointer(pathShader.aPos, 3, gl.FLOAT, false, 0, 0);
-  if(currentHoverId !== currentSelectId) gl.drawArrays(gl.LINE_STRIP, 0, NUM_SEGS + 1); //avoid z-fighting
-   
+  if(currentHoverId !== -1 && currentHoverId !== currentSelectId) { //avoid z-fighting
+    gl.uniform4fv(pathShader.uColor, hoverColor);
+    gl.bindBuffer(gl.ARRAY_BUFFER, glBuffers[currentHoverId]);
+    gl.vertexAttribPointer(pathShader.aPos, 3, gl.FLOAT, false, 0, 0);
+    gl.drawArrays(gl.LINE_STRIP, 0, NUM_SEGS + 1); 
+  }
   if(groups.selectedGroup !== null) {
     gl.uniform4fv(pathShader.uColor, groupColor);
-    groups.selectedGroup.forEachBuffer(function(buf){
-      gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    groups.selectedGroup.forEach(function(id){
+      gl.bindBuffer(gl.ARRAY_BUFFER, glBuffers[id]);
       gl.vertexAttribPointer(pathShader.aPos, 3, gl.FLOAT, false, 0, 0);
       gl.drawArrays(gl.LINE_STRIP, 0, NUM_SEGS + 1);
     });    
@@ -197,7 +187,7 @@ orbitDisplay.draw = function(pMatrix, camMatrix) { //lol what do I do here
     gl.disable(gl.BLEND);
 };
 
-orbitDisplay.allocateBuffer = function() {
+function allocateBuffer() {
   var buf = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, buf);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array((NUM_SEGS+1)*3), gl.STATIC_DRAW);

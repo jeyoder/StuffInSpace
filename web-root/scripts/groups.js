@@ -11,16 +11,14 @@
     if(groupType === 'intlDes') {
       for(var i=0; i < data.length; i++){
         this.sats.push({
-          satId : satSet.getIdFromIntlDes(data[i]),
-          orbitBuffer : orbitDisplay.allocateBuffer()
+          satId : satSet.getIdFromIntlDes(data[i])
         });
       }
     } else if (groupType === 'nameRegex') {
       var satIdList = satSet.searchNameRegex(data);
       for(var i=0; i < satIdList.length; i++) {
         this.sats.push({
-          satId : satIdList[i],
-          orbitBuffer: orbitDisplay.allocateBuffer()
+          satId : satIdList[i]
         });
       } 
     }
@@ -36,31 +34,68 @@
   
   SatGroup.prototype.updateOrbits = function() {
     for(var i=0; i < this.sats.length; i++) {
-      orbitDisplay.updateOrbitBuffer(this.sats[i].orbitBuffer, this.sats[i].satId);
+      orbitDisplay.updateOrbitBuffer(this.sats[i].satId);
     }
   };
   
-  SatGroup.prototype.forEachBuffer = function(callback) {
+  SatGroup.prototype.forEach = function(callback) {
     for(var i=0; i<this.sats.length; i++) {
-      callback(this.sats[i].orbitBuffer);
+      callback(this.sats[i].satId);
     }
   };
   
   groups.selectGroup = function(group) {
-    console.log('selectGroup');
+    var start = performance.now();
 		groups.selectedGroup = group;
     group.updateOrbits();
+    satSet.setColorScheme(ColorScheme.group);
+    var t = performance.now() - start;
+   // console.log('selectGroup: ' + t + ' ms');
 	};
+  
+  groups.clearSelect = function() {
+    groups.selectedGroup = null;
+    satSet.setColorScheme(ColorScheme.default);
+  };
 	
 	groups.init = function() {
     var start = performance.now();
     
+    var clicked = false;
+    $('#groups-display').mouseout(function() {
+      if(!clicked) groups.clearSelect();
+    });
+    
 		$('#groups-display>li').mouseover(function() {
+      clicked = false;
       var groupName = $(this).data('group');
-			console.log('selecting group: ' + groupName);
-			groups.selectGroup(groups[groupName]);
-			satSet.setColorScheme(ColorScheme.group);
+      if(groupName === '<clear>') {
+			 groups.clearSelect();
+      } else {
+       groups.selectGroup(groups[groupName]);
+      }
 		});
+    
+    $('#groups-display>li').click(function() {
+      clicked = true;
+      var groupName = $(this).data('group');
+      if(groupName === '<clear>') {
+        groups.clearSelect();
+        $('#menu-groups .menu-title').text('Groups');
+        $(this).css('display', 'none');
+      } else {
+        selectSat(-1); //clear selected sat
+        groups.selectGroup(groups[groupName]);
+        $('#menu-groups .clear-option').css({
+          display: 'block'
+        });
+        $('#menu-groups .menu-title').text('Groups (' + $(this).text() + ')');
+      }
+      
+      $('#groups-display').css({
+        display: 'none'
+      });
+    });
 	
 	  groups.GPSGroup = new SatGroup('intlDes', [
   		'90103A',
@@ -94,11 +129,12 @@
       '14045A',
       '14068A',
       '15013A'
-    ]);
-    
+    ]);   
     groups.IridiumGroup = new SatGroup('nameRegex', /IRIDIUM(?!.*DEB)/);
     groups.Iridium33DebrisGroup = new SatGroup('nameRegex', /(COSMOS 2251|IRIDIUM 33) DEB/);
     groups.GlonassGroup = new SatGroup('nameRegex', /GLONASS/);
+    groups.GalileoGroup = new SatGroup('nameRegex', /GALILEO/);
+    groups.FunGroup = new SatGroup('nameRegex', /SYLDA/);
     
     console.log('groups init: ' + (performance.now() - start) + ' ms');
   };

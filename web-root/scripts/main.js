@@ -82,16 +82,17 @@ $(document).ready(function() {
   var can = $('#canvas')[0];   
   
   gl = webGlInit(can);
-  debugLine = new Line();
-  debugLine2 = new Line();
-  debugLine3 = new Line();
   earth.init();
   ColorScheme.init();
   satSet.init(function(satData) {
+    orbitDisplay.init();
     groups.init();
     searchBox.init(satData);
+    
+    debugLine = new Line();
+    debugLine2 = new Line();
+    debugLine3 = new Line();
   });
-  orbitDisplay.init();
 
    /* var rotSpeed = 0.001;
     $(document).keydown(function(evt) {
@@ -145,6 +146,18 @@ $(document).ready(function() {
       if(evt.which === 3) {//RMB
         isDragging = false;
       }
+    });
+    
+    $('.menu-item').mouseover(function(evt){
+      $(this).children('.submenu').css({
+        display: 'block'
+      });
+    });
+    
+    $('.menu-item').mouseout(function(evt){
+      $(this).children('.submenu').css({
+        display: 'none'
+      });
     });
     
  //   debugContext = $('#debug-canvas')[0].getContext('2d');
@@ -208,6 +221,7 @@ function webGlInit(can) {
   
   pickShaderProgram.aPos = gl.getAttribLocation(pickShaderProgram, 'aPos');
   pickShaderProgram.aColor = gl.getAttribLocation(pickShaderProgram, 'aColor');
+  pickShaderProgram.aPickable = gl.getAttribLocation(pickShaderProgram, 'aPickable');
   pickShaderProgram.uCamMatrix = gl.getUniformLocation(pickShaderProgram, 'uCamMatrix');
   pickShaderProgram.uMvMatrix = gl.getUniformLocation(pickShaderProgram, 'uMvMatrix');
   pickShaderProgram.uPMatrix = gl.getUniformLocation(pickShaderProgram, 'uPMatrix');
@@ -414,9 +428,9 @@ function drawScene() {
   gl.clearColor(0.0, 0.0, 0.0, 1.0);
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-  debugLine.draw();
-  debugLine2.draw();
-  debugLine3.draw();
+  if(debugLine) debugLine.draw();
+  if(debugLine2)debugLine2.draw();
+  if(debugLine3)debugLine3.draw();
   earth.draw(pMatrix, camMatrix);
   satSet.draw(pMatrix, camMatrix);
   orbitDisplay.draw(pMatrix, camMatrix);

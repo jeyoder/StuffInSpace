@@ -7,15 +7,15 @@ var satPos, satVel, satAlt;
 
 onmessage = function(m) {
   var start = Date.now();
-  var len = m.data.satData.length;
   
+  var satData = JSON.parse(m.data);
+  var len = satData.length;
 
-  
   var extraData = [];
   for(var i = 0; i < len; i++) {
     var extra = {};
     var satrec = satellite.twoline2satrec( //perform and store sat init calcs
-      m.data.satData[i].TLE_LINE1, m.data.satData[i].TLE_LINE2);
+      satData[i].TLE_LINE1, satData[i].TLE_LINE2);
     
     //keplerian elements
     extra.inclination  = satrec.inclo;  //rads
@@ -40,7 +40,9 @@ onmessage = function(m) {
   satAlt = new Float32Array(len);
   
   var postStart = Date.now();
-  postMessage(extraData);
+  postMessage({
+    extraData : JSON.stringify(extraData),
+  });
   console.log('sat-cruncher init: ' + (Date.now() - start) + ' ms  (incl post: ' + (Date.now() - postStart) + ' ms)');
   propagate();
 };

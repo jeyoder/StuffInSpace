@@ -1,17 +1,17 @@
+/* global mat4 */
+/* global shaderLoader */
 /* global gl */
 /* global ColorScheme */
 /* global $ */
 (function() {
   var satSet = {};
   
-  var dotSize = 1000;
-
-  var satVerts = [];
   var dotShader;
 
   var satPosBuf;
   var satColorBuf;
   var pickColorBuf;
+  var pickableBuf;
   
   var currentColorScheme;
   
@@ -23,12 +23,10 @@
   
   var satData;
   var satExtraData;
-  var satrec;
   
   var hoveringSat = -1;
   var selectedSat = -1;
   
-  var defaultColor = [1.0, 0.2, 0.0, 1.0];
   var hoverColor =   [0.1, 1.0, 0.0, 1.0];
   var selectedColor = [0.0, 1.0, 1.0, 1.0];
   
@@ -41,17 +39,28 @@
   var gotExtraData = false;
   satCruncher.onmessage = function(m) {
     
-    if(!gotExtraData) { // store extra data that comes from crunching
-      
+    if(!gotExtraData) { // store extra data that comes from crunching     
       var start = performance.now();
       
-      satExtraData = m.data.extraData;
-      satrec = m.data.satrec;
+      satExtraData = JSON.parse(m.data.extraData);
+      
+      for(var i=0; i < satSet.numSats; i++) {
+        satData[i].inclination = satExtraData[i].inclination;
+        satData[i].eccentricity = satExtraData[i].eccentricity;
+        satData[i].raan = satExtraData[i].raan;
+        satData[i].argPe = satExtraData[i].argPe;
+        satData[i].meanMotion = satExtraData[i].meanMotion;
+        
+        satData[i].semiMajorAxis = satExtraData[i].semiMajorAxis;
+        satData[i].semiMinorAxis = satExtraData[i].semiMinorAxis;
+        satData[i].apogee = satExtraData[i].apogee;
+        satData[i].perigee = satExtraData[i].perigee;
+        satData[i].period = satExtraData[i].period;
+      }
       
       console.log('sat.js stored extra data in ' + (performance.now() - start) + ' ms');
       gotExtraData = true;
       return;
-      
     }
      
     satPos = new Float32Array(m.data.satPos);
@@ -60,7 +69,7 @@
        
     if(!cruncherReady) {
       $('#load-cover').fadeOut();
-      satColorBuf = currentColorScheme.calculateColorBuffer();
+      satSet.setColorScheme(currentColorScheme); //force color recalc
        cruncherReady = true;
     }
     
@@ -96,6 +105,19 @@
       $('#loader-text').text('Crunching numbers...');
       
       satData = resp;
+      satSet.satDataString = JSON.stringify(satData);
+      
+      var postStart = performance.now();
+        satCruncher.postMessage(satSet.satDataString); //kick off satCruncher
+      var postEnd = performance.now();
+      
+      satSet.satrec = [];
+      
+      for(var i=0; i < satData.length; i++) {
+        satSet.satrec.push(satellite.twoline2satrec(
+          satData[i].TLE_LINE1, satData[i].TLE_LINE2
+        ));
+      }
       
       //do some processing on our satData response
       for(var i = 0; i < satData.length; i++) {     
@@ -114,8 +136,6 @@
       
       satPosBuf = gl.createBuffer();
       satPos = new Float32Array(satData.length * 3);
-      /*gl.bindBuffer(gl.ARRAY_BUFFER, satPosBuf);
-      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(satPos), gl.STREAM_DRAW);*/
       
       var pickColorData = [];
       pickColorBuf = gl.createBuffer();
@@ -135,15 +155,9 @@
       satSet.setColorScheme(ColorScheme.default);
      // satSet.setColorScheme(ColorScheme.apogee);
    //  satSet.setColorScheme(ColorScheme.velocity);   
-      
-      var postStart = new Date().getTime();
-      
-      satCruncher.postMessage({ //kick off the BG sat propagation
-        satData: satData
-      });
-      
+    
        var end = new Date().getTime();
-      console.log('sat.js init: ' + (end - startTime) + ' ms (incl post: ' + (end - postStart) + ' ms)');
+      console.log('sat.js init: ' + (end - startTime) + ' ms (incl post: ' + (postEnd - postStart) + ' ms)');
       
       shadersReady = true;
       if(satsReadyCallback) {
@@ -155,8 +169,10 @@
 
 satSet.setColorScheme = function(scheme) {
   currentColorScheme = scheme;
-  satColorBuf = scheme.calculateColorBuffer();
-} 
+  var buffers = scheme.calculateColorBuffers();
+  satColorBuf = buffers.colorBuf;
+  pickableBuf = buffers.pickableBuf; 
+};
  
 satSet.draw = function(pMatrix, camMatrix) {
   if(!shadersReady || !cruncherReady) return;
@@ -207,6 +223,10 @@ satSet.draw = function(pMatrix, camMatrix) {
       gl.bindBuffer(gl.ARRAY_BUFFER, pickColorBuf);
       gl.vertexAttribPointer(gl.pickShaderProgram.aColor, 3, gl.FLOAT, false, 0, 0);
       
+      gl.bindBuffer(gl.ARRAY_BUFFER, pickableBuf);
+      gl.enableVertexAttribArray(gl.pickShaderProgram.aPickable);
+      gl.vertexAttribPointer(gl.pickShaderProgram.aPickable, 1, gl.FLOAT, false, 0, 0);
+      
     gl.drawArrays(gl.POINTS, 0, satData.length); //draw pick
     
     lastDrawTime = now;
@@ -256,7 +276,7 @@ satSet.draw = function(pMatrix, camMatrix) {
     if (i === hoveringSat) return;
     gl.bindBuffer(gl.ARRAY_BUFFER, satColorBuf);
     if(hoveringSat != -1 && hoveringSat != selectedSat) {
-      gl.bufferSubData(gl.ARRAY_BUFFER, hoveringSat * 4 * 4, new Float32Array(currentColorScheme.colorizer(hoveringSat)));
+      gl.bufferSubData(gl.ARRAY_BUFFER, hoveringSat * 4 * 4, new Float32Array(currentColorScheme.colorizer(hoveringSat).color));
     }
     if(i != -1) {
       gl.bufferSubData(gl.ARRAY_BUFFER, i * 4 * 4, new Float32Array(hoverColor));
@@ -268,7 +288,7 @@ satSet.draw = function(pMatrix, camMatrix) {
     if(i === selectedSat) return;
     gl.bindBuffer(gl.ARRAY_BUFFER, satColorBuf);
     if(selectedSat != -1) {
-      gl.bufferSubData(gl.ARRAY_BUFFER, selectedSat * 4 * 4, new Float32Array(currentColorScheme.colorizer(selectedSat)));
+      gl.bufferSubData(gl.ARRAY_BUFFER, selectedSat * 4 * 4, new Float32Array(currentColorScheme.colorizer(selectedSat).color));
     }
     if(i != -1) {
       gl.bufferSubData(gl.ARRAY_BUFFER, i * 4 * 4, new Float32Array(selectedColor));

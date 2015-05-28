@@ -125,7 +125,7 @@ body {
 
 .search-hilight {
   font-weight: bold;
-  color: #aaf;
+  color: #faa
 }
 
 .search-result {
@@ -135,8 +135,7 @@ body {
 }
 
 .search-result:hover {
-  color: #aaf;
-  background: #222;
+  background: #c33;
   cursor: pointer;
 }
 
@@ -168,6 +167,7 @@ body {
   align-items: stretch;
   align-content: stretch;
 }
+
 .menu-item {
   cursor: pointer;
   margin: 0px 10px;
@@ -177,15 +177,25 @@ body {
   margin-left: 2px;
 }
 
+.menu-item:hover .menu-title {
+  color: #faa;
+}
+
+.menu-title {
+  height: 30px;
+}
+
 .submenu {
   display: none;
-  background: red;
-  height: 500px;
+  background: black;
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 5px;
   margin: 0;
   list-style-type: none;
   padding: 0;
   overflow: hidden;
+  position: absolute;
+  width: 200px;
 }
 
 .submenu>li {
@@ -195,8 +205,14 @@ body {
 
 .submenu>li:hover {
   background: #c33;
+  font-weight: bold;
 }
 
-.menu-item:hover .submenu, .submenu:hover {
-  display: block;
+.submenu>li:active {
+  background: #511;
+}
+
+.submenu>li.clear-option {
+  background: #511;
+  display: none;
 }

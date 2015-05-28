@@ -23,17 +23,26 @@ header('Content-Type: text/html; charset=utf-8');
         <input type="text" id="search"></input>
       </div>
       <div id="menu-groups" class="menu-item">
-        Groups
+        <div class="menu-title">Groups</div>
         <ul id="groups-display" class="submenu">
-          <li data-group="GPSGroup">GPSs</li>
+          <li data-group="<clear>" class="clear-option">Clear</li>
+          <li data-group="GPSGroup">GPS</li>
           <li data-group="IridiumGroup">Iridium</li>
           <li data-group="GlonassGroup">GLONASS</li>
-          <li data-group="Iridium33DebrisGroup">Iridium 33 Debris</li>
+          <li data-group="GalileoGroup">Galileo</li>
+          <li data-group="Iridium33DebrisGroup">Iridium 33 Collision Debris</li>
+          
+          <li data-group="FunGroup">Ariane Sylda</li>
         </ul>
       </div>
-      <div id="menu-groups" class="menu-item">
-         Color Schemes
-      </div>
+     <!-- <div id="menu-color-schemes" class="menu-item">
+        <div class="menu-title">Color Schemes</div>
+        <ul id="color-schemes-submenu" class="submenu">
+          <li data-color="default">Type</li>
+          <li data-color="velocity">Velocity</li>
+          <li data-color="apogee">Apogee</li>
+        </ul>
+      </div>-->
     </div>
     <div id="search-results"></div>
     <div id="sat-hoverbox">(none)</div>
