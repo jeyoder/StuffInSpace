@@ -111,6 +111,13 @@ $(document).ready(function() {
       if(evt.which === 65) camYawSpeed = 0; //A
     });*/
     
+	$('#canvas').on('touchmove', function(evt) {
+		evt.preventDefault();
+	  if(isDragging) dragHasMoved = true;
+      mouseX = evt.originalEvent.touches[0].clientX;
+      mouseY = evt.originalEvent.touches[0].clientY;
+	});
+	
     $('#canvas').mousemove(function(evt) {
       if(isDragging) dragHasMoved = true;
       mouseX = evt.clientX;
@@ -131,7 +138,7 @@ $(document).ready(function() {
     $('#canvas').contextmenu(function() {
      return false; //stop right-click menu
     });
-    
+	
     $('#canvas').mousedown(function(evt){
    //   if(evt.which === 3) {//RMB
         dragPoint = getEarthScreenPoint(evt.clientX, evt.clientY);
@@ -142,6 +149,15 @@ $(document).ready(function() {
         camSnapMode = false;
    //   }
     });
+	
+	$('#canvas').on('touchstart', function (evt) {
+		dragPoint = getEarthScreenPoint(evt.originalEvent.touches[0].clientX, evt.originalEvent.touches[0].clientY);
+        dragStartPitch = camPitch;
+        dragStartYaw = camYaw;
+     //   debugLine.set(dragPoint, getCamPos());
+        isDragging = true;
+        camSnapMode = false;
+	});
     
     $('#canvas').mouseup(function(evt){
    //   if(evt.which === 3) {//RMB
@@ -154,6 +170,11 @@ $(document).ready(function() {
         isDragging = false;
   //    }
     });
+	
+	$('#canvas').on('touchend', function(evt) {
+		dragHasMoved = false;
+        isDragging = false;
+	});
     
     $('.menu-item').mouseover(function(evt){
       $(this).children('.submenu').css({
