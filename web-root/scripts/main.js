@@ -43,10 +43,12 @@ var pMatrix = mat4.create(), camMatrix = mat4.create();
 var selectedSat = -1;
 
 var mouseX = 0, mouseY = 0, mouseSat = -1;
-var isDragging = false;
+
 var dragPoint = [0,0,0];
 var dragStartPitch = 0;
 var dragStartYaw = 0;
+var isDragging = false;
+var dragHasMoved = false;
 
 var debugContext, debugImageData;
 
@@ -110,6 +112,7 @@ $(document).ready(function() {
     });*/
     
     $('#canvas').mousemove(function(evt) {
+      if(isDragging) dragHasMoved = true;
       mouseX = evt.clientX;
       mouseY = evt.clientY;
     });
@@ -121,9 +124,7 @@ $(document).ready(function() {
     });
     
     $('#canvas').click(function(evt) {
-      var clickedSat = getSatIdFromCoord(evt.clientX, evt.clientY);
-      selectSat(clickedSat);
-      searchBox.hideResults();
+	  
     
     });
     
@@ -132,20 +133,26 @@ $(document).ready(function() {
     });
     
     $('#canvas').mousedown(function(evt){
-      if(evt.which === 3) {//RMB
+   //   if(evt.which === 3) {//RMB
         dragPoint = getEarthScreenPoint(evt.clientX, evt.clientY);
         dragStartPitch = camPitch;
         dragStartYaw = camYaw;
      //   debugLine.set(dragPoint, getCamPos());
         isDragging = true;
         camSnapMode = false;
-      }
+   //   }
     });
     
     $('#canvas').mouseup(function(evt){
-      if(evt.which === 3) {//RMB
+   //   if(evt.which === 3) {//RMB
+		if(!dragHasMoved) {
+		  var clickedSat = getSatIdFromCoord(evt.clientX, evt.clientY);
+		  selectSat(clickedSat);
+		  searchBox.hideResults();
+	    }
+		dragHasMoved = false;
         isDragging = false;
-      }
+  //    }
     });
     
     $('.menu-item').mouseover(function(evt){
