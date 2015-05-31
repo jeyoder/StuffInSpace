@@ -125,7 +125,11 @@ $(document).ready(function() {
     });
     
     $('#canvas').on('wheel', function (evt) {
-      zoomTarget += evt.originalEvent.deltaY * 0.0002;
+      var delta = evt.originalEvent.deltaY;
+      if(evt.originalEvent.deltaMode === 1) {
+        delta *= 33.3333333;
+      }
+      zoomTarget += delta * 0.0002;
       if(zoomTarget > 1) zoomTarget = 1;
       if(zoomTarget < 0) zoomTarget = 0;
     });
