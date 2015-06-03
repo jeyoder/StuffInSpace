@@ -376,6 +376,7 @@ function camSnap(pitch, yaw) {
 function normalizeAngle(angle) {
   angle %= Math.PI * 2;
   if(angle > Math.PI) angle -= Math.PI*2;
+  if(angle < -Math.PI) angle += Math.PI*2;
   return angle;
 }
 
