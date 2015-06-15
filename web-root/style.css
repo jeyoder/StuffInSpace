@@ -216,3 +216,46 @@ body {
   background: #511;
   display: none;
 }
+
+#zoom-controls {
+  position:absolute;
+  right: 20px;
+  bottom: 20px;
+  width: 40px;
+  height:70px;
+  background: black;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.zoom-button {
+  height: 35px;
+  font-size: 20px;
+  font-weight: bold;
+  line-height: 35px;
+  text-align: center;
+  cursor: pointer;
+  
+  -moz-user-select: -moz-none;
+  -khtml-user-select: none;
+  -webkit-user-select: none;
+  -o-user-select: none;
+  user-select: none;
+}
+
+.zoom-button:hover {
+  background: #c33;
+}
+
+.zoom-button:active {
+  background: #511;
+}
+
+#zoom-in {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+#zoom-out {
+
+}

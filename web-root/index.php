@@ -81,6 +81,10 @@ header('Content-Type: text/html; charset=utf-8');
         <div class="sat-info-value" id="sat-period">100</div> min
       </div>
     </div>
+    <div id="zoom-controls">
+      <div id="zoom-in" class="zoom-button">+</div>
+      <div id="zoom-out" class="zoom-button">-</div>
+    </div>
     <div id="load-cover">
       <div id="loader">
         <div id="spinner"></div>

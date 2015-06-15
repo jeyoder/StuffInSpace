@@ -45,6 +45,7 @@ var selectedSat = -1;
 var mouseX = 0, mouseY = 0, mouseSat = -1;
 
 var dragPoint = [0,0,0];
+var screenDragPoint = [0,0];
 var dragStartPitch = 0;
 var dragStartYaw = 0;
 var isDragging = false;
@@ -146,6 +147,7 @@ $(document).ready(function() {
     $('#canvas').mousedown(function(evt){
    //   if(evt.which === 3) {//RMB
         dragPoint = getEarthScreenPoint(evt.clientX, evt.clientY);
+        screenDragPoint = [evt.clientX, evt.clientY];
         dragStartPitch = camPitch;
         dragStartYaw = camYaw;
      //   debugLine.set(dragPoint, getCamPos());
@@ -155,15 +157,19 @@ $(document).ready(function() {
     });
 	
 	$('#canvas').on('touchstart', function (evt) {
-		dragPoint = getEarthScreenPoint(evt.originalEvent.touches[0].clientX, evt.originalEvent.touches[0].clientY);
-        dragStartPitch = camPitch;
-        dragStartYaw = camYaw;
+    var x = evt.originalEvent.touches[0].clientX;
+    var y = evt.originalEvent.touches[0].clientY;
+		dragPoint = getEarthScreenPoint(x,y);
+    screenDragPoint = [x,y];
+    dragStartPitch = camPitch;
+    dragStartYaw = camYaw;
      //   debugLine.set(dragPoint, getCamPos());
-        isDragging = true;
-        camSnapMode = false;
+    isDragging = true;
+    camSnapMode = false;
 	});
     
     $('#canvas').mouseup(function(evt){
+      console.log(dragHasMoved);
    //   if(evt.which === 3) {//RMB
 		if(!dragHasMoved) {
 		  var clickedSat = getSatIdFromCoord(evt.clientX, evt.clientY);
@@ -192,6 +198,15 @@ $(document).ready(function() {
       });
     });
     
+    $('#zoom-in').click(function() {
+      zoomTarget -= 0.04;
+      if(zoomTarget < 0) zoomTarget = 0;
+    });
+    
+    $('#zoom-out').click(function() {
+      zoomTarget += 0.04;
+      if(zoomTarget > 1) zoomTarget = 1;
+    });
  //   debugContext = $('#debug-canvas')[0].getContext('2d');
  //   debugImageData = debugContext.createImageData(debugContext.canvas.width, debugContext.canvas.height);
   drawLoop(); //kick off the animationFrame()s
@@ -283,7 +298,7 @@ function webGlInit(can) {
   pickColorBuf = new Uint8Array(4);
   
   pMatrix = mat4.create();
-  mat4.perspective(pMatrix, 1.01, gl.drawingBufferWidth / gl.drawingBufferHeight, 20.0, 300000.0);
+  mat4.perspective(pMatrix, 1.01, gl.drawingBufferWidth / gl.drawingBufferHeight, 20.0, 600000.0);
   var eciToOpenGlMat = [
     1,  0,  0,  0,
     0,  0, -1,  0,
@@ -384,27 +399,33 @@ function normalizeAngle(angle) {
 var oldT = new Date();
 function drawLoop() {
   var newT = new Date();
-  var dt = newT - oldT;
+  var dt = Math.min(newT - oldT, 1000);
   oldT = newT;
   var dragTarget = getEarthScreenPoint(mouseX, mouseY);
-  if(isDragging && 
-      !(isNaN(dragTarget[0]) || isNaN(dragTarget[1]) || isNaN(dragTarget[2])
-       || isNaN(dragPoint[0]) || isNaN(dragPoint[1]) || isNaN(dragPoint[2]))) { 
-         
-    var dragPointR = Math.sqrt(dragPoint[0]*dragPoint[0] + dragPoint[1]*dragPoint[1]);
-    var dragTargetR = Math.sqrt(dragTarget[0]*dragTarget[0] + dragTarget[1]*dragTarget[1]);
-    
-    var dragPointLon =  Math.atan2(dragPoint[1], dragPoint[0]);
-    var dragTargetLon = Math.atan2(dragTarget[1], dragTarget[0]);
-    
-    var dragPointLat = Math.atan2(dragPoint[2] , dragPointR);
-    var dragTargetLat = Math.atan2(dragTarget[2] , dragTargetR);
-  
-    var pitchDif = dragPointLat - dragTargetLat;
-    var yawDif = normalizeAngle(dragPointLon - dragTargetLon);
-    
-    camPitchSpeed = pitchDif * 0.015;
-    camYawSpeed = yawDif * 0.015;
+  if(isDragging) {
+       if(isNaN(dragTarget[0]) || isNaN(dragTarget[1]) || isNaN(dragTarget[2])
+       || isNaN(dragPoint[0]) || isNaN(dragPoint[1]) || isNaN(dragPoint[2])) { //random screen drag
+         var xDif = screenDragPoint[0] - mouseX;
+         var yDif = screenDragPoint[1] - mouseY;
+         var yawTarget = dragStartYaw + xDif*0.005;
+         var pitchTarget = dragStartPitch + yDif*-0.005;
+         camPitchSpeed = normalizeAngle(camPitch - pitchTarget) * -0.005;
+         camYawSpeed = normalizeAngle(camYaw - yawTarget) * -0.005;
+       } else {  //earth surface point drag  
+        var dragPointR = Math.sqrt(dragPoint[0]*dragPoint[0] + dragPoint[1]*dragPoint[1]);
+        var dragTargetR = Math.sqrt(dragTarget[0]*dragTarget[0] + dragTarget[1]*dragTarget[1]);
+        
+        var dragPointLon =  Math.atan2(dragPoint[1], dragPoint[0]);
+        var dragTargetLon = Math.atan2(dragTarget[1], dragTarget[0]);
+        
+        var dragPointLat = Math.atan2(dragPoint[2] , dragPointR);
+        var dragTargetLat = Math.atan2(dragTarget[2] , dragTargetR);
+        
+        var pitchDif = dragPointLat - dragTargetLat;
+        var yawDif = normalizeAngle(dragPointLon - dragTargetLon);
+        camPitchSpeed = pitchDif * 0.015;
+        camYawSpeed = yawDif * 0.015;
+      }
   } else {
     camPitchSpeed -= (camPitchSpeed * dt * 0.005);
     camYawSpeed -= (camYawSpeed * dt * 0.005);
@@ -432,6 +453,11 @@ function drawLoop() {
  // camYaw = (camYaw % (Math.PI*2));
  camYaw = normalizeAngle(camYaw);
 // console.log(camYaw * R2D);
+  if (selectedSat !== -1) {
+    var sat = satSet.getSat(selectedSat);
+    debugLine.set(sat, [0,0,0]);
+  }
+
   drawScene();
   updateHover();
   updateSelectBox();
