@@ -78,13 +78,22 @@ $(document).ready(function() {
   spinner = new Spinner(opts).spin(target);
   
 	satSet.onLoadSatData(searchBox.init);
+ 
+  var resizing = false;
   
-  resizeCanvas();
-  $(window).resize(resizeCanvas);
+  $(window).resize(function() {
+    if(!resizing) {
+      window.setTimeout(function() {
+        resizing = false;
+        webGlInit();
+      }, 500);
+    } 
+    resizing = true;
+  });
   
   var can = $('#canvas')[0];   
   
-  gl = webGlInit(can);
+  webGlInit();
   earth.init();
   ColorScheme.init();
   satSet.init(function(satData) {
@@ -212,12 +221,6 @@ $(document).ready(function() {
   drawLoop(); //kick off the animationFrame()s
 });
 
-function resizeCanvas() {
-  var can = $('#canvas')[0];
-  can.width = window.innerWidth;
-  can.height = window.innerHeight;
-}
-
 function selectSat(satId) {
   selectedSat = satId;
   if(satId === -1) {
@@ -245,13 +248,17 @@ function browserUnsupported() {
   $('#no-webgl').css('display', 'block');
 }
 
-function webGlInit(can) {
+function webGlInit() {
+  var can = $('#canvas')[0];
+  can.width = window.innerWidth;
+  can.height = window.innerHeight;
+  
   var gl = can.getContext('webgl', {alpha: false}) || can.getContext('experimental-webgl', {alpha: false});
   if(!gl) {
       browserUnsupported();
   }
-  gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
-  // init shaders
+  
+  gl.viewport(0, 0, can.width, can.height);
   
   gl.enable(gl.DEPTH_TEST);
   
@@ -311,7 +318,7 @@ function webGlInit(can) {
   ];
   mat4.mul(pMatrix, pMatrix, eciToOpenGlMat); //pMat = pMat * ecioglMat 
   
-  return gl;
+  window.gl = gl;
 }
 
 function getCamPos() {

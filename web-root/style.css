@@ -16,6 +16,7 @@ a {
   bottom: 0;
   text-align: center;
   margin-top: 20px;
+  display: none;
 }
 
 #canvas {
