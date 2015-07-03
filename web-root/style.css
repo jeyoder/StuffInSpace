@@ -1,6 +1,21 @@
 body {
   font-family: 'Droid Sans', sans-serif;
   color: white;
+  background: black;
+}
+
+a {
+  color: #c33;
+}
+
+#no-webgl {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  text-align: center;
+  margin-top: 20px;
 }
 
 #canvas {

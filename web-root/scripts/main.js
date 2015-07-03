@@ -240,11 +240,15 @@ function selectSat(satId) {
   }
 }
 
+function browserUnsupported() {
+  $('#canvas-holder').hide();
+  $('#no-webgl').css('display', 'block');
+}
 
 function webGlInit(can) {
   var gl = can.getContext('webgl', {alpha: false}) || can.getContext('experimental-webgl', {alpha: false});
   if(!gl) {
-      alert('No Webgl!');
+      browserUnsupported();
   }
   gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
   // init shaders

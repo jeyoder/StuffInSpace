@@ -31,7 +31,9 @@ header('Content-Type: text/html; charset=utf-8');
     
   </head>
   <body>
- 
+  <div id="no-webgl">
+    Stuff in Space requires <a href="http://caniuse.com/#feat=webgl">WebGL</a> and <a href="http://caniuse.com/#feat=webworkers">Web Worker</a> support. 
+  </div>
   <div id="canvas-holder">
     <canvas id="canvas"></canvas>
     <div id="menubar">

@@ -30,7 +30,12 @@
   var hoverColor =   [0.1, 1.0, 0.0, 1.0];
   var selectedColor = [0.0, 1.0, 1.0, 1.0];
   
-  var satCruncher = new Worker('/scripts/sat-cruncher.js');
+  try {
+    var satCruncher = new Worker('/scripts/sat-cruncher.js');
+  } catch (E) {
+    browserUnsupported();
+  }
+  
   var cruncherReady = false;
   var lastDrawTime = 0;
   
