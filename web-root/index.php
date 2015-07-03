@@ -4,16 +4,33 @@ header('Content-Type: text/html; charset=utf-8');
 <!doctype html>
 <html>
   <head>
-    <link href='http://fonts.googleapis.com/css?family=Droid+Sans' rel='stylesheet' type='text/css'>
-    <link rel="stylesheet" href="/icomoon.css">
-    <link rel="stylesheet" href="/style.css">
+    
+    <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Droid+Sans" type="text/css">
+    <link rel="stylesheet" href="/icomoon.css" type="text/css">
+    <link rel="stylesheet" href="/style.css" type="text/css">
+    
     <script src="http://code.jquery.com/jquery-2.1.3.min.js"></script>
     <script src="/scripts/satellite.min.js"></script>
     <script src="/script-loader.php"></script>
+    
+    <?php if($_SERVER['HTTP_HOST'] === 'stuffin.space' || $_SERVER['HTTP_HOST'] === 'www.stuffin.space') { ?>
+      <script>
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+      
+        ga('create', 'UA-64721672-1', 'auto');
+        ga('send', 'pageview');
+      </script> 
+   <?php } else { ?>
+    <!-- analytics disabled for host "<?= $_SERVER['HTTP_HOST'] ?>" -->
+   <?php } ?>
+    
     <title>Stuff in Space</title>
+    
   </head>
   <body>
-
  
   <div id="canvas-holder">
     <canvas id="canvas"></canvas>
