@@ -19,15 +19,15 @@ var cubeVertIndexBuffer;
 var R2D = 180 / Math.PI;
 
 var camYaw = 0;
-var camPitch = 0;
+var camPitch = 0.5;
 
 var camYawTarget = 0;
 var camPitchTarget = 0;
 var camSnapMode = false;
 
 var camDistTarget = 10000;
-var zoomLevel = 0.3;
-var zoomTarget = 0.3;
+var zoomLevel = 0.5;
+var zoomTarget = 0.5;
 var ZOOM_EXP = 3;
 var DIST_MIN = 6400;
 var DIST_MAX = 200000;
@@ -50,6 +50,9 @@ var dragStartPitch = 0;
 var dragStartYaw = 0;
 var isDragging = false;
 var dragHasMoved = false;
+
+var initialRotation = true;
+var initialRotSpeed = 0.000075;
 
 var debugContext, debugImageData;
 
@@ -90,9 +93,6 @@ $(document).ready(function() {
     } 
     resizing = true;
   });
-  
-  var devicePixelRatio = window.devicePixelRatio || 1;
-  var can = $('#canvas')[0];   
   
   webGlInit();
   earth.init();
@@ -145,6 +145,7 @@ $(document).ready(function() {
       zoomTarget += delta * 0.0002;
       if(zoomTarget > 1) zoomTarget = 1;
       if(zoomTarget < 0) zoomTarget = 0;
+      initialRotation = false;
     });
     
     $('#canvas').click(function(evt) {
@@ -165,6 +166,7 @@ $(document).ready(function() {
      //   debugLine.set(dragPoint, getCamPos());
         isDragging = true;
         camSnapMode = false;
+        initialRotation = false;
    //   }
     });
 	
@@ -178,6 +180,7 @@ $(document).ready(function() {
      //   debugLine.set(dragPoint, getCamPos());
     isDragging = true;
     camSnapMode = false;
+    initialRotation = false;
 	});
     
     $('#canvas').mouseup(function(evt){
@@ -190,12 +193,14 @@ $(document).ready(function() {
 	    }
 		dragHasMoved = false;
         isDragging = false;
+        initialRotation = false;
   //    }
     });
 	
 	$('#canvas').on('touchend', function(evt) {
 		dragHasMoved = false;
-        isDragging = false;
+    isDragging = false;
+    initialRotation = false;
 	});
     
     $('.menu-item').mouseover(function(evt){
@@ -213,11 +218,13 @@ $(document).ready(function() {
     $('#zoom-in').click(function() {
       zoomTarget -= 0.04;
       if(zoomTarget < 0) zoomTarget = 0;
+      initialRotation = false;
     });
     
     $('#zoom-out').click(function() {
       zoomTarget += 0.04;
       if(zoomTarget > 1) zoomTarget = 1;
+      initialRotation = false;
     });
  //   debugContext = $('#debug-canvas')[0].getContext('2d');
  //   debugImageData = debugContext.createImageData(debugContext.canvas.width, debugContext.canvas.height);
@@ -442,12 +449,16 @@ function drawLoop() {
         camYawSpeed = yawDif * 0.015;
       }
   } else {
-    camPitchSpeed -= (camPitchSpeed * dt * 0.005);
+    camPitchSpeed -= (camPitchSpeed * dt * 0.005); //decay speeds when globe is "thrown"
     camYawSpeed -= (camYawSpeed * dt * 0.005);
   }
   
   camPitch += camPitchSpeed * dt;
   camYaw += camYawSpeed * dt;
+  
+  if(initialRotation) {
+    camYaw += initialRotSpeed * dt;
+  }
   
   if(camSnapMode) { 
     camPitch += (camPitchTarget - camPitch) * 0.003 * dt;
