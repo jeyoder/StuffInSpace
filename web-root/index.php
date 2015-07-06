@@ -84,7 +84,7 @@ header('Content-Type: text/html; charset=utf-8');
           </ul>
           <ul id="controls-info">
             <li>
-              Left/Right click to rotate camera
+              Left/Right click and drag to rotate camera
             </li>
             <li> Mousewheel to scroll </li>
             <li>
