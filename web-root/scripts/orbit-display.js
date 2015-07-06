@@ -93,7 +93,7 @@ orbitWorker.onmessage = function(m) {
   var pointsOut = new Float32Array(m.data.pointsOut);
   gl.bindBuffer(gl.ARRAY_BUFFER, glBuffers[satId]);
   gl.bufferData(gl.ARRAY_BUFFER, pointsOut, gl.DYNAMIC_DRAW);
-  inProgress[satId] = false
+  inProgress[satId] = false;
 };
 
 /*orbitDisplay.setOrbit = function(satId) {
@@ -120,7 +120,7 @@ orbitDisplay.clearOrbit = function() {
 }*/
 
 orbitDisplay.setSelectOrbit = function(satId) {
-  var start = performance.now();
+ // var start = performance.now();
   currentSelectId = satId;
   orbitDisplay.updateOrbitBuffer(satId);
  // console.log('setOrbit(): ' + (performance.now() - start) + ' ms');
@@ -130,12 +130,11 @@ orbitDisplay.clearSelectOrbit = function() {
   currentSelectId = -1;
   gl.bindBuffer(gl.ARRAY_BUFFER, selectOrbitBuf);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array((NUM_SEGS+1)*3), gl.DYNAMIC_DRAW);
-}
+};
 
 orbitDisplay.setHoverOrbit = function(satId) {
   if(satId === currentHoverId) return;
   currentHoverId = satId;
-  var start = performance.now();
   orbitDisplay.updateOrbitBuffer(satId);
 };
 
@@ -145,7 +144,7 @@ orbitDisplay.clearHoverOrbit = function(satId) {
   
   gl.bindBuffer(gl.ARRAY_BUFFER, hoverOrbitBuf);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array((NUM_SEGS+1)*3), gl.DYNAMIC_DRAW);
-}
+};
 
 orbitDisplay.draw = function(pMatrix, camMatrix) { //lol what do I do here
   if(!initialized) return;
@@ -196,7 +195,7 @@ function allocateBuffer() {
 
 orbitDisplay.getPathShader = function() {
   return pathShader;
-}
+};
 
 window.orbitDisplay = orbitDisplay;
 })();

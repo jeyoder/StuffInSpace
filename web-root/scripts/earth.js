@@ -48,18 +48,18 @@ earth.init = function() {
   gl.attachShader(earthShader, fragShader);
   gl.linkProgram(earthShader);
   
-  earthShader.aVertexPosition  = gl.getAttribLocation(earthShader, 'aVertexPosition');
-  earthShader.aTexCoord = gl.getAttribLocation(earthShader, 'aTexCoord');
-  earthShader.aVertexNormal = gl.getAttribLocation(earthShader, 'aVertexNormal');
-  earthShader.uPMatrix = gl.getUniformLocation(earthShader, 'uPMatrix');
-  earthShader.uCamMatrix = gl.getUniformLocation(earthShader, 'uCamMatrix');
-  earthShader.uMvMatrix = gl.getUniformLocation(earthShader, 'uMvMatrix');
-  earthShader.uNormalMatrix = gl.getUniformLocation(earthShader, 'uNormalMatrix');
-  earthShader.uLightDirection = gl.getUniformLocation(earthShader, 'uLightDirection');
-  earthShader.uAmbientLightColor = gl.getUniformLocation(earthShader, 'uAmbientLightColor');
-  earthShader.uDirectionalLightColor = gl.getUniformLocation(earthShader, 'uDirectionalLightColor');
-  earthShader.uSampler = gl.getUniformLocation(earthShader, 'uSampler');
-  earthShader.uNightSampler = gl.getUniformLocation(earthShader, 'uNightSampler');
+  earthShader.aVertexPosition  =        gl.getAttribLocation(earthShader, 'aVertexPosition');
+  earthShader.aTexCoord =               gl.getAttribLocation(earthShader, 'aTexCoord');
+  earthShader.aVertexNormal =           gl.getAttribLocation(earthShader, 'aVertexNormal');
+  earthShader.uPMatrix =                gl.getUniformLocation(earthShader, 'uPMatrix');
+  earthShader.uCamMatrix =              gl.getUniformLocation(earthShader, 'uCamMatrix');
+  earthShader.uMvMatrix =               gl.getUniformLocation(earthShader, 'uMvMatrix');
+  earthShader.uNormalMatrix =           gl.getUniformLocation(earthShader, 'uNormalMatrix');
+  earthShader.uLightDirection =         gl.getUniformLocation(earthShader, 'uLightDirection');
+  earthShader.uAmbientLightColor =      gl.getUniformLocation(earthShader, 'uAmbientLightColor');
+  earthShader.uDirectionalLightColor =  gl.getUniformLocation(earthShader, 'uDirectionalLightColor');
+  earthShader.uSampler =                gl.getUniformLocation(earthShader, 'uSampler');
+  earthShader.uNightSampler =           gl.getUniformLocation(earthShader, 'uNightSampler');
   
   texture = gl.createTexture();
   var img = new Image();
@@ -69,12 +69,12 @@ earth.init = function() {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT	);
-  //  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     console.log('earth.js loaded texture');
     texLoaded = true;
     onImageLoaded();
   };
   img.src = '/mercator-tex.jpg';
+//  img.src = '/mercator-tex-512.jpg';
   
   nightTexture = gl.createTexture();
   var nightImg = new Image();
@@ -84,12 +84,12 @@ earth.init = function() {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT	);
-  //  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     console.log('earth.js loaded nightearth');
     nightLoaded = true;
     onImageLoaded();
   };
   nightImg.src = '/nightearth-4096.png';
+ // nightImg.src = '/nightearth-512.jpg';
   
   //generate a uvsphere bottom up, CCW order
   var vertPos = [];
@@ -125,7 +125,7 @@ earth.init = function() {
       i++;
     }
   } 
-  var numTris = 0;
+
   //ok let's calculate vertex draw orders.... indiv triangles
   var vertIndex = [];
   for(var lat=0; lat < NUM_LAT_SEGS; lat++) { //this is for each QUAD, not each vertex, so <

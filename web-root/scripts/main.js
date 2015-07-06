@@ -91,6 +91,7 @@ $(document).ready(function() {
     resizing = true;
   });
   
+  var devicePixelRatio = window.devicePixelRatio || 1;
   var can = $('#canvas')[0];   
   
   webGlInit();
@@ -120,6 +121,8 @@ $(document).ready(function() {
       if(evt.which === 68) camYawSpeed = 0; //D
       if(evt.which === 65) camYawSpeed = 0; //A
     });*/
+    
+    
     
 	$('#canvas').on('touchmove', function(evt) {
 		evt.preventDefault();
@@ -250,9 +253,10 @@ function browserUnsupported() {
 
 function webGlInit() {
   var can = $('#canvas')[0];
+  
   can.width = window.innerWidth;
   can.height = window.innerHeight;
-  
+ 
   var gl = can.getContext('webgl', {alpha: false}) || can.getContext('experimental-webgl', {alpha: false});
   if(!gl) {
       browserUnsupported();
@@ -504,6 +508,7 @@ function drawScene() {
   earth.draw(pMatrix, camMatrix);
   satSet.draw(pMatrix, camMatrix);
   orbitDisplay.draw(pMatrix, camMatrix);
+ 
   
   /* DEBUG - show the pickbuffer on a canvas */
  // debugImageData.data = pickColorMap;

@@ -5,7 +5,17 @@ body {
 }
 
 a {
-  color: #c33;
+  color: #e66;
+}
+
+a:hover {
+  color: #ffcaca;
+}
+
+ul {
+   list-style-type: none;
+   padding: 0;
+   margin: 0;
 }
 
 #no-webgl {
@@ -75,7 +85,6 @@ a {
   height: 50px;
   width: 50px;
   position: relative;
-  float: left;
 }
 
 #sat-hoverbox {
@@ -158,7 +167,6 @@ a {
 .search-result-intldes {
   font-size: 12px;
   display: inline-block;
-  float: right;
   height: 28px;
 }
 
@@ -172,21 +180,33 @@ a {
   outline: none;
 }
 
-#menubar {
+.menubar {
   height: 30px;
   position: absolute;
-  top: 2px;
-  left: 0px;
+  top: 5px;
   display: flex;
   flex-direction: row;
-  justify-content: flex-start;
   align-items: stretch;
   align-content: stretch;
+}
+
+#menu-left {
+  left: 0px;
+  justify-content: flex-start;
+}
+
+#menu-right {
+ right: 0px;
+ justify-content: flex-end;
 }
 
 .menu-item {
   cursor: pointer;
   margin: 0px 10px;
+}
+
+.menubox {
+  cursor: default;
 }
 
 .menu-item:first-child {
@@ -201,34 +221,41 @@ a {
   height: 30px;
 }
 
+
+
 .submenu {
   display: none;
   background: black;
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 5px;
   margin: 0;
-  list-style-type: none;
-  padding: 0;
   overflow: hidden;
   position: absolute;
+}
+
+.dropdown {
   width: 200px;
 }
 
-.submenu>li {
+.menubox {
+  padding: 10px;
+}
+
+.dropdown>li {
   display: block;
   padding: 5px 10px;
 }
 
-.submenu>li:hover {
+.dropdown>li:hover {
   background: #c33;
   font-weight: bold;
 }
 
-.submenu>li:active {
+.dropdown>li:active {
   background: #511;
 }
 
-.submenu>li.clear-option {
+.dropdown>li.clear-option {
   background: #511;
   display: none;
 }
@@ -273,5 +300,43 @@ a {
 }
 
 #zoom-out {
+ 
+}
 
+#about-box {
+  right: 10px;
+  width: 500px;
+  height: 275px;
+}
+
+#help-box {
+  right: 70px;
+  width: 200px;
+  height: 225px;
+}
+
+.box-header {
+  font-size: 20px;
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
+
+#legend li {
+  height: 25px;
+  line-height: 25px;
+  margin-top: 5px;
+  magin-bottom: 5px;
+}
+
+.dot {
+  vertical-align: middle;
+  margin-right: 5px;
+}
+
+#controls-info {
+  margin-top: 10px;
+}
+
+#controls-info>li {
+  margin-top: 10px;
 }

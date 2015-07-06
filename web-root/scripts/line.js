@@ -1,5 +1,6 @@
+/* global orbitDisplay */
 (function() {
-	function Line(pt1, pt2) {
+	function Line() {
 		this.vertBuf = gl.createBuffer();
 		gl.bindBuffer(gl.ARRAY_BUFFER, this.vertBuf);
 		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(6), gl.STREAM_DRAW);

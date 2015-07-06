@@ -1,3 +1,5 @@
+/* global browserUnsupported */
+/* global satellite */
 /* global mat4 */
 /* global shaderLoader */
 /* global gl */
@@ -29,6 +31,8 @@
   
   var hoverColor =   [0.1, 1.0, 0.0, 1.0];
   var selectedColor = [0.0, 1.0, 1.0, 1.0];
+  
+
   
   try {
     var satCruncher = new Worker('/scripts/sat-cruncher.js');
@@ -208,13 +212,15 @@ satSet.draw = function(pMatrix, camMatrix) {
     gl.enable(gl.BLEND);
     gl.depthMask(false);
     
-     gl.drawArrays(gl.POINTS, 0, satData.length); //draw 
+     gl.drawArrays(gl.POINTS, 0, satData.length); 
      
     gl.depthMask(true);
     gl.disable(gl.BLEND);
     
+    // now pickbuffer stuff......
+    
     gl.useProgram(gl.pickShaderProgram);
-  gl.bindFramebuffer(gl.FRAMEBUFFER, gl.pickFb);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, gl.pickFb);
  //   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
       gl.uniformMatrix4fv(gl.pickShaderProgram.uMvMatrix, false, mat4.identity(mat4.create()));
       gl.uniformMatrix4fv(gl.pickShaderProgram.uCamMatrix, false, camMatrix);
