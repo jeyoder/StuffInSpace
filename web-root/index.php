@@ -104,12 +104,12 @@ header('Content-Type: text/html; charset=utf-8');
           and uses the excellent <a href="https://github.com/shashwatak/satellite-js">satellite.js</a> Javascript library
           to calculate satellite positions.</p>
           
-          <span class="box-header">About me</span>
+          <span class="box-header">About the author</span>
           <p>My name is James Yoder; I'm an an alumnus of <a href="http://www.usfirst.org/roboticsprograms/frc"><i>FIRST</i> Robotics
           Competition </a> (FRC) <a href="http://team624.org">Team 624</a> and an incoming Electrical and Computer Engineering freshman at the 
           University of Texas at Austin. </p>
           
-          <p>Stuff in Space on <a href="https://github.com/jeyoder/ThingsInSpace"> GitHub </a></p>
+          <p>See Stuff in Space on <a href="https://github.com/jeyoder/ThingsInSpace"> GitHub </a>.</p>
         </div>
       </div>
     </div>
