@@ -108,8 +108,10 @@ header('Content-Type: text/html; charset=utf-8');
           <p>My name is James Yoder; I'm an an alumnus of <a href="http://www.usfirst.org/roboticsprograms/frc"><i>FIRST</i> Robotics
           Competition </a> (FRC) <a href="http://team624.org">Team 624</a> and an incoming Electrical and Computer Engineering freshman at the 
           University of Texas at Austin. </p>
-          
-          <p>See Stuff in Space on <a href="https://github.com/jeyoder/ThingsInSpace"> GitHub </a>.</p>
+          <p>Contact: <a href="mailto:info@stuffin.space">info@stuffin.space</a></p>
+          <p>See Stuff in Space on <a href="https://github.com/jeyoder/ThingsInSpace"> GitHub </a></p>
+
+        
         </div>
       </div>
     </div>
