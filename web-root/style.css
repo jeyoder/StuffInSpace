@@ -166,8 +166,8 @@ ul {
 
 .search-result-intldes {
   font-size: 12px;
-  display: inline-block;
   height: 28px;
+  float: right;
 }
 
 #search {
