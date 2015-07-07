@@ -272,6 +272,9 @@ function webGlInit() {
   gl.viewport(0, 0, can.width, can.height);
   
   gl.enable(gl.DEPTH_TEST);
+  gl.enable(0x8642); //enable point sprites(?!) This might get browsers with 
+                     // underlying OpenGL to behave
+                     //although it's not technically a part of the WebGL standard
   
   var pFragShader = gl.createShader(gl.FRAGMENT_SHADER);
   var pFragCode = shaderLoader.getShaderCode('pick-fragment.glsl');
