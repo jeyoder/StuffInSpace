@@ -135,6 +135,7 @@
     groups.GlonassGroup = new SatGroup('nameRegex', /GLONASS/);
     groups.GalileoGroup = new SatGroup('nameRegex', /GALILEO/);
     groups.FunGroup = new SatGroup('nameRegex', /SYLDA/);
+    groups.WestfordNeedlesGroup = new SatGroup('nameRegex', /WESTFORD NEEDLES/);
     
     console.log('groups init: ' + (performance.now() - start) + ' ms');
   };

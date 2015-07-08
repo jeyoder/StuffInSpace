@@ -50,8 +50,8 @@ header('Content-Type: text/html; charset=utf-8');
           <li data-group="GlonassGroup">GLONASS</li>
           <li data-group="GalileoGroup">Galileo</li>
           <li data-group="Iridium33DebrisGroup">Iridium 33 Collision Debris</li>
-          
           <li data-group="FunGroup">Ariane Sylda</li>
+          <li data-group="WestfordNeedlesGroup">Westford Needles</li>
         </ul>
       </div>
      <!-- <div id="menu-color-schemes" class="menu-item">
