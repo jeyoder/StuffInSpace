@@ -105,7 +105,7 @@ header('Content-Type: text/html; charset=utf-8');
           to calculate satellite positions.</p>
           
           <span class="box-header">About the author</span>
-          <p>My name is James Yoder; I'm an an alumnus of <a href="http://www.usfirst.org/roboticsprograms/frc"><i>FIRST</i> Robotics
+          <p>My name is James Yoder; I'm an alumnus of <a href="http://www.usfirst.org/roboticsprograms/frc"><i>FIRST</i> Robotics
           Competition </a> (FRC) <a href="http://team624.org">Team 624</a> and an incoming Electrical and Computer Engineering freshman at the 
           University of Texas at Austin. </p>
           <p>Contact: <a href="mailto:info@stuffin.space">info@stuffin.space</a></p>
