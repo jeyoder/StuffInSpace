@@ -106,7 +106,7 @@
     dotShader.uCamMatrix = gl.getUniformLocation(dotShader, 'uCamMatrix');
     dotShader.uPMatrix = gl.getUniformLocation(dotShader, 'uPMatrix');
     
-    $.get('/TLE.json?fakeparameter=to_avoid_browser_cache', function(resp) {
+    $.getJSON('/TLE.json?fakeparameter=to_avoid_browser_cache', function(resp) {
       var startTime = new Date().getTime();
       
      
