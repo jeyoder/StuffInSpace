@@ -130,13 +130,16 @@
       '14068A',
       '15013A'
     ]);   
+	groups.DirecttvGroup = new SatGroup('nameRegex', /DIRECTV/);
+	groups.InmarsatGroup = new SatGroup('nameRegex', /INMARSAT/);
     groups.IridiumGroup = new SatGroup('nameRegex', /IRIDIUM(?!.*DEB)/);
     groups.Iridium33DebrisGroup = new SatGroup('nameRegex', /(COSMOS 2251|IRIDIUM 33) DEB/);
     groups.GlonassGroup = new SatGroup('nameRegex', /GLONASS/);
     groups.GalileoGroup = new SatGroup('nameRegex', /GALILEO/);
+	groups.MolniyaGroup = new SatGroup('nameRegex', /MOLNIYA/);
     groups.FunGroup = new SatGroup('nameRegex', /SYLDA/);
     groups.WestfordNeedlesGroup = new SatGroup('nameRegex', /WESTFORD NEEDLES/);
-    
+  
     console.log('groups init: ' + (performance.now() - start) + ' ms');
   };
 	window.groups = groups;

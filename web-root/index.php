@@ -46,10 +46,13 @@ header('Content-Type: text/html; charset=utf-8');
         <ul id="groups-display" class="dropdown submenu">
           <li data-group="<clear>" class="clear-option">Clear</li>
           <li data-group="GPSGroup">GPS</li>
-          <li data-group="IridiumGroup">Iridium</li>
+		  <li data-group="DirectvGroup">DirecTV</li>
+		  <li data-group="InmarsatGroup">INMARSAT</li>
+		  <li data-group="IridiumGroup">Iridium</li>
           <li data-group="GlonassGroup">GLONASS</li>
           <li data-group="GalileoGroup">Galileo</li>
           <li data-group="Iridium33DebrisGroup">Iridium 33 Collision Debris</li>
+		  <li data-group="MolniyaGroup">Molniya</li>
           <li data-group="FunGroup">Ariane Sylda</li>
           <li data-group="WestfordNeedlesGroup">Westford Needles</li>
         </ul>
