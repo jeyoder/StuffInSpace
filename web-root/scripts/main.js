@@ -42,6 +42,8 @@ var pMatrix = mat4.create(), camMatrix = mat4.create();
 
 var selectedSat = -1;
 
+var followSat = false;
+
 var mouseX = 0, mouseY = 0, mouseSat = -1;
 
 var dragPoint = [0,0,0];
@@ -490,6 +492,7 @@ function drawLoop() {
   drawScene();
   updateHover();
   updateSelectBox();
+  updateFollowSat();
   requestAnimationFrame(drawLoop);
 }
 
@@ -577,6 +580,16 @@ function getSatIdFromCoord(x, y) {
   return((pickB << 16) | (pickG << 8) | (pickR)) - 1;
 }
 
+function checkFollow(followCheckbox) {
+  followSat = followCheckbox.checked;
+}
+
+function updateFollowSat() {
+  if(selectedSat === -1) return;
+  if(!followSat) return;
+  
+  camSnapToSat(selectedSat);
+}
 
 
 
