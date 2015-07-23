@@ -151,6 +151,10 @@ header('Content-Type: text/html; charset=utf-8');
         <div class="sat-info-key">Period</div>
         <div class="sat-info-value" id="sat-period">100</div> min
       </div>
+      <div class="sat-info-row">
+        <div class="sat-info-key">Follow</div>
+        <input type="checkbox" name="sat-follow" onclick="checkFollow(this)" />
+      </div>
     </div>
     <div id="zoom-controls">
       <div id="zoom-in" class="zoom-button">+</div>
