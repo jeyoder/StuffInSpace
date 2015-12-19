@@ -24,6 +24,8 @@ var camPitch = 0.5;
 var camYawTarget = 0;
 var camPitchTarget = 0;
 var camSnapMode = false;
+var camZoomSnappedOnSat = false;
+var camAngleSnappedOnSat = false;
 
 var camDistTarget = 10000;
 var zoomLevel = 0.5;
@@ -79,8 +81,6 @@ $(document).ready(function() {
   };
   var target = document.getElementById('spinner');
   spinner = new Spinner(opts).spin(target);
-  
-	satSet.onLoadSatData(searchBox.init);
  
   var resizing = false;
   
@@ -107,32 +107,42 @@ $(document).ready(function() {
     debugLine3 = new Line();
   });
 
-   /* var rotSpeed = 0.001;
-    $(document).keydown(function(evt) {
-      if(evt.which === 83) camPitchSpeed = -rotSpeed; //S
-      if(evt.which === 87) camPitchSpeed = rotSpeed; //W
-      if(evt.which === 68) camYawSpeed = rotSpeed; //D
-      if(evt.which === 65) camYawSpeed = -rotSpeed; //A
-    });
-    
-    $(document).keyup(function (evt) {
-       if(evt.which === 83) camPitchSpeed = 0; //S
-      if(evt.which === 87) camPitchSpeed =0; //W
-      if(evt.which === 68) camYawSpeed = 0; //D
-      if(evt.which === 65) camYawSpeed = 0; //A
-    });*/
-    
-    
+  satSet.onCruncherReady(function(satData) {
+    //do querystring stuff
+    var queryStr = window.location.search.substring(1);
+    var params = queryStr.split('&');
+    for(var i=0; i < params.length; i++){
+      var key = params[i].split('=')[0];
+      var val = params[i].split('=')[1];
+      if(key === 'intldes') {
+        console.log('url snapping to ' + val);
+        var urlSatId = satSet.getIdFromIntlDes(val.toUpperCase());
+        if(urlSatId !== null) {
+          selectSat(urlSatId);
+        }
+      }
+    }
+
+    searchBox.init(satData);
+  });
     
 	$('#canvas').on('touchmove', function(evt) {
 		evt.preventDefault();
-	  if(isDragging) dragHasMoved = true;
+	  if(isDragging) {
+      dragHasMoved = true;
+      camAngleSnappedOnSat = false;
+      camZoomSnappedOnSat = false;
+    }
       mouseX = evt.originalEvent.touches[0].clientX;
       mouseY = evt.originalEvent.touches[0].clientY;
 	});
 	
     $('#canvas').mousemove(function(evt) {
-      if(isDragging) dragHasMoved = true;
+      if(isDragging) {
+        dragHasMoved = true;
+        camAngleSnappedOnSat = false;
+        camZoomSnappedOnSat = false;
+      }
       mouseX = evt.clientX;
       mouseY = evt.clientY;
     });
@@ -146,6 +156,7 @@ $(document).ready(function() {
       if(zoomTarget > 1) zoomTarget = 1;
       if(zoomTarget < 0) zoomTarget = 0;
       initialRotation = false;
+      camZoomSnappedOnSat = false;
     });
     
     $('#canvas').click(function(evt) {
@@ -184,7 +195,6 @@ $(document).ready(function() {
 	});
     
     $('#canvas').mouseup(function(evt){
-      console.log(dragHasMoved);
    //   if(evt.which === 3) {//RMB
 		if(!dragHasMoved) {
 		  var clickedSat = getSatIdFromCoord(evt.clientX, evt.clientY);
@@ -219,12 +229,14 @@ $(document).ready(function() {
       zoomTarget -= 0.04;
       if(zoomTarget < 0) zoomTarget = 0;
       initialRotation = false;
+      camZoomSnappedOnSat = false;
     });
     
     $('#zoom-out').click(function() {
       zoomTarget += 0.04;
       if(zoomTarget > 1) zoomTarget = 1;
       initialRotation = false;
+      camZoomSnappedOnSat = false;
     });
  //   debugContext = $('#debug-canvas')[0].getContext('2d');
  //   debugImageData = debugContext.createImageData(debugContext.canvas.width, debugContext.canvas.height);
@@ -236,9 +248,13 @@ function selectSat(satId) {
   if(satId === -1) {
     $('#sat-infobox').fadeOut();
      orbitDisplay.clearSelectOrbit();
+     window.history.replaceState(null, 'Stuff in Space', '/');
   } else {
+    camZoomSnappedOnSat = true;
+    camAngleSnappedOnSat = true;
+
     satSet.selectSat(satId);
-    camSnapToSat(satId);
+ //   camSnapToSat(satId);
     var sat = satSet.getSat(satId);
     if(!sat) return;
     orbitDisplay.setSelectOrbit(satId);
@@ -250,6 +266,8 @@ function selectSat(satId) {
     $('#sat-perigee').html(sat.perigee.toFixed(0) + ' km');
     $('#sat-inclination').html((sat.inclination * R2D).toFixed(2));  
     $('#sat-period').html(sat.period.toFixed(2));
+
+    window.history.replaceState(null, 'Stuff in Space', "/?intldes=" + sat.intlDes);
   }
 }
 
@@ -396,15 +414,23 @@ function getCamDist() {
 }
 
 function camSnapToSat(satId) {
+  /* this function runs every frame that a satellite is seleected. However, the user might have broken out of the
+  zoom snap or angle snap. If so, don't change those targets. */
+ 
   var sat = satSet.getSat(satId);
-  var pos = sat.position;
-  var r = Math.sqrt(pos.x * pos.x + pos.y * pos.y);
-  var yaw = Math.atan2(pos.y, pos.x) + Math.PI/2;
-  var pitch = Math.atan2(pos.z, r);
-  camSnap(pitch, yaw);
+
+  if(camAngleSnappedOnSat) {
+    var pos = sat.position;
+    var r = Math.sqrt(pos.x * pos.x + pos.y * pos.y);
+    var yaw = Math.atan2(pos.y, pos.x) + Math.PI/2;
+    var pitch = Math.atan2(pos.z, r);
+    camSnap(pitch, yaw);
+  }
   
-  var camDistTarget = sat.altitude + 6371 + 2000;
-  zoomTarget = Math.pow((camDistTarget - DIST_MIN) / (DIST_MAX - DIST_MIN), 1/ZOOM_EXP);
+  if(camZoomSnappedOnSat) {
+    var camDistTarget = sat.altitude + 6371 + 2000;
+    zoomTarget = Math.pow((camDistTarget - DIST_MIN) / (DIST_MAX - DIST_MIN), 1/ZOOM_EXP);
+  }
 }
 
 function camSnap(pitch, yaw) {
@@ -451,6 +477,7 @@ function drawLoop() {
         camPitchSpeed = pitchDif * 0.015;
         camYawSpeed = yawDif * 0.015;
       }
+      camSnapMode = false;
   } else {
     camPitchSpeed -= (camPitchSpeed * dt * 0.005); //decay speeds when globe is "thrown"
     camYawSpeed -= (camYawSpeed * dt * 0.005);
@@ -469,9 +496,9 @@ function drawLoop() {
     var yawErr = normalizeAngle(camYawTarget - camYaw);
     camYaw += yawErr * 0.003 * dt;
     
-    if(Math.abs(camPitchTarget - camPitch) < 0.002 && Math.abs(camYawTarget - camYaw) < 0.002 && Math.abs(zoomTarget - zoomLevel) < 0.002) {
-      camSnapMode = false;
-    }
+ /*   if(Math.abs(camPitchTarget - camPitch) < 0.002 && Math.abs(camYawTarget - camYaw) < 0.002 && Math.abs(zoomTarget - zoomLevel) < 0.002) {
+      camSnapMode = false; Stay in camSnapMode forever. Is this a good idea? dunno....
+    }*/
      zoomLevel = zoomLevel + (zoomTarget - zoomLevel)*dt*0.0025;
   } else {
      zoomLevel = zoomLevel + (zoomTarget - zoomLevel)*dt*0.0075;
@@ -485,6 +512,7 @@ function drawLoop() {
   if (selectedSat !== -1) {
     var sat = satSet.getSat(selectedSat);
     debugLine.set(sat, [0,0,0]);
+    camSnapToSat(selectedSat);
   }
 
   drawScene();

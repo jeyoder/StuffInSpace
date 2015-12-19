@@ -43,7 +43,7 @@
   var cruncherReady = false;
   var lastDrawTime = 0;
   
-  var satDataCallback;
+  var cruncherReadyCallback;
   
   var gotExtraData = false;
   satCruncher.onmessage = function(m) {
@@ -67,7 +67,7 @@
         satData[i].period = satExtraData[i].period;
       }
       
-      console.log('sat.js stored extra data in ' + (performance.now() - start) + ' ms');
+      console.log('sat.js copied extra data in ' + (performance.now() - start) + ' ms');
       gotExtraData = true;
       return;
     }
@@ -80,6 +80,9 @@
       $('#load-cover').fadeOut();
       satSet.setColorScheme(currentColorScheme); //force color recalc
        cruncherReady = true;
+       if(cruncherReadyCallback) {
+        cruncherReadyCallback(satData);
+       }
     }
     
   };
@@ -187,7 +190,7 @@ satSet.draw = function(pMatrix, camMatrix) {
   if(!shadersReady || !cruncherReady) return;
   
   var now = Date.now();
-  var dt = (now - lastDrawTime) / 1000.0;
+  var dt = Math.min((now - lastDrawTime) / 1000.0, 1.0);
   for(var i=0; i<(satData.length*3); i++) {
     satPos[i] += satVel[i] * dt;
   }
@@ -306,11 +309,11 @@ satSet.draw = function(pMatrix, camMatrix) {
     }
     selectedSat = i; 
   };
-  
-  satSet.onLoadSatData = function(callback) {
-    satDataCallback = callback;
-    if(shadersReady) callback(satData);
-  };
+
+  satSet.onCruncherReady = function(cb) {
+    cruncherReadyCallback = cb;
+    if(cruncherReady) cb;
+  }
   
   window.satSet = satSet;
  
