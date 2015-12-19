@@ -50,6 +50,7 @@ header('Content-Type: text/html; charset=utf-8');
           <li data-group="GlonassGroup">GLONASS</li>
           <li data-group="GalileoGroup">Galileo</li>
           <li data-group="Iridium33DebrisGroup">Iridium 33 Collision Debris</li>
+          <li data-group="FunGroup">Ariane Sylda</li>
           <li data-group="WestfordNeedlesGroup">Westford Needles</li>
           <li data-group="SpaceXGroup">SpaceX</li>
         </ul>
@@ -155,6 +156,16 @@ header('Content-Type: text/html; charset=utf-8');
     <div id="zoom-controls">
       <div id="zoom-in" class="zoom-button">+</div>
       <div id="zoom-out" class="zoom-button">-</div>
+    </div>
+    <div id="time-display">
+      <div class="time-box"> 
+        <div class="time-label">Real</div> 
+        <div class="time" id="real-time">1/23/2015 00:42:32.98 UTC</div>
+      </div>
+      <div class="time-box"> 
+        <div class="time-label">Sim</div> 
+        <div class="time" id="sim-time">6/24/2015 15:23:27.44 UTC</div>
+      </div>
     </div>
     <div id="load-cover">
       <div id="loader">

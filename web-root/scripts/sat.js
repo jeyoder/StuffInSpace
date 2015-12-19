@@ -186,7 +186,7 @@ satSet.setColorScheme = function(scheme) {
   pickableBuf = buffers.pickableBuf; 
 };
  
-satSet.draw = function(pMatrix, camMatrix) {
+satSet.draw = function(pMatrix, camMatrix, time) {
   if(!shadersReady || !cruncherReady) return;
   
   var now = Date.now();

@@ -9,6 +9,7 @@ $scriptFiles = [
 //'satellite.js',
 
 //our script files
+'time.js',
 'shader-loader.js',
 'color-scheme.js',
 'groups.js',

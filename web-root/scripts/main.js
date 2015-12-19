@@ -518,6 +518,7 @@ function drawLoop() {
   drawScene();
   updateHover();
   updateSelectBox();
+  time.updateDisplay();
   requestAnimationFrame(drawLoop);
 }
 
@@ -547,7 +548,9 @@ function drawScene() {
   if(debugLine) debugLine.draw();
   if(debugLine2)debugLine2.draw();
   if(debugLine3)debugLine3.draw();
-  earth.draw(pMatrix, camMatrix);
+  var simTime = time.getSimulationTime();
+
+  earth.draw(pMatrix, camMatrix, simTime);
   satSet.draw(pMatrix, camMatrix);
   orbitDisplay.draw(pMatrix, camMatrix);
  

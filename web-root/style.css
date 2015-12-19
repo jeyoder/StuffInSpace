@@ -340,3 +340,23 @@ ul {
 #controls-info>li {
   margin-top: 10px;
 }
+
+#time-display {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  width: 250px;
+}
+
+.time-box {
+
+}
+
+.time-label {
+  color: #c33;
+  display: inline;
+}
+
+.time {
+  display: inline;
+}

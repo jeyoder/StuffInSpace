@@ -168,17 +168,16 @@ earth.init = function() {
   console.log('earth init: ' + end + ' ms');
 };
 
-earth.draw = function(pMatrix, camMatrix) {
+earth.draw = function(pMatrix, camMatrix, time) {
   if(!loaded) return;
   
-  var now = new Date();   
-  var j = 	jday(now.getUTCFullYear(), 
-               now.getUTCMonth() + 1, // Note, this function requires months in range 1-12. 
-               now.getUTCDate(),
-               now.getUTCHours(), 
-               now.getUTCMinutes(), 
-               now.getUTCSeconds());
-  j += now.getUTCMilliseconds() * 1.15741e-8; //days per millisecond   
+  var j = 	jday(time.getUTCFullYear(), 
+               time.getUTCMonth() + 1, // Note, this function requires months in range 1-12. 
+               time.getUTCDate(),
+               time.getUTCHours(), 
+               time.getUTCMinutes(), 
+               time.getUTCSeconds());
+  j += time.getUTCMilliseconds() * 1.15741e-8; //days per millisecond   
   
   var era = satellite.gstime_from_jday(j);
   
