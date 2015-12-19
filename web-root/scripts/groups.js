@@ -136,6 +136,7 @@
     groups.GalileoGroup = new SatGroup('nameRegex', /GALILEO/);
     groups.FunGroup = new SatGroup('nameRegex', /SYLDA/);
     groups.WestfordNeedlesGroup = new SatGroup('nameRegex', /WESTFORD NEEDLES/);
+    groups.SpaceXGroup = new SatGroup('nameRegex', /FALCON [19]/);
     
     console.log('groups init: ' + (performance.now() - start) + ' ms');
   };
