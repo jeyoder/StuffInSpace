@@ -199,7 +199,7 @@ $(document).ready(function() {
 		if(!dragHasMoved) {
 		  var clickedSat = getSatIdFromCoord(evt.clientX, evt.clientY);
 		  selectSat(clickedSat);
-		  searchBox.hideResults();
+		  if(clickedSat === -1) searchBox.hideResults();
 	    }
 		dragHasMoved = false;
         isDragging = false;
@@ -566,8 +566,10 @@ function updateSelectBox() {
 }
 
 function updateHover() {
+  if(searchBox.isHovering()) return;
+
   mouseSat = getSatIdFromCoord(mouseX, mouseY);
-  
+
   satSet.setHover(mouseSat);
   
   if(mouseSat === -1) {

@@ -21,6 +21,12 @@
           satId : satIdList[i]
         });
       } 
+    } else if (groupType === 'idList') {
+      for(var i=0; i < data.length; i++) {
+        this.sats.push({
+          satId : data[i]
+        });
+      } 
     }
 	}
 	
@@ -43,6 +49,8 @@
       callback(this.sats[i].satId);
     }
   };
+
+  groups.SatGroup = SatGroup;
   
   groups.selectGroup = function(group) {
     var start = performance.now();

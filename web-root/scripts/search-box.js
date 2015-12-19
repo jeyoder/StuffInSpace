@@ -1,14 +1,21 @@
 (function() {
   var searchBox = {};
-  var SEARCH_LIMIT = 2000;
+  var SEARCH_LIMIT = 200;
   var satData;
+
+  var hovering = false;
   
   function hideResults() {
     var sr = $('#search-results');
     sr.slideUp();
+    groups.clearSelect();
   }
   
   searchBox.hideResults = hideResults;
+
+  searchBox.isHovering = function() {
+    return hovering;
+  }
   
   searchBox.init = function(_satData) {
     satData = _satData;
@@ -16,8 +23,19 @@
       var satId = $(this).data('sat-id');
       console.log(satId);
       selectSat(satId);
-      hideResults();
+     // hideResults();
     });
+
+    $('#search-results').on('mouseover', '.search-result', function(evt) {
+      var satId = $(this).data('sat-id');
+      orbitDisplay.setHoverOrbit(satId);
+      hovering = true;
+    });
+
+   $('#search-results').mouseout(function() {
+      orbitDisplay.clearHoverOrbit();
+      hovering = false;
+    }); 
     
     $('#search').on('input', function() {
         var initStart = performance.now();
@@ -51,10 +69,22 @@
             });
           }
           
-         if(results.length > SEARCH_LIMIT) break;
+        }
+        var resultCount = results.length;
+
+        if(results.length > SEARCH_LIMIT) {
+          results.length = SEARCH_LIMIT;
         }
 
-        
+        //make a group to hilight results
+        var idList = [];
+        for(var i=0; i<results.length; i++) {
+          idList.push(results[i].sat.id);
+        }
+        var dispGroup = new groups.SatGroup('idList', idList);
+        groups.selectGroup(dispGroup);
+
+        //update the results box
         var html = '';
         for(var i=0; i < results.length; i++) {
           var sat = results[i].sat;
