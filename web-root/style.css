@@ -139,13 +139,16 @@ ul {
 #search-results {
   display: none;
   position: absolute;
-  width: 300px;
+  width: 350px;
   background: black;
   color: white;
   border-radius: 5px;
   border: 1px solid rgba(255, 255, 255, 0.2);
   z-index: 10;
   top: 30px;
+  bottom: 0;
+  overflow: auto;
+  max-height: 100%;
 }
 
 .search-hilight {
@@ -168,6 +171,7 @@ ul {
   font-size: 12px;
   height: 28px;
   float: right;
+  margin-right: 10px;
 }
 
 #search {
@@ -203,6 +207,7 @@ ul {
 .menu-item {
   cursor: pointer;
   margin: 0px 10px;
+  z-index: 11;
 }
 
 .menubox {

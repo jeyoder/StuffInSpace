@@ -7,6 +7,7 @@ header('Content-Type: text/html; charset=utf-8');
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Droid+Sans" type="text/css">
     <link rel="stylesheet" href="/icomoon.css" type="text/css">
+    <link rel="stylesheet" href="/perfect-scrollbar.min.css" type="text/css">
     <link rel="stylesheet" href="/style.css" type="text/css">
     
     <script src="http://code.jquery.com/jquery-2.1.3.min.js"></script>
@@ -115,7 +116,7 @@ header('Content-Type: text/html; charset=utf-8');
         </div>
       </div>
     </div>
-    <div id="search-results"></div>
+      <div id="search-results"></div>
     <div id="sat-hoverbox">(none)</div>
     <div id="sat-infobox">
       <div id="sat-info-title">This is a title</div>
@@ -137,19 +138,19 @@ header('Content-Type: text/html; charset=utf-8');
       </div>
        <div class="sat-info-row">
         <div class="sat-info-key">Inclination</div>
-        <div class="sat-info-value" id="sat-inclination">123.45</div>°
+        <div class="sat-info-value" id="sat-inclination">123.45°</div>
       </div>
       <div class="sat-info-row">
         <div class="sat-info-key">Altitude</div>
-        <div class="sat-info-value" id="sat-altitude">100</div> km
+        <div class="sat-info-value" id="sat-altitude">100  km</div>
       </div>
       <div class="sat-info-row">
         <div class="sat-info-key">Velocity</div>
-        <div class="sat-info-value" id="sat-velocity">100</div> km/s
+        <div class="sat-info-value" id="sat-velocity">100  km/s</div>
       </div>
       <div class="sat-info-row">
         <div class="sat-info-key">Period</div>
-        <div class="sat-info-value" id="sat-period">100</div> min
+        <div class="sat-info-value" id="sat-period">100  min</div>
       </div>
     </div>
     <div id="zoom-controls">
