@@ -123,14 +123,6 @@
         satCruncher.postMessage(satSet.satDataString); //kick off satCruncher
       var postEnd = performance.now();
       
-      satSet.satrec = [];
-      
-      for(var i=0; i < satData.length; i++) {
-        satSet.satrec.push(satellite.twoline2satrec(
-          satData[i].TLE_LINE1, satData[i].TLE_LINE2
-        ));
-      }
-      
       //do some processing on our satData response
       for(var i = 0; i < satData.length; i++) {     
       
