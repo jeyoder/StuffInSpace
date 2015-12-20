@@ -17,6 +17,15 @@
     return lastResultGroup;
   };
 
+  searchBox.getCurrentSearch = function() {
+    if(resultsOpen) {
+      return $('#search').val();
+    } else {
+      return null;
+    }
+  };
+
+
   searchBox.isHovering = function() {
     return hovering;
   };
@@ -33,9 +42,16 @@
   };
 
   searchBox.doSearch = function(str) {
-    if(str.length === 0) return null;
+    selectSat(-1);
+
+    if(str.length === 0) {
+      hideResults();
+      return;
+    }
 
     var searchStart = performance.now();
+
+    str = str.toUpperCase();
 
     var results = [];
     for(var i=0; i < satData.length; i++) {
@@ -62,7 +78,17 @@
       results.length = SEARCH_LIMIT;
     }
 
-    return results;
+    //make a group to hilight results
+    var idList = [];
+    for(var i=0; i<results.length; i++) {
+      idList.push(results[i].satId);
+    }
+    var dispGroup = new groups.SatGroup('idList', idList);
+    lastResultGroup = dispGroup;
+    groups.selectGroup(dispGroup);
+
+    searchBox.fillResultBox(results, str);
+    updateUrl();
   };
 
   searchBox.fillResultBox = function (results, searchStr) {
@@ -130,28 +156,16 @@
     
     $('#search').on('input', function() {
         var initStart = performance.now();
-        var searchStr = $('#search').val().toUpperCase();
-        
-        selectSat(-1);
+        var searchStr = $('#search').val()
 
-        if(searchStr.length === 0) {
-          hideResults();
-          return;
-        }
+        searchBox.doSearch(searchStr);
+    });
 
-        var results = searchBox.doSearch(searchStr);
-
-        //make a group to hilight results
-        var idList = [];
-        for(var i=0; i<results.length; i++) {
-          idList.push(results[i].satId);
-        }
-        var dispGroup = new groups.SatGroup('idList', idList);
-        lastResultGroup = dispGroup;
-        groups.selectGroup(dispGroup);
-
-        //update the results box   
-        searchBox.fillResultBox(results, searchStr);
+    $('#all-objects-link').click(function() {
+      var intldes = satSet.getSat(selectedSat).intlDes;
+      var searchStr = intldes.slice(0,8);
+      searchBox.doSearch(searchStr);
+      $('#search').val(searchStr);
     });
   };
   

@@ -120,6 +120,7 @@ header('Content-Type: text/html; charset=utf-8');
     <div id="sat-hoverbox">(none)</div>
     <div id="sat-infobox">
       <div id="sat-info-title">This is a title</div>
+      <div id="all-objects-link" class="link">Find all objects from this launch...</div>
       <div class="sat-info-row">
         <div class="sat-info-key">Int'l Designator</div>
         <div class="sat-info-value" id="sat-intl-des">1998-067A</div>
