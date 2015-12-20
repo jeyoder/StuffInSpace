@@ -4,11 +4,13 @@ body {
   background: black;
 }
 
-a {
+a,.link {
   color: #e66;
+  text-decoration: underline;
+  cursor: pointer;
 }
 
-a:hover {
+a:hover,.link:hover {
   color: #ffcaca;
 }
 
@@ -116,6 +118,12 @@ ul {
   display: none;
 }
 
+#all-objects-link {
+  font-size: 12px;
+
+  margin: 5px 0;
+}
+
 #sat-info-title{
   text-align: center;
   margin-bottom: 5px;
@@ -125,15 +133,22 @@ ul {
 .sat-info-row {
   text-align: center;
   margin-bottom: 5px;
+  height: 18px;
 }
 
 .sat-info-key,.sat-info-value {
   display: inline-block;
+  height: 18px;
 }
 
 .sat-info-key {
   font-size: 14px;
   color: #aaa;
+  float: left;
+}
+
+.sat-info-value {
+  float: right;
 }
 
 #search-results {
@@ -146,6 +161,9 @@ ul {
   border: 1px solid rgba(255, 255, 255, 0.2);
   z-index: 10;
   top: 30px;
+  bottom: 0;
+  overflow: auto;
+  max-height: 100%;
 }
 
 .search-hilight {
@@ -168,6 +186,7 @@ ul {
   font-size: 12px;
   height: 28px;
   float: right;
+  margin-right: 10  px;
 }
 
 #search {
@@ -203,6 +222,7 @@ ul {
 .menu-item {
   cursor: pointer;
   margin: 0px 10px;
+  z-index: 11;
 }
 
 .menubox {

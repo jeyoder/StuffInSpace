@@ -6,6 +6,7 @@ $scriptFiles = [
 //libraries
 'gl-matrix-min.js',
 'spin.min.js',
+'perfect-scrollbar.jquery.min.js',
 //'satellite.js',
 
 //our script files

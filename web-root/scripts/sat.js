@@ -199,7 +199,7 @@ satSet.draw = function(pMatrix, camMatrix, time) {
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
  //   gl.bindFramebuffer(gl.FRAMEBUFFER, gl.pickFb);
     
-    gl.uniformMatrix4fv(dotShader.uMvMatrix, false, mat4.identity(mat4.create()));
+    gl.uniformMatrix4fv(dotShader.uMvMatrix, false, mat4.create());
     gl.uniformMatrix4fv(dotShader.uCamMatrix, false, camMatrix);
     gl.uniformMatrix4fv(dotShader.uPMatrix, false, pMatrix);
     
@@ -225,7 +225,7 @@ satSet.draw = function(pMatrix, camMatrix, time) {
     gl.useProgram(gl.pickShaderProgram);
     gl.bindFramebuffer(gl.FRAMEBUFFER, gl.pickFb);
  //   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-      gl.uniformMatrix4fv(gl.pickShaderProgram.uMvMatrix, false, mat4.identity(mat4.create()));
+      gl.uniformMatrix4fv(gl.pickShaderProgram.uMvMatrix, false, mat4.create());
       gl.uniformMatrix4fv(gl.pickShaderProgram.uCamMatrix, false, camMatrix);
       gl.uniformMatrix4fv(gl.pickShaderProgram.uPMatrix, false, pMatrix);
       
@@ -274,6 +274,26 @@ satSet.draw = function(pMatrix, camMatrix, time) {
     }
     return null;
   };
+
+  satSet.getScreenCoords = function(i, pMatrix, camMatrix) {
+    var pos = satSet.getSat(i).position;
+    var posVec4 = vec4.fromValues(pos.x, pos.y, pos.z, 1);
+    var transform = mat4.create();
+
+    vec4.transformMat4(posVec4, posVec4, camMatrix);
+    vec4.transformMat4(posVec4, posVec4, pMatrix);
+
+    var glScreenPos =  {
+      x : (posVec4[0] / posVec4[3]),
+      y : (posVec4[1] / posVec4[3]),
+      z : (posVec4[2] / posVec4[3]),
+    };
+
+    return {
+      x : (glScreenPos.x + 1) * 0.5 * window.innerWidth,
+      y : (-glScreenPos.y + 1) * 0.5 * window.innerHeight,
+    };
+  }
   
   satSet.searchNameRegex = function(regex) {
     var res = [];

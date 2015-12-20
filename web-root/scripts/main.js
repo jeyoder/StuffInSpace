@@ -81,6 +81,8 @@ $(document).ready(function() {
   };
   var target = document.getElementById('spinner');
   spinner = new Spinner(opts).spin(target);
+
+  $('#search-results').perfectScrollbar();
  
   var resizing = false;
   
@@ -120,6 +122,10 @@ $(document).ready(function() {
         if(urlSatId !== null) {
           selectSat(urlSatId);
         }
+      } else if (key === 'search') {
+        console.log('preloading search to ' + val);
+        searchBox.doSearch(val);
+        $('#search').val(val);
       }
     }
 
@@ -198,8 +204,8 @@ $(document).ready(function() {
    //   if(evt.which === 3) {//RMB
 		if(!dragHasMoved) {
 		  var clickedSat = getSatIdFromCoord(evt.clientX, evt.clientY);
+      if(clickedSat === -1) searchBox.hideResults();
 		  selectSat(clickedSat);
-		  searchBox.hideResults();
 	    }
 		dragHasMoved = false;
         isDragging = false;
@@ -248,7 +254,6 @@ function selectSat(satId) {
   if(satId === -1) {
     $('#sat-infobox').fadeOut();
      orbitDisplay.clearSelectOrbit();
-     window.history.replaceState(null, 'Stuff in Space', '/');
   } else {
     camZoomSnappedOnSat = true;
     camAngleSnappedOnSat = true;
@@ -264,11 +269,10 @@ function selectSat(satId) {
     $('#sat-type').html(sat.OBJECT_TYPE);
     $('#sat-apogee').html(sat.apogee.toFixed(0) + ' km');
     $('#sat-perigee').html(sat.perigee.toFixed(0) + ' km');
-    $('#sat-inclination').html((sat.inclination * R2D).toFixed(2));  
-    $('#sat-period').html(sat.period.toFixed(2));
-
-    window.history.replaceState(null, 'Stuff in Space', "/?intldes=" + sat.intlDes);
+    $('#sat-inclination').html((sat.inclination * R2D).toFixed(2) + '°');  
+    $('#sat-period').html(sat.period.toFixed(2) + ' min');
   }
+  updateUrl();
 }
 
 function browserUnsupported() {
@@ -564,32 +568,47 @@ function drawScene() {
 function updateSelectBox() {
   if(selectedSat === -1) return;
   var satData = satSet.getSat(selectedSat);
-  $('#sat-altitude').html(satData.altitude.toFixed(2));
-  $('#sat-velocity').html(satData.velocity.toFixed(2));
+  $('#sat-altitude').html(satData.altitude.toFixed(2) + ' km');
+  $('#sat-velocity').html(satData.velocity.toFixed(2) + ' km');
 }
 
 function updateHover() {
-  mouseSat = getSatIdFromCoord(mouseX, mouseY);
-  
-  satSet.setHover(mouseSat);
-  
-  if(mouseSat === -1) {
+  if(searchBox.isHovering()) {
+    var satId =  searchBox.getHoverSat();
+    var satPos = satSet.getScreenCoords(satId, pMatrix, camMatrix);
+    if(!earthHitTest(satPos.x, satPos.y)) {
+      hoverBoxOnSat(satId, satPos.x, satPos.y);
+    } else {
+      hoverBoxOnSat(-1, 0, 0);
+    }
+  } else {
+    mouseSat = getSatIdFromCoord(mouseX, mouseY);
+    if(mouseSat !== -1) {
+      orbitDisplay.setHoverOrbit(mouseSat);
+    } else {
+      orbitDisplay.clearHoverOrbit();
+    }
+    satSet.setHover(mouseSat);
+    hoverBoxOnSat(mouseSat, mouseX, mouseY);
+  }
+}
+
+function hoverBoxOnSat(satId, satX, satY) {
+  if(satId === -1) {
     $('#sat-hoverbox').html('(none)');
     $('#sat-hoverbox').css({display: 'none'});
     $('#canvas').css({cursor : 'default'});
-    orbitDisplay.clearHoverOrbit();
   } else {
    try{
-      $('#sat-hoverbox').html(satSet.getSat(mouseSat).OBJECT_NAME);
-  // $('#sat-hoverbox').html(satId);
+  //    console.log(pos);
+      $('#sat-hoverbox').html(satSet.getSat(satId).OBJECT_NAME);
       $('#sat-hoverbox').css({
         display: 'block',
         position: 'absolute',
-        left: mouseX + 20,
-        top: mouseY - 10
+        left: satX + 20,
+        top: satY - 10
       });
       $('#canvas').css({cursor : 'pointer'});
-      orbitDisplay.setHoverOrbit(mouseSat);
     } catch(e){}
   }
 }
@@ -606,6 +625,35 @@ function getSatIdFromCoord(x, y) {
   
  // console.log('picking op: ' + (performance.now() - start) + ' ms');
   return((pickB << 16) | (pickG << 8) | (pickR)) - 1;
+}
+
+function earthHitTest(x, y) {
+  gl.bindFramebuffer(gl.FRAMEBUFFER, gl.pickFb);
+  gl.readPixels(x, gl.drawingBufferHeight - y, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pickColorBuf);
+
+  return (pickColorBuf[0] === 0 &&
+          pickColorBuf[1] === 0 &&
+          pickColorBuf[2] === 0);
+}
+
+function updateUrl() {
+  var url = '/';
+  var paramSlices = [];
+
+  if(selectedSat !== -1){
+    paramSlices.push('intldes=' + satSet.getSat(selectedSat).intlDes);
+  }
+
+  var currentSearch = searchBox.getCurrentSearch();
+  if(currentSearch != null) {
+    paramSlices.push('search=' + currentSearch);
+  }
+
+  if(paramSlices.length > 0) {
+    url += '?' + paramSlices.join('&');
+  }
+
+  window.history.replaceState(null, 'Stuff in Space', url);
 }
 
 

@@ -11,14 +11,26 @@
     if(groupType === 'intlDes') {
       for(var i=0; i < data.length; i++){
         this.sats.push({
-          satId : satSet.getIdFromIntlDes(data[i])
+          satId : satSet.getIdFromIntlDes(data[i]),
+          isIntlDes : true,
+          strIndex : 0,
         });
       }
     } else if (groupType === 'nameRegex') {
       var satIdList = satSet.searchNameRegex(data);
       for(var i=0; i < satIdList.length; i++) {
         this.sats.push({
-          satId : satIdList[i]
+          satId : satIdList[i],
+          isIntlDes : false,
+          strIndex : 0,
+        });
+      } 
+    } else if (groupType === 'idList') {
+      for(var i=0; i < data.length; i++) {
+        this.sats.push({
+          satId : data[i],
+          isIntlDes : false,
+          strIndex : 0
         });
       } 
     }
@@ -43,6 +55,8 @@
       callback(this.sats[i].satId);
     }
   };
+
+  groups.SatGroup = SatGroup;
   
   groups.selectGroup = function(group) {
     var start = performance.now();
@@ -63,7 +77,13 @@
     
     var clicked = false;
     $('#groups-display').mouseout(function() {
-      if(!clicked) groups.clearSelect();
+      if(!clicked) {
+        if(searchBox.isResultBoxOpen()) {
+          groups.selectGroup(searchBox.getLastResultGroup());
+        } else {
+          groups.clearSelect();
+        }
+      }
     });
     
 		$('#groups-display>li').mouseover(function() {
@@ -86,6 +106,9 @@
       } else {
         selectSat(-1); //clear selected sat
         groups.selectGroup(groups[groupName]);
+
+        searchBox.fillResultBox(groups[groupName].sats, '');
+
         $('#menu-groups .clear-option').css({
           display: 'block'
         });
