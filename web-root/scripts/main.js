@@ -269,7 +269,7 @@ function selectSat(satId) {
     var sat = satSet.getSat(satId);
     if(!sat) return;
 
-    var nasaInfoUrl = 'nasainfo.php?id=' + sat.intlDes;
+    var nasaInfoUrl = 'nasainfo.php?intldes=' + sat.intlDes;
     $.getJSON(nasaInfoUrl, function (data){
       var satDescription = $('.sat-description');
       var satDescriptionContent = $('.sat-description__content', satDescription);
