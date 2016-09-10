@@ -1,6 +1,6 @@
 <?php
     $catalogURLTemplate = 'http://nssdc.gsfc.nasa.gov/nmc/masterCatalog.do?sc=%s';
-    $designator = htmlspecialchars($_GET['id']);
+    $designator = htmlspecialchars($_GET['intldes']);
     $redirect = filter_var($_GET['redirect'], FILTER_VALIDATE_BOOLEAN);
 
     if ($designator) {
@@ -17,7 +17,11 @@
 
                     $match = $xpath->query('//div[@id="contentwrapper"]//div[@class="urone"]');
                     if ($match->length > 0) {
-                        $description = trim($match[0]->lastChild->nodeValue);
+                        $description = '';
+                        $descriptionParts = $match[0]->childNodes;
+                        for ($i = 1; $i < $descriptionParts->length; ++$i) {
+                            $description .= trim($descriptionParts[$i]->nodeValue);
+                        }
 
                         header('Content-Type: text/json', true, 200);
 
