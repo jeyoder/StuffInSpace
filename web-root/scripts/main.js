@@ -244,16 +244,22 @@ $(document).ready(function() {
       initialRotation = false;
       camZoomSnappedOnSat = false;
     });
+
+  $('.sat-description__close').click(function() {
+    $('.sat-description').fadeOut();
+  });
  //   debugContext = $('#debug-canvas')[0].getContext('2d');
  //   debugImageData = debugContext.createImageData(debugContext.canvas.width, debugContext.canvas.height);
   drawLoop(); //kick off the animationFrame()s
 });
 
 function selectSat(satId) {
+  $('.sat-description').fadeOut();
+
   selectedSat = satId;
   if(satId === -1) {
     $('#sat-infobox').fadeOut();
-     orbitDisplay.clearSelectOrbit();
+    orbitDisplay.clearSelectOrbit();
   } else {
     camZoomSnappedOnSat = true;
     camAngleSnappedOnSat = true;
@@ -262,6 +268,19 @@ function selectSat(satId) {
  //   camSnapToSat(satId);
     var sat = satSet.getSat(satId);
     if(!sat) return;
+
+    var nasaInfoUrl = 'nasainfo.php?id=' + sat.intlDes;
+    $.getJSON(nasaInfoUrl, function (data){
+      var satDescription = $('.sat-description');
+      var satDescriptionContent = $('.sat-description__content', satDescription);
+      var learnMore = $('<a/>').prop('href', nasaInfoUrl + '&redirect=true').text('Learn more...');
+
+      satDescriptionContent.html(data.description);
+      satDescriptionContent.append($('<br/>'), learnMore);
+
+      satDescription.fadeIn();
+    });
+
     orbitDisplay.setSelectOrbit(satId);
     $('#sat-infobox').fadeIn();
     $('#sat-info-title').html(sat.OBJECT_NAME);
