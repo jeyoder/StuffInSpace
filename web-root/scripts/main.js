@@ -566,7 +566,7 @@ function updateSelectBox() {
   if(selectedSat === -1) return;
   var satData = satSet.getSat(selectedSat);
   $('#sat-altitude').html(satData.altitude.toFixed(2) + ' km');
-  $('#sat-velocity').html(satData.velocity.toFixed(2) + ' km');
+  $('#sat-velocity').html(satData.velocity.toFixed(2) + ' km/s');
 }
 
 function updateHover() {
