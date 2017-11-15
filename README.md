@@ -20,3 +20,10 @@ files, then the script-loader.php will need to be run, as follows:
     
 This step is done to avoid needing an environment that provides php on the public facing server. For example, 
 this allows the project to hosted on `github.io`.
+
+Getting TLE data
+----------------
+
+While TLE data (Two-Line Elements) is included in the project, it won't be up to date.
+
+If you wish to get current TLE data, then the best source is probably [Space Track](https://www.space-track.org/). You should consider what data to include in the generated file, since it can get fairly big and therefore impact the load times.
