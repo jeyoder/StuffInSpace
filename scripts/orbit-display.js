@@ -26,41 +26,41 @@ var currentSelectId = -1;
 
 var orbitMvMat = mat4.create();
 
-var orbitWorker = new Worker('/scripts/orbit-calculation-worker.js');
+var orbitWorker = new Worker('scripts/orbit-calculation-worker.js');
 
 var initialized = false;
 
 orbitDisplay.init = function() {
-  
+
   var startTime = performance.now();
-  
+
   var vs = gl.createShader(gl.VERTEX_SHADER);
   gl.shaderSource(vs, shaderLoader.getShaderCode('path-vertex.glsl'));
   gl.compileShader(vs);
-  
+
   var fs = gl.createShader(gl.FRAGMENT_SHADER);
   gl.shaderSource(fs, shaderLoader.getShaderCode('path-fragment.glsl'));
   gl.compileShader(fs);
-  
+
   pathShader = gl.createProgram();
   gl.attachShader(pathShader,vs);
   gl.attachShader(pathShader,fs);
   gl.linkProgram(pathShader);
-  
+
   pathShader.aPos = gl.getAttribLocation(pathShader, 'aPos');
   pathShader.uMvMatrix = gl.getUniformLocation(pathShader, 'uMvMatrix');
   pathShader.uCamMatrix = gl.getUniformLocation(pathShader, 'uCamMatrix');
   pathShader.uPMatrix = gl.getUniformLocation(pathShader, 'uPMatrix');
   pathShader.uColor = gl.getUniformLocation(pathShader, 'uColor');
-  
+
   selectOrbitBuf = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, selectOrbitBuf);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array((NUM_SEGS+1)*3), gl.STATIC_DRAW);
-  
+
   hoverOrbitBuf = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, hoverOrbitBuf);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array((NUM_SEGS+1)*3), gl.STATIC_DRAW);
-  
+
   for(var i=0; i<satSet.numSats; i++) {
     glBuffers.push(allocateBuffer());
   }
@@ -69,9 +69,9 @@ orbitDisplay.init = function() {
     satData : satSet.satDataString,
     numSegs : NUM_SEGS
   });
-  
+
   initialized = true;
-  
+
   var time = performance.now() - startTime;
   console.log('orbitDisplay init: ' + time + ' ms');
 };
@@ -101,7 +101,7 @@ orbitWorker.onmessage = function(m) {
   mat4.identity(orbitMvMat);
   //apply steps in reverse order because matrix multiplication
   // (last multiplied in is first applied to vertex)
-  
+
   //step 5. rotate to RAAN
   mat4.rotateZ(orbitMvMat, orbitMvMat, sat.raan + Math.PI/2);
   //step 4. incline the plane
@@ -141,37 +141,37 @@ orbitDisplay.setHoverOrbit = function(satId) {
 orbitDisplay.clearHoverOrbit = function(satId) {
   if(currentHoverId === -1) return;
   currentHoverId = -1;
-  
+
   gl.bindBuffer(gl.ARRAY_BUFFER, hoverOrbitBuf);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array((NUM_SEGS+1)*3), gl.DYNAMIC_DRAW);
 };
 
 orbitDisplay.draw = function(pMatrix, camMatrix) { //lol what do I do here
   if(!initialized) return;
-  
+
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
   gl.useProgram(pathShader);
-  
+
   gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
   gl.enable(gl.BLEND);
  // gl.depthMask(false);
-  
-  gl.uniformMatrix4fv(pathShader.uMvMatrix, false, orbitMvMat); 
+
+  gl.uniformMatrix4fv(pathShader.uMvMatrix, false, orbitMvMat);
   gl.uniformMatrix4fv(pathShader.uCamMatrix, false, camMatrix);
   gl.uniformMatrix4fv(pathShader.uPMatrix, false, pMatrix);
-  
+
   if(currentSelectId !== -1) {
     gl.uniform4fv(pathShader.uColor, selectColor);
     gl.bindBuffer(gl.ARRAY_BUFFER, glBuffers[currentSelectId]);
     gl.vertexAttribPointer(pathShader.aPos, 3, gl.FLOAT, false, 0, 0);
     gl.drawArrays(gl.LINE_STRIP, 0, NUM_SEGS + 1);
   }
-  
+
   if(currentHoverId !== -1 && currentHoverId !== currentSelectId) { //avoid z-fighting
     gl.uniform4fv(pathShader.uColor, hoverColor);
     gl.bindBuffer(gl.ARRAY_BUFFER, glBuffers[currentHoverId]);
     gl.vertexAttribPointer(pathShader.aPos, 3, gl.FLOAT, false, 0, 0);
-    gl.drawArrays(gl.LINE_STRIP, 0, NUM_SEGS + 1); 
+    gl.drawArrays(gl.LINE_STRIP, 0, NUM_SEGS + 1);
   }
   if(groups.selectedGroup !== null) {
     gl.uniform4fv(pathShader.uColor, groupColor);
@@ -179,9 +179,9 @@ orbitDisplay.draw = function(pMatrix, camMatrix) { //lol what do I do here
       gl.bindBuffer(gl.ARRAY_BUFFER, glBuffers[id]);
       gl.vertexAttribPointer(pathShader.aPos, 3, gl.FLOAT, false, 0, 0);
       gl.drawArrays(gl.LINE_STRIP, 0, NUM_SEGS + 1);
-    });    
+    });
   }
-  
+
   //  gl.depthMask(true);
     gl.disable(gl.BLEND);
 };

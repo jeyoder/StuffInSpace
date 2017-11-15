@@ -1,44 +1,44 @@
 /* global satellite */
-importScripts('/scripts/satellite.min.js');
+importScripts('../scripts/satellite.min.js');
 
 var NUM_SEGS;
 var satCache = [];
 
 onmessage = function(m) {
-  
+
   if(m.data.isInit) {
-    
+
     var satData = JSON.parse(m.data.satData);
-    
+
     for(var i=0; i < satData.length; i++) {
       satCache[i] = satellite.twoline2satrec(
         satData[i].TLE_LINE1, satData[i].TLE_LINE2
       );
     }
-    
+
     NUM_SEGS = m.data.numSegs;
-    
+
   } else {
-  //  var start = performance.now(); 
-    //TODO: figure out how to calculate the orbit points on constant 
+  //  var start = performance.now();
+    //TODO: figure out how to calculate the orbit points on constant
     // position slices, not timeslices (ugly perigees on HEOs)
-    
+
     var satId = m.data.satId;
     var pointsOut = new Float32Array((NUM_SEGS + 1) * 3);
-    
+
     var nowDate = new Date();
-    var nowJ = jday(nowDate.getUTCFullYear(), 
-                 nowDate.getUTCMonth() + 1, 
-                 nowDate.getUTCDate(), 
-                 nowDate.getUTCHours(), 
-                 nowDate.getUTCMinutes(), 
+    var nowJ = jday(nowDate.getUTCFullYear(),
+                 nowDate.getUTCMonth() + 1,
+                 nowDate.getUTCDate(),
+                 nowDate.getUTCHours(),
+                 nowDate.getUTCMinutes(),
                  nowDate.getUTCSeconds());
-    nowJ += nowDate.getUTCMilliseconds() * 1.15741e-8; //days per millisecond    
-    var now = (nowJ - satCache[satId].jdsatepoch) * 1440.0; //in minutes 
-    
+    nowJ += nowDate.getUTCMilliseconds() * 1.15741e-8; //days per millisecond
+    var now = (nowJ - satCache[satId].jdsatepoch) * 1440.0; //in minutes
+
     var period = (2 * Math.PI) / satCache[satId].no  //convert rads/min to min
     var timeslice = period / NUM_SEGS;
-    
+
     for(var i=0; i<NUM_SEGS+1; i++) {
       var t = now + i*timeslice;
       var p = satellite.sgp4(satCache[satId], t).position;

@@ -1,4 +1,6 @@
 <?php
+$basePath = dirname(__FILE__);
+// $_SERVER['DOCUMENT_ROOT'];
 header('Content-type: text/javascript');
 
 $scriptFiles = [
@@ -33,9 +35,14 @@ $shaderFiles = [
 'path-vertex.glsl'
 ];
 
+echo "// This file is generated using the scripts-loader.php file"
+echo "// Source code changes should be made in the files that are"
+echo "// used for this file"
+echo "//"
+
 foreach($scriptFiles as $f) {
   echo '// **** ' . $f . " ***\r\n";
-  echo file_get_contents($_SERVER['DOCUMENT_ROOT'] . '/scripts/' . $f);
+  echo file_get_contents($basePath . '/scripts/' . $f);
   echo "\r\n// **** end " . $f . " ***\r\n\r\n";
 } 
 
@@ -43,7 +50,7 @@ $shaderData = [];
 foreach($shaderFiles as $f) {
   $shaderData[] = [
     'name' => $f,
-    'code' => file_get_contents($_SERVER['DOCUMENT_ROOT'] . '/shaders/' . $f)
+    'code' => file_get_contents($basePath . '/shaders/' . $f)
   ];
 }
 ?>

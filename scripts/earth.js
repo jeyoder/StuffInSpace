@@ -31,23 +31,23 @@ function onImageLoaded() {
 }
 
 earth.init = function() {
-  var startTime = new Date().getTime();	
- 
+  var startTime = new Date().getTime();
+
   var fragShader = gl.createShader(gl.FRAGMENT_SHADER);
   var fragCode = shaderLoader.getShaderCode('earth-fragment.glsl');
   gl.shaderSource(fragShader, fragCode);
   gl.compileShader(fragShader);
-  
+
   var vertShader = gl.createShader(gl.VERTEX_SHADER);
   var vertCode = shaderLoader.getShaderCode('earth-vertex.glsl');
   gl.shaderSource(vertShader, vertCode);
   gl.compileShader(vertShader);
-  
+
   earthShader = gl.createProgram();
   gl.attachShader(earthShader, vertShader);
   gl.attachShader(earthShader, fragShader);
   gl.linkProgram(earthShader);
-  
+
   earthShader.aVertexPosition  =        gl.getAttribLocation(earthShader, 'aVertexPosition');
   earthShader.aTexCoord =               gl.getAttribLocation(earthShader, 'aTexCoord');
   earthShader.aVertexNormal =           gl.getAttribLocation(earthShader, 'aVertexNormal');
@@ -60,7 +60,7 @@ earth.init = function() {
   earthShader.uDirectionalLightColor =  gl.getUniformLocation(earthShader, 'uDirectionalLightColor');
   earthShader.uSampler =                gl.getUniformLocation(earthShader, 'uSampler');
   earthShader.uNightSampler =           gl.getUniformLocation(earthShader, 'uNightSampler');
-  
+
   texture = gl.createTexture();
   var img = new Image();
   img.onload = function() {
@@ -73,9 +73,9 @@ earth.init = function() {
     texLoaded = true;
     onImageLoaded();
   };
-  img.src = '/mercator-tex.jpg';
+  img.src = 'images/mercator-tex.jpg';
 //  img.src = '/mercator-tex-512.jpg';
-  
+
   nightTexture = gl.createTexture();
   var nightImg = new Image();
   nightImg.onload = function() {
@@ -88,15 +88,15 @@ earth.init = function() {
     nightLoaded = true;
     onImageLoaded();
   };
-  nightImg.src = '/nightearth-4096.png';
+  nightImg.src = 'images/nightearth-4096.png';
  // nightImg.src = '/nightearth-512.jpg';
-  
+
   //generate a uvsphere bottom up, CCW order
   var vertPos = [];
   var vertNorm = [];
   var texCoord = [];
   var i = 0;
-  for (var lat = 0; lat <= NUM_LAT_SEGS; lat++) { 
+  for (var lat = 0; lat <= NUM_LAT_SEGS; lat++) {
     var latAngle = (Math.PI / NUM_LAT_SEGS) * lat - (Math.PI / 2);
     var diskRadius = Math.cos(Math.abs(latAngle));
     var z = Math.sin(latAngle);
@@ -106,13 +106,13 @@ earth.init = function() {
       var x = Math.cos(lonAngle) * diskRadius;
       var y = Math.sin(lonAngle) * diskRadius;
   //      console.log('i: ' + i + '    LON: ' + lonAngle * R2D + ' X: ' + x + ' Y: ' + y)
-      
+
       //mercator cylindrical projection (simple angle interpolation)
       var v = 1-(lat / NUM_LAT_SEGS);
       var u = 0.5 + (lon / NUM_LON_SEGS); //may need to change to move map
   //    console.log('u: ' + u + ' v: ' + v);
       //normals: should just be a vector from center to point (aka the point itself!
-      
+
       vertPos.push(x * radius);
       vertPos.push(y * radius);
       vertPos.push(z * radius);
@@ -121,10 +121,10 @@ earth.init = function() {
       vertNorm.push(x);
       vertNorm.push(y);
       vertNorm.push(z);
-      
+
       i++;
     }
-  } 
+  }
 
   //ok let's calculate vertex draw orders.... indiv triangles
   var vertIndex = [];
@@ -132,69 +132,69 @@ earth.init = function() {
     for(var lon=0; lon < NUM_LON_SEGS; lon++) {
       var blVert = lat * (NUM_LON_SEGS+1) + lon; //there's NUM_LON_SEGS + 1 verts in each horizontal band
       var brVert = blVert + 1;
-      var tlVert = (lat + 1) * (NUM_LON_SEGS+1) + lon; 
+      var tlVert = (lat + 1) * (NUM_LON_SEGS+1) + lon;
       var trVert = tlVert + 1;
   //    console.log('bl: ' + blVert + ' br: ' + brVert +  ' tl: ' + tlVert + ' tr: ' + trVert);
       vertIndex.push(blVert);
       vertIndex.push(brVert);
       vertIndex.push(tlVert);
-      
+
       vertIndex.push(tlVert);
       vertIndex.push(trVert);
       vertIndex.push(brVert);
     }
   }
   vertCount = vertIndex.length;
-  
-  
+
+
   vertPosBuf = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, vertPosBuf);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertPos), gl.STATIC_DRAW);
-  
+
   vertNormBuf = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, vertNormBuf);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertNorm), gl.STATIC_DRAW);
-  
+
   texCoordBuf = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, texCoordBuf);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(texCoord), gl.STATIC_DRAW);
-  
+
   vertIndexBuf = gl.createBuffer();
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, vertIndexBuf);
   gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(vertIndex), gl.STATIC_DRAW);
- 
-  
+
+
   var end = new Date().getTime() - startTime;
   console.log('earth init: ' + end + ' ms');
 };
 
 earth.draw = function(pMatrix, camMatrix) {
   if(!loaded) return;
-  
-  var now = new Date();   
-  var j = 	jday(now.getUTCFullYear(), 
-               now.getUTCMonth() + 1, // Note, this function requires months in range 1-12. 
+
+  var now = new Date();
+  var j = 	jday(now.getUTCFullYear(),
+               now.getUTCMonth() + 1, // Note, this function requires months in range 1-12.
                now.getUTCDate(),
-               now.getUTCHours(), 
-               now.getUTCMinutes(), 
+               now.getUTCHours(),
+               now.getUTCMinutes(),
                now.getUTCSeconds());
-  j += now.getUTCMilliseconds() * 1.15741e-8; //days per millisecond   
-  
+  j += now.getUTCMilliseconds() * 1.15741e-8; //days per millisecond
+
   var era = satellite.gstime_from_jday(j);
-  
+
   var lightDirection = sun.currentDirection();
   vec3.normalize(lightDirection, lightDirection);
-  
+
   var mvMatrix = mat4.create();
   mat4.identity(mvMatrix);
   mat4.rotateZ(mvMatrix, mvMatrix, era);
   mat4.translate(mvMatrix, mvMatrix, earth.pos);
   var nMatrix = mat3.create();
   mat3.normalFromMat4(nMatrix, mvMatrix);
-  
+
   gl.useProgram(earthShader);
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-  
+
   gl.uniformMatrix3fv(earthShader.uNormalMatrix, false, nMatrix);
   gl.uniformMatrix4fv(earthShader.uMvMatrix, false, mvMatrix);
   gl.uniformMatrix4fv(earthShader.uPMatrix, false, pMatrix);
@@ -202,31 +202,31 @@ earth.draw = function(pMatrix, camMatrix) {
   gl.uniform3fv(earthShader.uLightDirection, lightDirection);
   gl.uniform3fv(earthShader.uAmbientLightColor, [0.03, 0.03, 0.03]); //RGB ambient light
   gl.uniform3fv(earthShader.uDirectionalLightColor, [1, 1, 0.9]); //RGB directional light
-  
+
   gl.uniform1i(earthShader.uSampler, 0); //point sampler to TEXTURE0
   gl.activeTexture(gl.TEXTURE0);
   gl.bindTexture(gl.TEXTURE_2D, texture); //bind texture to TEXTURE0
-  
+
   gl.uniform1i(earthShader.uNightSampler, 1);  //point sampler to TEXTURE1
   gl.activeTexture(gl.TEXTURE1);
   gl.bindTexture(gl.TEXTURE_2D, nightTexture); //bind tex to TEXTURE1
-  
+
   gl.bindBuffer(gl.ARRAY_BUFFER, texCoordBuf);
   gl.enableVertexAttribArray(earthShader.aTexCoord);
   gl.vertexAttribPointer(earthShader.aTexCoord, 2, gl.FLOAT, false, 0, 0);
-  
+
   gl.bindBuffer(gl.ARRAY_BUFFER, vertPosBuf);
   gl.enableVertexAttribArray(earthShader.aVertexPosition);
   gl.vertexAttribPointer(earthShader.aVertexPosition, 3, gl.FLOAT, false, 0, 0);
   gl.vertexAttribPointer(gl.pickShaderProgram.aPos, 3, gl.FLOAT, false, 0, 0);
-  
+
   gl.bindBuffer(gl.ARRAY_BUFFER, vertNormBuf);
    gl.enableVertexAttribArray(earthShader.aVertexNormal);
   gl.vertexAttribPointer(earthShader.aVertexNormal, 3, gl.FLOAT, false, 0, 0);
-  
+
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, vertIndexBuf);
   gl.drawElements(gl.TRIANGLES, vertCount, gl.UNSIGNED_SHORT, 0);
-  
+
   gl.useProgram(gl.pickShaderProgram);
   gl.bindFramebuffer(gl.FRAMEBUFFER, gl.pickFb);
  // gl.bindFramebuffer(gl.FRAMEBUFFER, null);
@@ -234,7 +234,7 @@ earth.draw = function(pMatrix, camMatrix) {
   gl.disableVertexAttribArray(gl.pickShaderProgram.aColor);
   gl.enableVertexAttribArray(gl.pickShaderProgram.aPos);
   gl.drawElements(gl.TRIANGLES, vertCount, gl.UNSIGNED_SHORT, 0);
-      
+
 }
 
 function jday(year, mon, day, hr, minute, sec){ //from satellite.js

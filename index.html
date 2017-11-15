@@ -1,21 +1,20 @@
-<?php
-header('Content-Type: text/html; charset=utf-8');
-?>
 <!doctype html>
 <html>
   <head>
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Droid+Sans" type="text/css">
-    <link rel="stylesheet" href="/icomoon.css" type="text/css">
-    <link rel="stylesheet" href="/perfect-scrollbar.min.css" type="text/css">
-    <link rel="stylesheet" href="/style.css" type="text/css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Sans" type="text/css">
+    <link rel="stylesheet" href="styles/icomoon.css" type="text/css">
+    <link rel="stylesheet" href="styles/perfect-scrollbar.min.css" type="text/css">
+    <link rel="stylesheet" href="styles/style.css" type="text/css">
     
-    <script src="http://code.jquery.com/jquery-2.1.3.min.js"></script>
-    <script src="/scripts/satellite.min.js"></script>
-    <script src="/script-loader.php"></script>
+    <script src="https://code.jquery.com/jquery-2.1.3.min.js"></script>
+    <script src="scripts/satellite.min.js"></script>
+    <script src="scripts/script-loader.js"></script>
     
-    <?php if($_SERVER['HTTP_HOST'] === 'stuffin.space' || $_SERVER['HTTP_HOST'] === 'www.stuffin.space') { ?>
-      <script>
+    <script language="javascript">
+
+    if (window.location.hostname === 'stuffin.space' || window.location.hostname === 'www.stuffin.space') {
         (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
         (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
         m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
@@ -23,17 +22,15 @@ header('Content-Type: text/html; charset=utf-8');
       
         ga('create', 'UA-64721672-1', 'auto');
         ga('send', 'pageview');
-      </script> 
-   <?php } else { ?>
-    <!-- analytics disabled for host "<?= $_SERVER['HTTP_HOST'] ?>" -->
-   <?php } ?>
-    
+   }
+    </script> 
+          
     <title>Stuff in Space</title>
     
   </head>
   <body>
   <div id="no-webgl">
-    Stuff in Space requires <a href="http://caniuse.com/#feat=webgl">WebGL</a> and <a href="http://caniuse.com/#feat=webworkers">Web Worker</a> support. 
+    Stuff in Space requires <a href="https://caniuse.com/#feat=webgl">WebGL</a> and <a href="https://caniuse.com/#feat=webworkers">Web Worker</a> support. 
   </div>
   <div id="canvas-holder">
     <canvas id="canvas"></canvas>
@@ -71,15 +68,15 @@ header('Content-Type: text/html; charset=utf-8');
           <span class="box-header">Legend</span>
           <ul id="legend">
             <li>
-               <img class="dot" src="/dot-red.png"></img>
+               <img class="dot" src="images/dot-red.png"></img>
                Satellite
              </li>
             <li>
-              <img class="dot" src="/dot-blue.png"></img>
+              <img class="dot" src="images/dot-blue.png"></img>
               Rocket body
             </li>
             <li>
-              <img class="dot" src="/dot-grey.png"></img>
+              <img class="dot" src="images/dot-grey.png"></img>
               Debris
             </li>
           </ul>
