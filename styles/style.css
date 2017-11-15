@@ -1,0 +1,362 @@
+body {
+  font-family: 'Droid Sans', sans-serif;
+  color: white;
+  background: black;
+}
+
+a,.link {
+  color: #e66;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+a:hover,.link:hover {
+  color: #ffcaca;
+}
+
+ul {
+   list-style-type: none;
+   padding: 0;
+   margin: 0;
+}
+
+#no-webgl {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  text-align: center;
+  margin-top: 20px;
+  display: none;
+}
+
+#canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+}
+
+#canvas-holder {
+  padding: 0;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+}
+
+#load-cover {
+  background: rgba(0, 0, 0, 0.8);
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0
+}
+
+#loader {
+  background: black;
+  cursor:default;
+  color: white;
+  position: absolute;
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  width: 250px;
+  height: 50px;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin: auto;
+  text-align: center;
+}
+
+#loader-text {
+  display: inline-block;
+  vertical-align: text-bottom;
+  line-height: 50px;
+}
+
+#spinner {
+  display: inline-block;
+  height: 50px;
+  width: 50px;
+  position: relative;
+}
+
+#sat-hoverbox {
+  background: black;
+  cursor:default;
+  color: white;
+  position: absolute;
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  pointer-events: none;
+}
+
+#sat-infobox {
+  background: black;
+  cursor:default;
+  color: white;
+  position: absolute;
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  right: 0px;
+  top: 0;
+  bottom: 0;
+  margin-top: auto;
+  margin-bottom: auto;
+  height: 225px;
+  width: 200px;
+  display: none;
+}
+
+#all-objects-link {
+  font-size: 12px;
+
+  margin: 5px 0;
+}
+
+#sat-info-title{
+  text-align: center;
+  margin-bottom: 5px;
+  font-size: 18px;
+}
+
+.sat-info-row {
+  text-align: center;
+  margin-bottom: 5px;
+  height: 18px;
+}
+
+.sat-info-key,.sat-info-value {
+  display: inline-block;
+  height: 18px;
+}
+
+.sat-info-key {
+  font-size: 14px;
+  color: #aaa;
+  float: left;
+}
+
+.sat-info-value {
+  float: right;
+}
+
+#search-results {
+  display: none;
+  position: absolute;
+  width: 300px;
+  background: black;
+  color: white;
+  border-radius: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  z-index: 10;
+  top: 30px;
+  bottom: 0;
+  overflow: auto;
+  max-height: 100%;
+}
+
+.search-hilight {
+  font-weight: bold;
+  color: #faa
+}
+
+.search-result {
+  padding: 5px;
+  height: 28px;
+  line-height: 28px;
+}
+
+.search-result:hover {
+  background: #c33;
+  cursor: pointer;
+}
+
+.search-result-intldes {
+  font-size: 12px;
+  height: 28px;
+  float: right;
+  margin-right: 10  px;
+}
+
+#search {
+  background: rgba(0, 0, 0, 0);
+  border: none;
+  border-bottom: 1px solid white;
+  color: white;
+  font-family: 'Droid Sans', sans-serif;
+  font-size: 16px;
+  outline: none;
+}
+
+.menubar {
+  height: 30px;
+  position: absolute;
+  top: 5px;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  align-content: stretch;
+}
+
+#menu-left {
+  left: 0px;
+  justify-content: flex-start;
+}
+
+#menu-right {
+ right: 0px;
+ justify-content: flex-end;
+}
+
+.menu-item {
+  cursor: pointer;
+  margin: 0px 10px;
+  z-index: 11;
+}
+
+.menubox {
+  cursor: default;
+}
+
+.menu-item:first-child {
+  margin-left: 2px;
+}
+
+.menu-item:hover .menu-title {
+  color: #faa;
+}
+
+.menu-title {
+  height: 30px;
+}
+
+
+
+.submenu {
+  display: none;
+  background: black;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 5px;
+  margin: 0;
+  overflow: hidden;
+  position: absolute;
+}
+
+.dropdown {
+  width: 200px;
+}
+
+.menubox {
+  padding: 10px;
+}
+
+.dropdown>li {
+  display: block;
+  padding: 5px 10px;
+}
+
+.dropdown>li:hover {
+  background: #c33;
+  font-weight: bold;
+}
+
+.dropdown>li:active {
+  background: #511;
+}
+
+.dropdown>li.clear-option {
+  background: #511;
+  display: none;
+}
+
+#zoom-controls {
+  position:absolute;
+  right: 20px;
+  bottom: 20px;
+  width: 40px;
+  height:70px;
+  background: black;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.zoom-button {
+  height: 35px;
+  font-size: 20px;
+  font-weight: bold;
+  line-height: 35px;
+  text-align: center;
+  cursor: pointer;
+  
+  -moz-user-select: -moz-none;
+  -khtml-user-select: none;
+  -webkit-user-select: none;
+  -o-user-select: none;
+  user-select: none;
+}
+
+.zoom-button:hover {
+  background: #c33;
+}
+
+.zoom-button:active {
+  background: #511;
+}
+
+#zoom-in {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+#zoom-out {
+ 
+}
+
+#about-box {
+  right: 10px;
+  width: 500px;
+  height: 335px;
+}
+
+#help-box {
+  right: 70px;
+  width: 200px;
+  height: 225px;
+}
+
+.box-header {
+  font-size: 20px;
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
+
+#legend li {
+  height: 25px;
+  line-height: 25px;
+  margin-top: 5px;
+  magin-bottom: 5px;
+}
+
+.dot {
+  vertical-align: middle;
+  margin-right: 5px;
+}
+
+#controls-info {
+  margin-top: 10px;
+}
+
+#controls-info>li {
+  margin-top: 10px;
+}
