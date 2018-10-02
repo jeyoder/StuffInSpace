@@ -125,12 +125,17 @@
       
       //do some processing on our satData response
       for(var i = 0; i < satData.length; i++) {     
+
+        if(satData[i].INTLDES !== null) {
+            var year = satData[i].INTLDES.substring(0,2); //clean up intl des for display
+            var prefix = (year > 50) ? '19' : '20';
+            year = prefix + year;
+            var rest = satData[i].INTLDES.substring(2);
+            satData[i].intlDes = year + '-' + rest;   
+        } else {
+            satData[i].intlDes = '(unknown)';    
+        }
       
-        var year = satData[i].INTLDES.substring(0,2); //clean up intl des for display
-        var prefix = (year > 50) ? '19' : '20';
-        year = prefix + year;
-        var rest = satData[i].INTLDES.substring(2);
-        satData[i].intlDes = year + '-' + rest;   
         
         satData[i].id = i;
       
