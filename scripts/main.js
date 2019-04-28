@@ -286,7 +286,13 @@ function webGlInit() {
   can.width = window.innerWidth;
   can.height = window.innerHeight;
  
-  var gl = can.getContext('webgl', {alpha: false}) || can.getContext('experimental-webgl', {alpha: false});
+  var glOptions = {
+    // antialias: false,
+    alpha: false,
+    premultipliedAlpha: false
+  };
+
+  var gl = can.getContext('webgl', glOptions) || can.getContext('experimental-webgl', glOptions);
   if(!gl) {
       browserUnsupported();
   }
