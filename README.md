@@ -26,4 +26,7 @@ Getting TLE data
 
 While TLE data (Two-Line Elements) is included in the project, it won't be up to date.
 
-If you wish to get current TLE data, then the best source is probably [Space Track](https://www.space-track.org/). You should consider what data to include in the generated file, since it can get fairly big and therefore impact the load times.
+If you wish to get current TLE data, then head over to [Space Track](https://www.space-track.org/), 
+login and then you can use the following URL:
+
+https://www.space-track.org/basicspacedata/query/class/tle_latest/ORDINAL/1/EPOCH/%3Enow-30/orderby/NORAD_CAT_ID/format/json
