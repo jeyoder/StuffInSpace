@@ -40,7 +40,7 @@ header('Content-Type: text/html; charset=utf-8');
     <div id="menu-left" class="menubar">
       <div id="search-holder" class="menu-item">
         <span class="icon-search"></span>
-        <input type="text" id="search"></input>
+        <input type="text" id="search"/>
       </div>
       <div id="menu-groups" class="menu-item">
         <div class="menu-title">Groups</div>
@@ -71,15 +71,15 @@ header('Content-Type: text/html; charset=utf-8');
           <span class="box-header">Legend</span>
           <ul id="legend">
             <li>
-               <img class="dot" src="/dot-red.png"></img>
+               <img class="dot" src="/dot-red.png"/>
                Satellite
              </li>
             <li>
-              <img class="dot" src="/dot-blue.png"></img>
+              <img class="dot" src="/dot-blue.png"/>
               Rocket body
             </li>
             <li>
-              <img class="dot" src="/dot-grey.png"></img>
+              <img class="dot" src="/dot-grey.png"/>
               Debris
             </li>
           </ul>
@@ -116,6 +116,16 @@ header('Content-Type: text/html; charset=utf-8');
     </div>
       <div id="search-results"></div>
     <div id="sat-hoverbox">(none)</div>
+    <div class="sat-description">
+      <div class="sat-description__header">
+        <div class="sat-description__header--left">About</div>
+        <a class="sat-description__header--right sat-description__close">X</a>
+      </div>
+      <div class="sat-description__content"></div>
+      <div class="sat-description__footer">
+        <b>Credits:</b> NASA Space Science Data Coordinated Archive
+      </div>
+    </div>
     <div id="sat-infobox">
       <div id="sat-info-title">This is a title</div>
       <div id="all-objects-link" class="link">Find all objects from this launch...</div>
