@@ -202,6 +202,7 @@ satSet.draw = function(pMatrix, camMatrix) {
     
     gl.bindBuffer(gl.ARRAY_BUFFER, satPosBuf);
     gl.bufferData(gl.ARRAY_BUFFER, satPos, gl.STREAM_DRAW);
+    gl.enableVertexAttribArray(dotShader.aPos);
     gl.vertexAttribPointer(dotShader.aPos, 3, gl.FLOAT, false, 0, 0);
     
     gl.bindBuffer(gl.ARRAY_BUFFER, satColorBuf);
