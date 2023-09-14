@@ -33,6 +33,17 @@
           strIndex : 0
         });
       } 
+    }  else if (groupType === 'objectType') {
+      for(var i=0; i < data.length; i++) {
+        if (i < 20) {
+          console.log(data[i]);
+        }
+        this.sats.push({
+          satId : data[i],
+          isIntlDes : false,
+          strIndex : 0
+        });
+      } 
     }
 	}
 	
@@ -160,7 +171,7 @@
     groups.FunGroup = new SatGroup('nameRegex', /SYLDA/);
     groups.WestfordNeedlesGroup = new SatGroup('nameRegex', /WESTFORD NEEDLES/);
     groups.SpaceXGroup = new SatGroup('nameRegex', /FALCON [19]/);
-    
+    groups.DebrisGroup = new SatGroup('objectType', 'DEBRIS');
     console.log('groups init: ' + (performance.now() - start) + ' ms');
   };
 	window.groups = groups;

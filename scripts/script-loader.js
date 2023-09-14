@@ -1189,11 +1189,20 @@ window.sun = {
       $('#loader-text').text('Crunching numbers...');
 
       satData = resp;
+      if (true) {
+        satData = satData.filter((entry) => {
+          // console.log(entry.OBJECT_TYPE);
+          return entry.OBJECT_TYPE !== 'TBA';
+            //|| entry.OBJECT_TYPE === 'PAYLOAD'; // PAYLOAD | DEBRIS | ROCKET BODY | PAYLOAD || TBA
+        })
+      }
+
       satSet.satDataString = JSON.stringify(satData);
 
       var postStart = performance.now();
         satCruncher.postMessage(satSet.satDataString); //kick off satCruncher
       var postEnd = performance.now();
+
 
       //do some processing on our satData response
       for(var i = 0; i < satData.length; i++) {
@@ -1205,6 +1214,8 @@ window.sun = {
           year = prefix + year;
           var rest = satData[i].INTLDES.substring(2);
           satData[i].intlDes = year + '-' + rest;
+        } else {
+          satData[i].intlDes = 'unknown';
         }
         satData[i].id = i;
 
