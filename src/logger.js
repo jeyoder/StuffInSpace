@@ -1,4 +1,5 @@
 /* eslint-disable no-console */
+import constants from './constants';
 
 const logLevels = ['error', 'warn', 'info', 'debug'];
 const enabledOutputs = {};
@@ -12,6 +13,11 @@ function log (scope, level, output, ...args) {
 
 function setLogLevel (level) {
   const levelIdx = logLevels.indexOf(level.toLowerCase());
+
+  if (levelIdx < 0) {
+    throw new Error('Unknown log level');
+  }
+
   for (let i = 0; i < logLevels.length; i++) {
     enabledOutputs[logLevels[i]] = i <= levelIdx;
   }
@@ -38,6 +44,6 @@ function init () {
 }
 
 init();
-setLogLevel('debug');
+setLogLevel(constants.logLevel);
 
 export default getLogger();

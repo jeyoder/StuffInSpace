@@ -12,7 +12,7 @@ import orbitDisplay from './orbit-display';
 import searchBox from './search-box';
 import satGroups from './sat-groups';
 import logger from './logger';
-import contstants from './constants';
+import constants from './constants';
 
 const validateProgram = false;
 let app;
@@ -496,6 +496,36 @@ function selectSat (satId) {
   app.updateUrl();
 }
 
+function processPageParams (updateSearch = true) {
+  let title = constants.appName;
+
+  const searchParams = new URLSearchParams(document.location.search);
+
+  if (searchParams.get('intldes')) {
+    const value = searchParams.get('intldes');
+    const urlSatId = satSet.getIdFromIntlDes(value.toUpperCase());
+    if (urlSatId !== null) {
+      const satellite = app.satSet.getSat(urlSatId);
+      title += ` - ${satellite.OBJECT_NAME} (${value})`;
+
+      if (updateSearch) {
+        selectSat(urlSatId);
+      }
+    } else {
+      title += ` - ${value}`;
+    }
+  } else if (searchParams.get('search')) {
+    const value = searchParams.get('search');
+    if (updateSearch) {
+      searchBox.doSearch(value);
+      document.querySelector('#search').value = value;
+    }
+    title += ` - $${value}`;
+  }
+
+  document.title = title;
+}
+
 function initSpinner () {
   const opts = {
     lines: 11, // The number of lines to draw
@@ -533,6 +563,11 @@ function initListeners () {
     }
     // perfectScrollBar.update();
     resizing = true;
+  });
+
+  window.addEventListener('popstate', (event) => {
+    console.log('>>>>', 'popstate', event);
+    processPageParams();
   });
 
   const canvasElement = document.querySelector('#canvas');
@@ -676,7 +711,7 @@ class App {
   }
 
   updateUrl () {
-    let url = contstants.baseUrl || '/';
+    let url = constants.baseUrl || '/';
     const paramSlices = [];
 
     // const search = new URLSearchParams(document.location.search);
@@ -700,13 +735,17 @@ class App {
       url += `?${params.join('&')}`;
     }
 
-    window.history.replaceState(null, 'Stuff in Space', url);
-
     if (paramSlices.length > 0) {
       url += `?${paramSlices.join('&')}`;
     }
 
-    window.history.replaceState(null, 'Stuff in Space', url);
+    if (constants.pushHistory) {
+      window.history.pushState({}, '', url);
+    } else {
+      window.history.replaceState(null, constants.appName, url);
+    }
+
+    processPageParams(false);
   }
 
   setHover (satelliteId) {
@@ -752,21 +791,9 @@ async function main () {
       spinner.stop();
     }
 
-    const searchParams = new URLSearchParams(document.location.search);
-    if (searchParams.get('intldes')) {
-      const value = searchParams.get('intldes');
-      const urlSatId = satSet.getIdFromIntlDes(value.toUpperCase());
-      if (urlSatId !== null) {
-        selectSat(urlSatId);
-      }
-    } else if (searchParams.get('search')) {
-      const value = searchParams.get('search');
-      searchBox.doSearch(value);
-      document.querySelector('#search').value = value;
-    }
-
     initListeners();
     searchBox.init(app); // .satData);
+    processPageParams();
   });
 
   drawLoop();

@@ -179,10 +179,13 @@ function registerHandlers () {
   });
 
   document.querySelector('#all-objects-link').addEventListener('click', () => {
-    const intldes = app.getSat(app.selectedSat).intlDes;
-    const searchStr = intldes.slice(0, 8);
-    doSearch(searchStr);
-    document.querySelector('#search').value = searchStr;
+    console.log('>>>>', app.selectedSat, app.satSet.getSat(app.selectedSat));
+    if (app.selectedSat && app.selectedSat !== -1) {
+      const intldes = app.satSet.getSat(app.selectedSat).intlDes;
+      const searchStr = intldes.slice(0, 8);
+      doSearch(searchStr);
+      document.querySelector('#search').value = searchStr;
+    }
   });
 }
 
