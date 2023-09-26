@@ -12,6 +12,7 @@ export default defineConfig(({ mode }) => {
     publicDir: 'public',
     build: {
       outDir: 'dist'
-    }
+    },
+    base: '/StuffInSpace'
   };
 });
