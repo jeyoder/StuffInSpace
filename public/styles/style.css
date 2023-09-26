@@ -37,6 +37,8 @@ ul {
   left: 0;
   bottom: 0;
   right: 0;
+  /* width: 100vh;
+  height: 100vh; */
 }
 
 #canvas-holder {
@@ -299,7 +301,7 @@ ul {
   line-height: 35px;
   text-align: center;
   cursor: pointer;
-  
+
   -moz-user-select: -moz-none;
   -khtml-user-select: none;
   -webkit-user-select: none;
@@ -320,7 +322,7 @@ ul {
 }
 
 #zoom-out {
- 
+
 }
 
 #about-box {
@@ -359,4 +361,20 @@ ul {
 
 #controls-info>li {
   margin-top: 10px;
+}
+
+.hidden {
+  transition: opacity 1s ease-in-out;
+  -webkit-transition: opacity 1s ease-in-out;
+  -moz-transition:opacity 1s ease-in-out;
+  opacity: 0;
+  display: none !important;
+}
+
+.visible {
+  transition: opacity 1s ease-in-out;
+  -webkit-transition: opacity 1s ease-in-out;
+  -moz-transition:opacity 1s ease-in-out;
+  display: block !important;
+  opacity: 1;
 }
