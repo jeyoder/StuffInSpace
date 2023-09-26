@@ -6,18 +6,23 @@ A real-time interactive WebGL visualisation of objects in Earth orbit
 
 The official live version is hosted at http://stuffin.space/
 
-## Installation
+## Running for Development
 
-For the most part it is simply a question of dropping
-the files into a folder and serving them up from there.
+ 1. Install dependencies: `npm run install`
+ 2. Run the project `npm run dev`
 
-If any changes are made to the underlying javascript
-files, then the script-loader.php will need to be run, as follows:
+Connect to it at http://localhost:5173
 
-    php script-loader.php > scripts/script-loader.js
+## Building for Deployment
 
-This step is done to avoid needing an environment that provides php on the public facing server. For example,
-this allows the project to hosted on `github.io`.
+ 1. Install dependencies: `npm run install`
+ 2. Build the project `npm run build`
+
+The resulting assets will be in the `dist` folder, which you can
+then make available on your website.
+
+Note, the current setup assumes the project will be run at the root
+of the website.
 
 ## Getting TLE data
 
@@ -27,6 +32,9 @@ If you wish to get current TLE data, then head over to [Space Track](https://www
 login and then you can use the following URL:
 
 https://www.space-track.org/basicspacedata/query/class/tle_latest/ORDINAL/1/EPOCH/%3Enow-30/orderby/NORAD_CAT_ID/format/json
+
+Once you have the latest data, then update `public/data/TLE.json`, if running in
+development or `data/TLE.json` if deployed.
 
 ## License
 

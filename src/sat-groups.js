@@ -63,6 +63,9 @@ const groupConfigs = [
   },
   {
     id: 'DebrisGroup', name: 'Debris', groupType: 'objectType', data: 'DEBRIS'
+  },
+  {
+    id: 'Starlink', name: 'Starlink', groupType: 'nameRegex', data: /STARLINK/
   }
 ];
 
