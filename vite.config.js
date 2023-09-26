@@ -13,6 +13,6 @@ export default defineConfig(({ mode }) => {
     build: {
       outDir: 'dist'
     },
-    base: '/StuffInSpace'
+    base: env.BASE_URL || '/'
   };
 });

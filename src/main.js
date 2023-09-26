@@ -12,6 +12,7 @@ import orbitDisplay from './orbit-display';
 import searchBox from './search-box';
 import satGroups from './sat-groups';
 import logger from './logger';
+import contstants from './constants';
 
 const validateProgram = false;
 let app;
@@ -676,7 +677,7 @@ class App {
   }
 
   updateUrl () {
-    let url = '/';
+    let url = contstants.baseUrl || '/';
     const paramSlices = [];
 
     // const search = new URLSearchParams(document.location.search);

@@ -5,6 +5,9 @@ on:
     branches-ignore:
       - master
 
+env:
+  BASE_URL: /StuffInSpace
+
 jobs:
   build:
     name: Build

@@ -5,11 +5,12 @@ import axios from 'axios';
 import logger from './logger';
 import { getShaderCode } from './shader-loader';
 import { defaultColorScheme } from './color-scheme';
+import constants from './constants';
 
 // eslint-disable-next-line import/no-unresolved
 import SatCruncherWorker from './sat-cruncher-worker?worker';
 
-const tleUrl = '/data/TLE.json';
+const tleUrl = `${constants.baseUrl}/data/TLE.json`;
 const hoverColor = [0.1, 1.0, 0.0, 1.0];
 const selectedColor = [0.0, 1.0, 1.0, 1.0];
 

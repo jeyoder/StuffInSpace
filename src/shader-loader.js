@@ -1,5 +1,6 @@
 import axios from 'axios';
 import logger from './logger';
+import constants from './constants';
 
 const shaders = [
   'earth-fragment.glsl',
@@ -13,10 +14,11 @@ const shaders = [
 ];
 
 const shaderData = {};
+const basePath = `${constants.baseUrl}/shaders`;
 
 async function loadShader (name) {
   logger.debug(`Loading shader ${name}`);
-  const response = await axios.get(`/shaders/${name}`);
+  const response = await axios.get(`${basePath}/${name}`);
   shaderData[name] = response.data;
 }
 
