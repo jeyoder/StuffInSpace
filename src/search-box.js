@@ -38,10 +38,6 @@ function clearHover () {
   hovering = false;
   hoverSatId = -1;
 
-  // TODO move to main
-  // orbitDisplay.setHoverOrbit(hoverSatId);
-  // app.satSet.setHover(hoverSatId);
-
   app.setHover(hoverSatId);
 }
 

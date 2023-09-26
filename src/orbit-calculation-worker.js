@@ -26,8 +26,6 @@ onmessage = function (message) {
     const pointsOut = new Float32Array((numSegs + 1) * 3);
 
     if (!satCache || !satCache[satId]) {
-      // logger.debug('satCache', satCache);
-      logger.debug('satCache', satId, satCache[satId]);
       return;
     }
 

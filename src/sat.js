@@ -21,7 +21,7 @@ class SatSet {
     this.satCruncher = undefined;
 
     try {
-      logger.debug('Registering /sat-cruncher.js');
+      logger.info('Kicking off sat-cruncher-worker');
       this.satCruncher = SatCruncherWorker();
     } catch (_error) {
       logger.error('unsupported browser');
@@ -43,10 +43,10 @@ class SatSet {
     this.gotExtraData = false;
 
     // eslint-disable-next-line func-names, space-before-function-paren
-    this.satCruncher.onmessage = this.handleMessage.bind(this);
+    this.satCruncher.onmessage = this.onMessage.bind(this);
   }
 
-  async handleMessage (message) {
+  async onMessage (message) {
     const scope = this;
     try {
       if (!this.gotExtraData) { // store extra data that comes from crunching

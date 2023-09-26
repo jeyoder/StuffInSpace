@@ -2,17 +2,16 @@ import {
   jday, twoline2satrec, eciToGeodetic, gstime, sgp4
 } from 'satellite.js';
 import logger from './logger';
+import constants from './constants';
 
 const satCache = [];
-const propergateInterval = 20000; // 500;
+const propergateInterval = constants.propergateInterval;
 const oneOnce = true;
 let satPos;
 let satVel;
 let satAlt;
 
 function propagate () {
-  logger.debug('Propagate');
-
   const now = new Date();
   let j = jday(
     now.getUTCFullYear(),

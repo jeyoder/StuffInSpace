@@ -631,7 +631,6 @@ function initListeners () {
     });
 
     menuItem.addEventListener('mouseout', (event) => {
-      logger.debug('.menu-item', 'mouseout', event);
       const target = event.currentTarget;
       const subMenu = target.querySelector('.submenu');
       if (subMenu) {

@@ -66,6 +66,9 @@ const groupConfigs = [
   },
   {
     id: 'Starlink', name: 'Starlink', groupType: 'nameRegex', data: /STARLINK/
+  },
+  {
+    id: 'Unknown', name: 'Unknown', groupType: 'objectType', data: 'UNKNOWN'
   }
 ];
 
