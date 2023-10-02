@@ -1,6 +1,5 @@
-import orbitDisplay from './orbit-display';
-import SatGroup from './sat-group';
-import logger from './logger';
+import SatGroup from '../sat-group';
+import logger from '../utils/logger';
 
 const SEARCH_LIMIT = 200;
 
@@ -41,11 +40,27 @@ function clearHover () {
   app.setHover(hoverSatId);
 }
 
+function setResultsVisible (visible) {
+  const searchResultsElem = document.querySelector('#search-results');
+  if (visible) {
+    searchResultsElem.style.display = 'block';
+  } else {
+    searchResultsElem.style.display = 'none';
+  }
+  resultsOpen = visible;
+}
+
+function toggleResultsVisible () {
+  setResultsVisible(!isResultBoxOpen());
+}
+
+function showResults () {
+  setResultsVisible(true);
+}
+
 function hideResults () {
-  // const searchResults = document.querySelector('#search-results');
-  // searchResults.slideUp();
+  setResultsVisible(false);
   app.groups.clearSelect();
-  resultsOpen = false;
 }
 
 function fillResultBox (results, searchStr) {
@@ -86,6 +101,11 @@ function fillResultBox (results, searchStr) {
   resultBox.innerHTML = html;
   resultBox.style.display = 'block';
   resultsOpen = true;
+}
+
+function clearResults () {
+  const searchResultsElem = document.querySelector('#search-results');
+  searchResultsElem.innerHTML = '';
 }
 
 function doSearch (str) {
@@ -155,7 +175,7 @@ function registerHandlers () {
     const satId = target.dataset.satId;
 
     if (satId && satId !== -1) {
-      orbitDisplay.setHoverOrbit(satId);
+      app.orbitDisplay.setHoverOrbit(satId);
       app.satSet.setHover(satId);
 
       hovering = true;
@@ -164,7 +184,7 @@ function registerHandlers () {
   });
 
   searchResultsElem.addEventListener('mouseout', (event) => {
-    orbitDisplay.clearHoverOrbit();
+    app.orbitDisplay.clearHoverOrbit();
     app.satSet.setHover(-1);
     hovering = false;
 
@@ -179,7 +199,6 @@ function registerHandlers () {
   });
 
   document.querySelector('#all-objects-link').addEventListener('click', () => {
-    console.log('>>>>', app.selectedSat, app.satSet.getSat(app.selectedSat));
     if (app.selectedSat && app.selectedSat !== -1) {
       const intldes = app.satSet.getSat(app.selectedSat).intlDes;
       const searchStr = intldes.slice(0, 8);
@@ -196,12 +215,16 @@ function init (appContext) {
 
 export default {
   init,
+  clearResults,
   getHoverSat,
   isHovering,
+  showResults,
   hideResults,
   doSearch,
   getCurrentSearch,
   getLastResultGroup,
   fillResultBox,
-  isResultBoxOpen
+  isResultBoxOpen,
+  setResultsVisible,
+  toggleResultsVisible
 };

@@ -2,10 +2,10 @@
 import { mat4, vec4 } from 'gl-matrix';
 import axios from 'axios';
 
-import logger from './logger';
+import logger from './utils/logger';
 import { getShaderCode } from './shader-loader';
 import { defaultColorScheme } from './color-scheme';
-import constants from './constants';
+import constants from './config';
 
 // eslint-disable-next-line import/no-unresolved
 import SatCruncherWorker from './sat-cruncher-worker?worker';
@@ -31,6 +31,7 @@ class SatSet {
 
     this.cruncherReadyCallback = undefined;
     this.satData = undefined;
+    this.size = 0;
     this.satPos = [];
     this.satVel = [];
     this.satAlt = [];
@@ -98,6 +99,14 @@ class SatSet {
     this.app = app;
     const { gl } = app;
 
+    app.addEventListener('selectedsatchange', (satellite) => {
+      if (satellite) {
+        this.selectSat(satellite.id);
+      } else {
+        this.selectSat(-1);
+      }
+    });
+
     this.dotShader = gl.createProgram();
 
     const vertShader = gl.createShader(gl.VERTEX_SHADER);
@@ -135,6 +144,7 @@ class SatSet {
 
         logger.debug('oooo satData');
         this.satData = response.data;
+        this.size = this.satData.size;
 
         // if (true) {
         // this.satData = this.satData.filter((entry) => entry.OBJECT_TYPE !== 'TBA');

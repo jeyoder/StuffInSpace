@@ -1,5 +1,5 @@
 import orbitDisplay from './orbit-display';
-import logger from './logger';
+import logger from './utils/logger';
 
 class Line {
   constructor (gl) {

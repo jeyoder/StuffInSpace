@@ -1,5 +1,5 @@
 import { jday, twoline2satrec, sgp4 } from 'satellite.js';
-import logger from './logger';
+import logger from './utils/logger';
 
 let numSegs;
 const satCache = [];

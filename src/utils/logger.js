@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-import constants from './constants';
+import constants from '../config';
 
 const logLevels = ['error', 'warn', 'info', 'debug'];
 const enabledOutputs = {};

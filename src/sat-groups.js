@@ -1,5 +1,5 @@
 import { defaultColorScheme, groupColorScheme } from './color-scheme';
-import searchBox from './search-box';
+// import searchBox from './search-box';
 import SatGroup from './sat-group';
 
 const gpSatellites = [
@@ -68,14 +68,24 @@ const groupConfigs = [
     id: 'Starlink', name: 'Starlink', groupType: 'nameRegex', data: /STARLINK/
   },
   {
-    id: 'Unknown', name: 'Unknown', groupType: 'objectType', data: 'UNKNOWN'
+    id: 'Unknown', name: 'Unknown Objects', groupType: 'objectType', data: 'UNKNOWN'
   }
 ];
 
 class SatGroups {
-  constructor () {
+  constructor (appContext) {
+    this.app = appContext;
     this.groups = {};
     this.selectedGroup = null;
+
+    for (let i = 0; i < groupConfigs.length; i++) {
+      this.groups[groupConfigs[i].id] = new SatGroup(
+        groupConfigs[i].id,
+        groupConfigs[i].name,
+        groupConfigs[i].groupType,
+        groupConfigs[i].data
+      );
+    }
   }
 
   asArray () {
@@ -99,76 +109,23 @@ class SatGroups {
   }
 
   clearSelect () {
-    this.selectedGroup = null;
+    this.selectedGroup = undefined;
     this.app.satSet.setColorScheme(defaultColorScheme);
   }
 
-  initListeners () {
-    const scope = this;
-    // const start = performance.now();
-    this.clicked = false;
+  getGroup (groupId) {
+    return this.groups[groupId];
+  }
 
-    document.querySelector('#groups-display').addEventListener('mouseout', () => {
-      if (!scope.clicked) {
-        if (searchBox.isResultBoxOpen()) {
-          scope.selectGroup(searchBox.getLastResultGroup());
-        } else {
-          scope.clearSelect();
-        }
-      }
-    });
-
-    const listItems = document.querySelectorAll('#groups-display>li');
-    for (let i = 0; i < listItems.length; i++) {
-      const listItem = listItems[i];
-      listItem.addEventListener('mouseover', (event) => {
-        const target = event.currentTarget;
-        scope.clicked = false;
-        const groupName = target.dataset.group;
-        if (groupName === '<clear>') {
-          scope.clearSelect();
-        } else {
-          scope.selectGroup(scope.groups[groupName]);
-        }
-      });
-
-      listItem.addEventListener('click', (event) => {
-        const { app } = scope;
-        const target = event.currentTarget;
-        scope.clicked = true;
-        const groupName = target.dataset.group;
-        if (groupName === '<clear>') {
-          scope.clearSelect();
-          document.querySelector('#menu-groups .menu-title').innerHTML = 'Groups';
-          target.style.display = 'none';
-        } else {
-          app.selectSat(-1); // clear selected sat
-          scope.selectGroup(scope.groups[groupName]);
-
-          searchBox.fillResultBox(scope.groups[groupName].sats, '');
-
-          document.querySelector('#menu-groups .clear-option').style.display = 'block';
-          document.querySelector('#menu-groups .menu-title').innerHTML = `Groups (${target.textContent})`;
-        }
-
-        document.querySelector('#groups-display').style.display = 'none';
-      });
+  reloadGroups () {
+    const keys = Object.keys(this.groups);
+    for (let i = 0; i < keys.length; i++) {
+      this.groups[keys[i]].reload();
     }
   }
 
   init (appContext) {
     this.app = appContext;
-    for (let i = 0; i < groupConfigs.length; i++) {
-      this.groups[groupConfigs[i].id] = new SatGroup(
-        groupConfigs[i].id,
-        groupConfigs[i].name,
-        groupConfigs[i].groupType,
-        groupConfigs[i].data
-      );
-    }
-
-    // Give time for update to happen before registering listeners
-    setTimeout(this.initListeners.bind(this), 0);
   }
 }
 

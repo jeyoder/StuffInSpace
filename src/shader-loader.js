@@ -1,6 +1,6 @@
 import axios from 'axios';
-import logger from './logger';
-import constants from './constants';
+import logger from './utils/logger';
+import constants from './config';
 
 const shaders = [
   'earth-fragment.glsl',

@@ -2,7 +2,7 @@ import { mat4, vec3, mat3 } from 'gl-matrix';
 import { jday, gstime } from 'satellite.js';
 import { getShaderCode } from './shader-loader';
 
-import logger from './logger';
+import logger from './utils/logger';
 
 const NUM_LAT_SEGS = 64;
 const NUM_LON_SEGS = 64;

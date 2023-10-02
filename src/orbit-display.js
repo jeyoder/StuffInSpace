@@ -1,7 +1,7 @@
 import { mat4 } from 'gl-matrix';
 
 import { getShaderCode } from './shader-loader';
-import logger from './logger';
+import logger from './utils/logger';
 
 // eslint-disable-next-line import/no-unresolved
 import worker from './orbit-calculation-worker?worker';
@@ -137,10 +137,21 @@ function getPathShader () {
   return pathShader;
 }
 
+function onSelectedSatChange (satellite) {
+  if (!satellite) {
+    clearSelectOrbit();
+    setSelectOrbit(-1);
+  } else {
+    setSelectOrbit(satellite.id);
+  }
+}
+
 function init (appContext) {
   app = appContext;
   const startTime = performance.now();
   const gl = app.gl;
+
+  app.addEventListener('selectedsatchange', onSelectedSatChange);
 
   logger.info('Kicking off orbit-calculation-worker');
   orbitWorker = worker();

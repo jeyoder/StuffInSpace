@@ -2,7 +2,13 @@
 <html>
   <head>
     <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+
+    <!--
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    -->
+
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Sans" type="text/css">
     <link rel="stylesheet" href="styles/icomoon.css" type="text/css">
     <link rel="stylesheet" href="styles/perfect-scrollbar.min.css" type="text/css">
@@ -12,24 +18,24 @@
 
     <title>Stuff in Space</title>
   </head>
-  <body>
+  <body class="loading">
   <div id="no-webgl">
     Stuff in Space requires <a href="https://caniuse.com/#feat=webgl">WebGL</a> and <a href="https://caniuse.com/#feat=webworkers">Web Worker</a> support.
   </div>
   <div id="canvas-holder">
     <canvas id="canvas"></canvas>
     <div id="menu-left" class="menubar">
-      <div id="search-holder" class="menu-item">
+      <div id="search-holder" class="menu">
         <span class="icon-search"></span>
         <input type="text" id="search"></input>
       </div>
-      <div id="menu-groups" class="menu-item">
+      <div id="menu-groups" class="menu">
         <div class="menu-title">Groups</div>
         <ul id="groups-display" class="dropdown submenu">
           <li data-group="<clear>" class="clear-option">Clear</li>
         </ul>
       </div>
-     <!-- <div id="menu-color-schemes" class="menu-item">
+     <!-- <div id="menu-color-schemes" class="menu">
         <div class="menu-title">Color Schemes</div>
         <ul id="color-schemes-submenu" class="submenu">
           <li data-color="default">Type</li>
@@ -39,7 +45,7 @@
       </div>-->
     </div>
     <div id="menu-right" class="menubar">
-      <div id="menu-help" class="menu-item">
+      <div id="menu-help" class="menu">
         <div class="menu-title">Help</div>
         <div id="help-box" class="menubox submenu">
           <span class="box-header">Legend</span>
@@ -73,7 +79,7 @@
 
         </div>
       </div>
-      <div id="menu-about" class="menu-item">
+      <div id="menu-about" class="menu">
         <div class="menu-title">About</div>
         <div id="about-box" class="menubox submenu">
           <span class="box-header">Stuff in Space</span>
@@ -136,6 +142,9 @@
       </div>
     </div>
     <div id="zoom-controls">
+      <!--
+      <div id="center-loc" class="zoom-button">❂</div>
+      -->
       <div id="zoom-in" class="zoom-button">+</div>
       <div id="zoom-out" class="zoom-button">-</div>
     </div>

@@ -1,10 +1,6 @@
-const baseUrl = import.meta.env.BASE_URL;
-const constants = {
-  appName: 'Stuff in Space',
-  baseUrl,
-  propergateInterval: 500, // milliseconds
-  pushHistory: false,
-  logLevel: 'info'
-};
+/* eslint-disable import/prefer-default-export */
+const R2D = 80 / Math.PI;
 
-export default constants;
+export {
+  R2D
+};

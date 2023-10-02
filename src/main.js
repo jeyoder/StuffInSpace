@@ -9,15 +9,21 @@ import Sun from './sun';
 import Earth from './earth';
 import { initColorSchemes } from './color-scheme';
 import orbitDisplay from './orbit-display';
-import searchBox from './search-box';
+import searchBox from './hud/search-box';
 import satGroups from './sat-groups';
-import logger from './logger';
-import constants from './constants';
+import logger from './utils/logger';
+import config from './config';
+import hud from './hud';
+
+// import { R2D } from './constants';
 
 const validateProgram = false;
-let app;
+const listeners = {
+  selectedsatchange: new Set(),
+  satdataloaded: new Set()
+};
 
-const R2D = 180 / Math.PI;
+let app;
 
 let camYaw = 0;
 let camPitch = 0.5;
@@ -73,6 +79,23 @@ function getCanvas () {
   const elementId = 'canvas';
   const canvas = document.querySelector(`#${elementId}`);
   return canvas;
+}
+
+function addEventListener (eventName, listener) {
+  if (listeners[eventName]) {
+    listeners[eventName].add(listener);
+  } else {
+    throw new Error('unknown event');
+  }
+}
+
+function fireEvent (eventName, data) {
+  if (listeners[eventName]) {
+    const listenerSet = listeners[eventName];
+    listenerSet.forEach((listener) => {
+      listener(data);
+    });
+  }
 }
 
 function webGlInit () {
@@ -216,10 +239,24 @@ function getEarthScreenPoint (x, y) {
   return ptSurf;
 }
 
+// function rotateTo (latitude, longitude) {
+//   TODO
+//   let x = 0;
+//   let y = 0;
+//   const r = Math.sqrt(longitude * longitude + latitude * latitude);
+//   const yaw = Math.atan2(latitude) + Math.PI / 2;
+//   const pitch = Math.atan2(1000, r);
+//   camSnap(pitch, yaw);
+// }
+
 function normalizeAngle (angle) {
   angle %= Math.PI * 2;
-  if (angle > Math.PI) angle -= Math.PI * 2;
-  if (angle < -Math.PI) angle += Math.PI * 2;
+  if (angle > Math.PI) {
+    angle -= Math.PI * 2;
+  }
+  if (angle < -Math.PI) {
+    angle += Math.PI * 2;
+  }
   return angle;
 }
 
@@ -237,6 +274,7 @@ function camSnapToSat (satId) {
 
   if (camAngleSnappedOnSat) {
     const pos = sat.position;
+
     const r = Math.sqrt(pos.x * pos.x + pos.y * pos.y);
     const yaw = Math.atan2(pos.y, pos.x) + Math.PI / 2;
     const pitch = Math.atan2(pos.z, r);
@@ -360,6 +398,7 @@ function updateHover () {
       hoverBoxOnSat(-1, 0, 0);
     }
   } else {
+    // TODO too slow need to speed this up
     mouseSat = getSatIdFromCoord(mouseX, mouseY);
     if (mouseSat !== -1) {
       orbitDisplay.setHoverOrbit(mouseSat);
@@ -450,54 +489,20 @@ function drawLoop () {
   requestAnimationFrame(drawLoop);
 }
 
-async function updateGroupList () {
-  const groupDisplay = document.querySelector('#menu-groups #groups-display');
-  groupDisplay.innerHTML = '<li data-group="<clear>" class="clear-option">Clear</li>';
-
-  const groups = app.groups.asArray().sort((entryA, entryB) => entryA.name.localeCompare(entryB.name));
-
-  let html = '<li data-group="<clear>" class="clear-option">Clear</li>';
-  for (let i = 0; i < groups.length; i++) {
-    html += `<li data-group="${groups[i].id}">${groups[i].name}</li>\n`;
-  }
-
-  groupDisplay.innerHTML = html;
-}
-
 function selectSat (satId) {
-  if (satId === -1) {
-    document.querySelector('#sat-infobox').classList.remove('visible');
-    orbitDisplay.clearSelectOrbit();
-    satSet.selectSat(-1);
-  } else {
+  if (satId !== -1) {
     camZoomSnappedOnSat = true;
     camAngleSnappedOnSat = true;
-
-    app.satSet.selectSat(satId);
-    // camSnapToSat(satId);
-    const sat = satSet.getSat(satId);
-
-    if (!sat) {
-      return;
-    }
-
-    orbitDisplay.setSelectOrbit(satId);
-    document.querySelector('#sat-infobox').classList.add('visible');
-    document.querySelector('#sat-info-title').innerHTML = sat.OBJECT_NAME;
-    document.querySelector('#sat-intl-des').innerHTML = sat.intlDes;
-    document.querySelector('#sat-type').innerHTML = sat.OBJECT_TYPE;
-    document.querySelector('#sat-apogee').innerHTML = `${sat.apogee.toFixed(0)} km`;
-    document.querySelector('#sat-perigee').innerHTML = `${sat.perigee.toFixed(0)} km`;
-    document.querySelector('#sat-inclination').innerHTML = `${(sat.inclination * R2D).toFixed(2)}°`;
-    document.querySelector('#sat-period').innerHTML = `${sat.period.toFixed(2)} min`;
   }
+
+  fireEvent('selectedsatchange', satSet.getSat(satId));
   app.selectedSat = satId;
 
   app.updateUrl();
 }
 
 function processPageParams (updateSearch = true) {
-  let title = constants.appName;
+  let title = config.appName;
 
   const searchParams = new URLSearchParams(document.location.search);
 
@@ -551,6 +556,24 @@ function initSpinner () {
   spinner.spin(target);
 }
 
+function zoomIn (delta = 0.04) {
+  zoomTarget -= delta;
+  if (zoomTarget < 0) {
+    zoomTarget = 0;
+  }
+  initialRotation = false;
+  camZoomSnappedOnSat = false;
+}
+
+function zoomOut (delta = 0.04) {
+  zoomTarget += delta;
+  if (zoomTarget > 1) {
+    zoomTarget = 1;
+  }
+  initialRotation = false;
+  camZoomSnappedOnSat = false;
+}
+
 function initListeners () {
   let resizing = false;
 
@@ -565,9 +588,45 @@ function initListeners () {
     resizing = true;
   });
 
-  window.addEventListener('popstate', (event) => {
-    console.log('>>>>', 'popstate', event);
+  window.addEventListener('popstate', () => {
     processPageParams();
+  });
+
+  window.addEventListener('gesturestart', (event) => {
+    event.preventDefault();
+    let scale = event.scale;
+    if (scale > 1) {
+      scale -= 1;
+    }
+    const delta = Math.abs(0.01 * scale);
+    if (event.scale < 1.0) {
+      zoomIn(delta);
+    } else {
+      zoomOut(delta);
+    }
+  });
+
+  // Safari specific
+  window.addEventListener('gestureend', (event) => {
+    event.preventDefault();
+    dragHasMoved = false;
+    isDragging = false;
+    initialRotation = false;
+  });
+
+  // Safari specific
+  window.addEventListener('gesturechange', (event) => {
+    event.preventDefault();
+    let scale = event.scale;
+    if (scale > 1) {
+      scale -= 1;
+    }
+    const delta = Math.abs(0.01 * scale);
+    if (event.scale < 1.0) {
+      zoomIn(delta);
+    } else {
+      zoomOut(delta);
+    }
   });
 
   const canvasElement = document.querySelector('#canvas');
@@ -579,8 +638,8 @@ function initListeners () {
       camAngleSnappedOnSat = false;
       camZoomSnappedOnSat = false;
     }
-    mouseX = event.originalEvent.touches[0].clientX;
-    mouseY = event.originalEvent.touches[0].clientY;
+    mouseX = event.touches[0].clientX;
+    mouseY = event.touches[0].clientY;
   }, { passive: false });
 
   canvasElement.addEventListener('mousemove', (event) => {
@@ -609,8 +668,6 @@ function initListeners () {
     camZoomSnappedOnSat = false;
   }, { passive: true });
 
-  canvasElement.addEventListener('contextmenu', () => false); // stop right-click menu
-
   canvasElement.addEventListener('mousedown', (event) => {
     dragPoint = getEarthScreenPoint(event.clientX, event.clientY);
     screenDragPoint = [event.clientX, event.clientY];
@@ -622,8 +679,8 @@ function initListeners () {
   });
 
   canvasElement.addEventListener('touchstart', (event) => {
-    const x = event.originalEvent.touches[0].clientX;
-    const y = event.originalEvent.touches[0].clientY;
+    const x = event.touches[0].clientX;
+    const y = event.touches[0].clientY;
     dragPoint = getEarthScreenPoint(x, y);
     screenDragPoint = [x, y];
     dragStartPitch = camPitch;
@@ -652,43 +709,6 @@ function initListeners () {
     isDragging = false;
     initialRotation = false;
   }, { passive: true });
-
-  const menuItems = document.querySelectorAll('.menu-item');
-  for (let i = 0; i < menuItems.length; i++) {
-    const menuItem = menuItems[i];
-
-    menuItem.addEventListener('mouseover', (event) => {
-      const target = event.currentTarget;
-      const subMenu = target.querySelector('.submenu');
-      if (subMenu) {
-        subMenu.style.display = 'block';
-      }
-    });
-
-    menuItem.addEventListener('mouseout', (event) => {
-      const target = event.currentTarget;
-      const subMenu = target.querySelector('.submenu');
-      if (subMenu) {
-        subMenu.style.display = 'none';
-      }
-    });
-  }
-
-  document.querySelector('#zoom-in').addEventListener('click', () => {
-    zoomTarget -= 0.04;
-    if (zoomTarget < 0) zoomTarget = 0;
-    initialRotation = false;
-    camZoomSnappedOnSat = false;
-  });
-
-  document.querySelector('#zoom-out').addEventListener('click', () => {
-    zoomTarget += 0.04;
-    if (zoomTarget > 1) {
-      zoomTarget = 1;
-    }
-    initialRotation = false;
-    camZoomSnappedOnSat = false;
-  });
 }
 
 class App {
@@ -701,7 +721,12 @@ class App {
     this.gl = undefined;
     this.earth = undefined;
     this.sun = undefined;
+    this.orbitDisplay = undefined;
+
     this.validateProgram = validateProgram;
+    this.addEventListener = addEventListener;
+    this.fireEvent = fireEvent;
+    // this.rotateTo = rotateTo;
   }
 
   browserUnsupported () {
@@ -711,10 +736,9 @@ class App {
   }
 
   updateUrl () {
-    let url = constants.baseUrl || '/';
+    let url = config.baseUrl || '/';
     const paramSlices = [];
 
-    // const search = new URLSearchParams(document.location.search);
     const query = {};
 
     if (this.selectedSat && this.selectedSat !== -1) {
@@ -739,10 +763,10 @@ class App {
       url += `?${paramSlices.join('&')}`;
     }
 
-    if (constants.pushHistory) {
+    if (config.pushHistory) {
       window.history.pushState({}, '', url);
     } else {
-      window.history.replaceState(null, constants.appName, url);
+      window.history.replaceState(null, config.appName, url);
     }
 
     processPageParams(false);
@@ -761,6 +785,8 @@ async function main () {
   app.sun = Sun;
   app.earth = Earth; // new Earth();
   app.satSet = satSet;
+
+  app.searchBox = searchBox;
   searchBox.init(app);
   initSpinner();
 
@@ -771,15 +797,24 @@ async function main () {
   app.satSet = satSet;
   app.groups = satGroups;
   app.selectSat = selectSat;
+  app.orbitDisplay = orbitDisplay;
+  app.viewer = {
+    zoomIn,
+    zoomOut
+  };
+
+  hud.setLoading(true);
 
   initColorSchemes(app);
 
   satSet.init(app, (satData) => {
+    hud.init(app);
     app.satData = satData;
     satGroups.init(app);
     orbitDisplay.init(app);
     searchBox.init(app);
-    updateGroupList();
+
+    fireEvent('satdataloaded', satData);
 
     debugLine = new Line(app.gl);
     debugLine2 = new Line(app.gl);

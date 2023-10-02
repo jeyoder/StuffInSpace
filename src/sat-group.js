@@ -6,16 +6,22 @@ class SatGroup {
     this.sats = [];
     this.id = groupId;
     this.name = name;
-    if (groupType === 'intlDes') {
-      for (let i = 0; i < data.length; i++) {
+    this.groupType = groupType;
+    this.data = data;
+  }
+
+  reload () {
+    this.sats = [];
+    if (this.groupType === 'intlDes') {
+      for (let i = 0; i < this.data.length; i++) {
         this.sats.push({
-          satId: satSet.getIdFromIntlDes(data[i]),
+          satId: satSet.getIdFromIntlDes(this.data[i]),
           isIntlDes: true,
           strIndex: 0
         });
       }
-    } else if (groupType === 'nameRegex') {
-      const satIdList = satSet.searchNameRegex(data);
+    } else if (this.groupType === 'nameRegex') {
+      const satIdList = satSet.searchNameRegex(this.data);
       for (let i = 0; i < satIdList.length; i++) {
         this.sats.push({
           satId: satIdList[i],
@@ -23,17 +29,17 @@ class SatGroup {
           strIndex: 0
         });
       }
-    } else if (groupType === 'idList') {
-      for (let i = 0; i < data.length; i++) {
+    } else if (this.groupType === 'idList') {
+      for (let i = 0; i < this.data.length; i++) {
         this.sats.push({
-          satId: data[i],
+          satId: this.data[i],
           isIntlDes: false,
           strIndex: 0
         });
       }
-    } else if (groupType === 'objectType') {
+    } else if (this.groupType === 'objectType') {
       const field = 'OBJECT_TYPE';
-      const satIdList = satSet.search({ [field]: data });
+      const satIdList = satSet.search({ [field]: this.data });
       for (let i = 0; i < satIdList.length; i++) {
         this.sats.push({
           satId: satIdList[i].id,
@@ -44,10 +50,14 @@ class SatGroup {
     }
   }
 
-  hasSat (id) {
+  getSat (satId) {
+    return this.sats.find((satellite) => satellite.id === satId);
+  }
+
+  hasSat (satId) {
     const len = this.sats.length;
     for (let i = 0; i < len; i++) {
-      if (this.sats[i].satId === id) {
+      if (this.sats[i].satId === satId) {
         return true;
       }
     }
