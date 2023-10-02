@@ -1,10 +1,8 @@
-# Things in Space
+# Stuff in Space
 
 Original author: James Yoder (https://github.com/jeyoder)
 
-A real-time interactive WebGL visualisation of objects in Earth orbit
-
-The official live version is hosted at http://stuffin.space/
+A real-time interactive WebGL visualisation of objects in Earth orbit.
 
 ## Running for Development
 
