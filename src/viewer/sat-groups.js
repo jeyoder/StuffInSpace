@@ -37,6 +37,10 @@ class SatGroups {
     return this.groups[groupId];
   }
 
+  getSelectedGroup () {
+    return this.selectedGroup;
+  }
+
   reloadGroups () {
     const keys = Object.keys(this.groups);
     for (let i = 0; i < keys.length; i++) {

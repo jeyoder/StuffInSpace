@@ -127,14 +127,19 @@ function draw (pMatrix, camMatrix) { // lol what do I do here
   if (app.groups.selectedGroup) {
     gl.uniform4fv(pathShader.uColor, groupColor);
     const satellites = app.groups.selectedGroup.sats;
-    satellites.forEach((id) => {
-      gl.bindBuffer(gl.ARRAY_BUFFER, glBuffers[id]);
-      gl.vertexAttribPointer(pathShader.aPos, 3, gl.FLOAT, false, 0, 0);
-      gl.drawArrays(gl.LINE_STRIP, 0, NUM_SEGS + 1);
+    satellites.forEach((satellite) => {
+      const id = satellite.satId;
+      if (glBuffers[id]) {
+        gl.bindBuffer(gl.ARRAY_BUFFER, glBuffers[id]);
+        gl.vertexAttribPointer(pathShader.aPos, 3, gl.FLOAT, false, 0, 0);
+        gl.drawArrays(gl.LINE_STRIP, 0, NUM_SEGS + 1);
+      } else {
+        logger.warn(`glBuffers[${id}] is undefined`);
+      }
     });
   }
 
-  //  gl.depthMask(true);
+  // gl.depthMask(true);
   gl.disable(gl.BLEND);
 }
 
