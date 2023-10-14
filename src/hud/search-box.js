@@ -149,7 +149,8 @@ function doSearch (str) {
     idList.push(results[i].satId);
   }
 
-  const dispGroup = new SatGroup('idList', idList);
+  const dispGroup = new SatGroup('search-results', 'Search Results', 'idList', idList);
+  dispGroup.reload();
   lastResultGroup = dispGroup;
 
   app.groups.selectGroup(dispGroup);
