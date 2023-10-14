@@ -93,13 +93,13 @@ function initGroupsListeners (app) {
       const target = event.currentTarget;
       const groupName = target.dataset.group;
 
-      app.groups.selectGroup(app.groups.getGroup(groupName));
+      app.groups.selectGroup(app.groups.getGroupById(groupName));
     });
 
     listItem.addEventListener('mouseout', () => {
       const selectedGroup = document.querySelector('#groups-display>li.selected');
       if (selectedGroup) {
-        app.groups.selectGroup(app.groups.getGroup(selectedGroup.dataset.group));
+        app.groups.selectGroup(app.groups.getGroupById(selectedGroup.dataset.group));
       } else {
         app.groups.selectGroup(undefined);
       }
@@ -129,8 +129,8 @@ function initGroupsListeners (app) {
         event.stopPropagation();
         const satelliteGroups = app.viewer.getSatGroups();
         app.viewer.setSelectedSatellite(-1); // clear selected sat
-        satelliteGroups.selectGroup(satelliteGroups.getGroup(groupName));
-        searchBox.fillResultBox(satelliteGroups.getGroup(groupName).sats, '');
+        satelliteGroups.selectGroup(satelliteGroups.getGroupById(groupName));
+        searchBox.fillResultBox(satelliteGroups.getGroupById(groupName).sats, '');
         windowManager.openWindow('search-window');
         target.classList.add('selected');
       }
@@ -172,14 +172,11 @@ function initEventListeners () {
   setLoading(false);
 }
 
-function onSatMovementChange () {
-  const { selectedSat } = app;
-  if (!selectedSat || selectedSat === -1) {
-    return;
+function onSatMovementChange (event) {
+  if (event.satId) {
+    document.querySelector('#sat-altitude').innerHTML = `${event.altitude.toFixed(2)} km`;
+    document.querySelector('#sat-velocity').innerHTML = `${event.velocity.toFixed(2)} km/s`;
   }
-  const satData = app.satSet.getSat(selectedSat);
-  document.querySelector('#sat-altitude').innerHTML = `${satData.altitude.toFixed(2)} km`;
-  document.querySelector('#sat-velocity').innerHTML = `${satData.velocity.toFixed(2)} km/s`;
 }
 
 function onSatDataLoaded () {

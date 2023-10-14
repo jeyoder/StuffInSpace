@@ -151,6 +151,7 @@ function doSearch (str) {
 
   const dispGroup = new SatGroup('idList', idList);
   lastResultGroup = dispGroup;
+
   app.groups.selectGroup(dispGroup);
 
   fillResultBox(results, str);
