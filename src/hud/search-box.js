@@ -1,4 +1,4 @@
-import SatGroup from '../sat-group';
+import SatGroup from '../viewer/sat-group';
 import logger from '../utils/logger';
 
 const SEARCH_LIMIT = 200;
@@ -37,7 +37,7 @@ function clearHover () {
   hovering = false;
   hoverSatId = -1;
 
-  app.setHover(hoverSatId);
+  app.viewer.setHover(hoverSatId);
 }
 
 function setResultsVisible (visible) {
@@ -109,10 +109,9 @@ function clearResults () {
 }
 
 function doSearch (str) {
-  const satSet = app.satSet;
   const satData = app.satData;
 
-  satSet.selectSat(-1);
+  app.viewer.setSelectedSatellite(-1);
 
   if (str.length === 0) {
     hideResults();
@@ -158,39 +157,15 @@ function doSearch (str) {
   app.updateUrl();
 }
 
-function registerHandlers () {
+function registerListeners () {
   const searchResultsElem = document.querySelector('#search-results');
 
   searchResultsElem.addEventListener('click', (event) => {
     const target = event.target;
-    const satId = target.dataset.satId; // document.querySelector(target).data('sat-id');
+    const satId = target.dataset.satId;
     clearHover();
 
-    app.selectSat(satId);
-    // app.satSet.selectSat(satId);
-  });
-
-  searchResultsElem.addEventListener('mouseover', (event) => {
-    const target = event.target;
-    const satId = target.dataset.satId;
-
-    if (satId && satId !== -1) {
-      app.orbitDisplay.setHoverOrbit(satId);
-      app.satSet.setHover(satId);
-
-      hovering = true;
-      hoverSatId = satId;
-    }
-  });
-
-  searchResultsElem.addEventListener('mouseout', (event) => {
-    app.orbitDisplay.clearHoverOrbit();
-    app.satSet.setHover(-1);
-    hovering = false;
-
-    if (event.target.id === searchResultsElem.id) {
-      searchResultsElem.style.display = 'none';
-    }
+    app.viewer.setSelectedSatellite(satId);
   });
 
   document.querySelector('#search').addEventListener('input', () => {
@@ -199,18 +174,22 @@ function registerHandlers () {
   });
 
   document.querySelector('#all-objects-link').addEventListener('click', () => {
-    if (app.selectedSat && app.selectedSat !== -1) {
-      const intldes = app.satSet.getSat(app.selectedSat).intlDes;
+    const selectedSatelltie = app.viewer.getSelectedSatellite();
+    if (selectedSatelltie && selectedSatelltie !== -1) {
+      const intldes = app.viewer.getSatellite(selectedSatelltie).intlDes;
       const searchStr = intldes.slice(0, 8);
       doSearch(searchStr);
       document.querySelector('#search').value = searchStr;
+      if (app.windowManager) {
+        app.windowManager.openWindow('search-window');
+      }
     }
   });
 }
 
 function init (appContext) {
   app = appContext;
-  registerHandlers();
+  registerListeners();
 }
 
 export default {

@@ -5,10 +5,7 @@
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 
-    <!--
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    -->
-
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Sans" type="text/css">
     <link rel="stylesheet" href="styles/icomoon.css" type="text/css">
     <link rel="stylesheet" href="styles/perfect-scrollbar.min.css" type="text/css">
@@ -24,90 +21,22 @@
   </div>
   <div id="canvas-holder">
     <canvas id="canvas"></canvas>
-    <div id="menu-left" class="menubar">
-      <div id="search-holder" class="menu">
-        <span class="icon-search"></span>
-        <input type="text" id="search"></input>
-      </div>
-      <div id="menu-groups" class="menu">
-        <div class="menu-title">Groups</div>
-        <ul id="groups-display" class="dropdown submenu">
-          <li data-group="<clear>" class="clear-option">Clear</li>
-        </ul>
-      </div>
-     <!-- <div id="menu-color-schemes" class="menu">
-        <div class="menu-title">Color Schemes</div>
-        <ul id="color-schemes-submenu" class="submenu">
-          <li data-color="default">Type</li>
-          <li data-color="velocity">Velocity</li>
-          <li data-color="apogee">Apogee</li>
-        </ul>
-      </div>-->
+
+    <div id="mobile-hamburger"><span class="material-symbols-outlined">menu</span></div>
+
+    <div id="menu-right" class="toolbar">
+      <ul class="menu">
+        <li class="menu-item" data-action="open:search-window">Search</li>
+        <li class="menu-item" data-action="open:groups-window">Groups</li>
+        <li class="menu-item" data-action="open:help-window">Help</li>
+        <li class="menu-item" data-action="open:about-window">About</li>
+      </ul>
     </div>
-    <div id="menu-right" class="menubar">
-      <div id="menu-help" class="menu">
-        <div class="menu-title">Help</div>
-        <div id="help-box" class="menubox submenu">
-          <span class="box-header">Legend</span>
-          <ul id="legend">
-            <li  class="clickable satellite">
-               <img class="dot" src="images/dot-red.png"></img>
-               Satellite
-             </li>
-            <li class="clickable rockey-body">
-              <img class="dot" src="images/dot-blue.png"></img>
-              Rocket body
-            </li>
-            <li class="clickable debris">
-              <img class="dot" src="images/dot-grey.png"></img>
-              Debris
-            </li>
-            <li class="clickable unassigned">
-              <img class="dot" src="images/dot-yellow.png"></img>
-              Unassigned
-            </li>
-          </ul>
-          <ul id="controls-info">
-            <li>
-              Left/Right click and drag to rotate camera
-            </li>
-            <li> Mousewheel to scroll </li>
-            <li>
-              Left click to select an object
-            </li>
-          </ul>
 
-        </div>
-      </div>
-      <div id="menu-about" class="menu">
-        <div class="menu-title">About</div>
-        <div id="about-box" class="menubox submenu">
-          <span class="box-header">Stuff in Space</span>
-          <p>Stuff in Space is a realtime 3D map of objects in Earth orbit, visualized using WebGL.</p>
-
-          <p>The website updates daily with orbit data from <a href="http://www.space-track.org">Space-Track.org</a>
-          and uses the excellent <a href="https://github.com/shashwatak/satellite-js">satellite.js</a> Javascript library
-          to calculate satellite positions.</p>
-
-          <span class="box-header">About the author</span>
-          <p>This is was originally developped, in 2015, by James Yoder, an alumnus of <a href="http://www.usfirst.org/roboticsprograms/frc"><i>FIRST</i> Robotics
-            Competition </a> (FRC) <a href="http://team624.org">Team 624</a> and a graduate of the University of Texas at Austin.</p>
-          <p>The project has since been taken up by the community to further its development and keep it relevant.</p>
-          <span class="box-header">Source Code and Issue Reporting</span>
-          <p>This current fork is available on <a href="https://github.com/ajmas/StuffInSpace">GitHub</a>,
-            with James Yoder's upstream repository also being available on
-            <a href="https://github.com/jeyoder/StuffInSpace">GitHub</a>.
-          </p>
-
-
-        </div>
-      </div>
-    </div>
-    <div id="search-results"></div>
-    <div id="sat-hoverbox">(none)</div>
-    <div id="sat-infobox">
+    <div id="sat-hoverbox" style="display: none">(none)</div>
+    <div id="sat-infobox" class="drag-zone">
       <div id="sat-info-title">This is a title</div>
-      <div id="all-objects-link" class="link">Find all objects from this launch...</div>
+      <div id="all-objects-link" class="link" data-action="open:search-window">Find all objects from this launch...</div>
       <div class="sat-info-row">
         <div class="sat-info-key">Int'l Designator</div>
         <div class="sat-info-value" id="sat-intl-des">1998-067A</div>
@@ -150,11 +79,105 @@
     </div>
     <div id="load-cover">
       <div id="loader">
-        <div id="spinner"></div>
+        <div id="spinner-holder"><img src="/images/loading.gif" alt="loading" class="loading-spinner"/></div>
         <div id="loader-text">
           Downloading resources...
         </div>
       </div>
+    </div>
+  </div>
+
+  <div id="groups-window" class="titlebar-window">
+    <div class="window-title drag-zone">
+      Groups
+      <div class="window-close"><span class="material-symbols-outlined">close</span></div>
+    </div>
+    <div class="window-content-holder">
+    <div class="window-content">
+      <ul id="groups-display">
+        <li data-group="<clear>" class="clear-option">Clear</li>
+      </ul>
+    </div>
+    </div>
+  </div>
+
+  <div id="search-window" class="titlebar-window">
+    <div class="window-title drag-zone">
+      Search
+      <div class="window-close"><span class="material-symbols-outlined">close</span></div>
+    </div>
+    <div class="window-content-holder">
+    <div class="window-content">
+      <div id="search-holder">
+        <span class="icon-search"></span>
+        <input type="text" id="search"></input>
+      </div>
+      <div id="search-results"></div>
+    </div>
+    </div>
+  </div>
+
+  <div id="help-window" class="titlebar-window">
+    <div class="window-title drag-zone">
+      Legend
+      <div class="window-close"><span class="material-symbols-outlined">close</span></div>
+    </div>
+    <div class="window-content-holder">
+    <div class="window-content">
+      <ul id="legend">
+        <li  class="clickable satellite">
+           <img class="dot" src="images/dot-red.png"></img>
+           Satellite
+         </li>
+        <li class="clickable rockey-body">
+          <img class="dot" src="images/dot-blue.png"></img>
+          Rocket body
+        </li>
+        <li class="clickable debris">
+          <img class="dot" src="images/dot-grey.png"></img>
+          Debris
+        </li>
+        <li class="clickable unassigned">
+          <img class="dot" src="images/dot-yellow.png"></img>
+          Unassigned
+        </li>
+      </ul>
+      <ul id="controls-info">
+        <li>
+          Left/Right click and drag to rotate camera
+        </li>
+        <li> Mousewheel to scroll </li>
+        <li>
+          Left click to select an object
+        </li>
+      </ul>
+    </div>
+    </div>
+  </div>
+
+  <div id="about-window" class="titlebar-window">
+    <div class="window-title  drag-zone">
+      About Stuff in Space
+      <div class="window-close"><span class="material-symbols-outlined">close</span></div>
+    </div>
+    <div class="window-content-holder">
+    <div class="window-content">
+      <p>Stuff in Space is a realtime 3D map of objects in Earth orbit, visualized using WebGL.</p>
+
+      <p>The website updates daily with orbit data from <a href="http://www.space-track.org">Space-Track.org</a>
+      and uses the excellent <a href="https://github.com/shashwatak/satellite-js">satellite.js</a> Javascript library
+      to calculate satellite positions.</p>
+
+      <span class="box-header">About the author</span>
+      <p>This is was originally developped, in 2015, by James Yoder, an alumnus of <a href="http://www.usfirst.org/roboticsprograms/frc"><i>FIRST</i> Robotics
+        Competition </a> (FRC) <a href="http://team624.org">Team 624</a> and a graduate of the University of Texas at Austin.</p>
+      <p>The project has since been taken up by the community to further its development and keep it relevant.</p>
+      <span class="box-header">Source Code and Issue Reporting</span>
+      <p>This current fork is available on <a href="https://github.com/ajmas/StuffInSpace">GitHub</a>,
+        with James Yoder's upstream repository also being available on
+        <a href="https://github.com/jeyoder/StuffInSpace">GitHub</a>.
+      </p>
+    </div>
     </div>
   </div>
 
