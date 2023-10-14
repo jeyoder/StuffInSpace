@@ -446,8 +446,10 @@ function drawLoop () {
   const satData = app.satSet.getSat(selectedSat);
   if (satData) {
     eventManager.fireEvent(Events.satMovementChange, {
-      altitude: `${satData.altitude.toFixed(2)} km`,
-      velocity: `${satData.velocity.toFixed(2)} km/s`
+      satId: selectedSat,
+      satellite: satData,
+      altitude: satData.altitude,
+      velocity: satData.velocity
     });
   }
 
@@ -642,6 +644,10 @@ function getSatellite (satelliteId) {
   return satSet.getSat(satelliteId);
 }
 
+function setSatelliteGroup (satelliteGroup) {
+  satGroups.selectGroup(satelliteGroup);
+}
+
 async function onSatSetLoaded ({ satData }) {
   app.satData = satData;
   satGroups.init(app, app.config.satelliteGroups);
@@ -705,5 +711,6 @@ export default {
   getSatSet,
   setSelectedSatellite,
   getSelectedSatellite,
-  getSatellite
+  getSatellite,
+  setSatelliteGroup
 };
