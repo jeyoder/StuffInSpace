@@ -52,6 +52,7 @@ ul {
   overflow: hidden;
 }
 
+
 #load-cover {
   background: rgba(0, 0, 0, 0.8);
   position: absolute;
@@ -77,6 +78,13 @@ ul {
   bottom: 0;
   margin: auto;
   text-align: center;
+  display: flex;
+  align-items: center;
+}
+
+#loader .loading-spinner {
+  width: 32px;
+  margin: 9px;
 }
 
 #loader-text {
@@ -105,7 +113,7 @@ ul {
 
 #sat-infobox {
   background: black;
-  cursor:default;
+  /* cursor:default; */
   color: white;
   position: absolute;
   padding: 10px;
@@ -121,12 +129,14 @@ ul {
   display: none;
 }
 
-#sat-infobox.draggable {
+.draggable .drag-zone, .draggable.drag-zone {
   cursor: grab;
+  /* z-index: 100; */
 }
 
-#sat-infobox.dragging {
+.dragging .drag-zone, .dragging.drag-zone {
   cursor: grabbing;
+  /* z-index: 200; */
 }
 
 #all-objects-link {
@@ -164,15 +174,15 @@ ul {
 
 #search-results {
   display: none;
-  position: absolute;
-  width: 300px;
+  /* position: absolute; */
+  /* width: 300px; */
   background: black;
   color: white;
   border-radius: 5px;
   border: 1px solid rgba(255, 255, 255, 0.2);
-  z-index: 10;
-  top: 30px;
-  bottom: 0;
+  /* z-index: 10; */
+  /* top: 30px;
+  bottom: 0; */
   overflow: auto;
   max-height: 100%;
 }
@@ -210,7 +220,7 @@ ul {
   outline: none;
 }
 
-.menubar {
+.toolbar {
   height: 30px;
   position: absolute;
   top: 5px;
@@ -218,9 +228,21 @@ ul {
   flex-direction: row;
   align-items: stretch;
   align-content: stretch;
+  width: 100%;
+  padding: 10px;
 }
 
-body.loading .menubar {
+ul.menu {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+}
+.menu-item:hover {
+  color:#faa;
+  cursor: default;
+}
+
+body.loading .toolbar {
   display: none;
 }
 
@@ -229,9 +251,45 @@ body.loading .menubar {
   justify-content: flex-start;
 }
 
-#menu-right {
- right: 0px;
+#menu-right ul.menu {
+  display: flex;
+  flex-direction: column;
+  /* justify-content: flex-end; */
+  /* padding-right: 11px; */
+  /* border: solid 1px white; */
+}
+
+#menu-right ul.menu li {
+  line-height: 150%;
+}
+
+/* #menu-right ul {
+ display: flex;
+ flex-direction: row;
  justify-content: flex-end;
+ column-gap: 11px;
+} */
+
+/* #menu-right ul li {
+  border: solid 1px yellow;
+  align-items: center;
+} */
+
+#menu-right ul li:last-child {
+  margin-right: 11px;
+}
+
+#menu-right ul .menu-items{
+  display: none;
+}
+
+.menu-title {
+  display: flex;
+  align-items: center;
+}
+
+.menu-title:hover {
+  color: #faa;
 }
 
 .menu {
@@ -248,8 +306,9 @@ body.loading .menubar {
   margin-left: 2px;
 }
 
-.menu:hover .menu-title {
+.menu:hover .menu-title, .button-menu:hover .menu-title {
   color: #faa;
+  cursor: pointer;
 }
 
 .menu-title {
@@ -388,6 +447,7 @@ body.loading .menubar {
 #groups-display {
   color: white;
 }
+
 #groups-display li:before {
   content: '\00a0\00a0\00a0\00a0';
   margin-left: 10px;
@@ -410,6 +470,10 @@ body.loading .menubar {
   margin-top: 10px;
 }
 
+.clickable {
+  cursor: pointer;
+}
+
 .hidden {
   transition: opacity 1s ease-in-out;
   -webkit-transition: opacity 1s ease-in-out;
@@ -424,4 +488,105 @@ body.loading .menubar {
   -moz-transition:opacity 1s ease-in-out;
   display: block !important;
   opacity: 1;
+}
+
+
+.titlebar-window {
+  display: none;
+  /* background-color: black; */
+  backdrop-filter: blur(7px) opacity(0.9);
+  overflow: hidden;
+  background-color: rgba(0, 0, 0, 0.5);
+  border: solid 1px #aaa;
+
+  position: absolute;
+  border: solid 1px rgb(87, 87, 87);
+  /* left: 0;
+  top: 0; */
+  /* width: 100vw;
+  height: 100vh; */
+
+  left: 50%;
+  top: 25%;
+  width: 300px;
+  height: 500px;
+}
+
+.titlebar-window .window-title {
+  /* background-color: rgb(3, 3, 102); */
+  background-color: rgb(4, 161, 246);
+  position: relative;
+  color: white;
+  font-weight: bold;
+  font-size: 110%;
+  padding: 7px 12px;
+  border-bottom: 1px rgb(148, 140, 140) solid;
+}
+
+.titlebar-window .window-close{
+  position: absolute;
+  top: 6px;
+  right: 21px;
+  height: 12px;
+  width: 12px;
+  color: white;
+  cursor: pointer;
+}
+
+.titlebar-window .window-close:hover {
+  color: black;
+}
+
+
+.titlebar-window .window-content-holder {
+  overflow-y: auto;
+  height: 100%;
+}
+
+.titlebar-window .window-content {
+  padding: 7px;
+  padding-bottom: 40px;
+}
+
+.titlebar-window .window-content p {
+  line-height: 150%;
+}
+
+.titlebar-window.active {
+  display: block;
+}
+
+#mobile-hamburger {
+  display: none;
+  position: absolute;
+  top: 10px;
+  left: 10px;
+}
+
+#mobile-hamburger span {
+  color: white;
+  font-size: 30px !important;
+}
+
+@media screen and (max-width: 400px) {
+  /* #mobile-hamburger {
+    display: block;
+  }
+
+  #menu-right {
+    display: none;
+  } */
+
+  .titlebar-window {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    filter: none;
+    -webkit-filter: none;
+    background: black;
+}
 }

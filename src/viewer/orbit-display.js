@@ -1,10 +1,10 @@
 import { mat4 } from 'gl-matrix';
 
 import { getShaderCode } from './shader-loader';
-import logger from './utils/logger';
+import logger from '../utils/logger';
 
 // eslint-disable-next-line import/no-unresolved
-import worker from './orbit-calculation-worker?worker';
+import worker from './workers/orbit-calculation-worker?worker';
 
 const NUM_SEGS = 255;
 
@@ -39,6 +39,7 @@ function allocateBuffer () {
 
 function updateOrbitBuffer (satId) {
   if (!inProgress[satId]) {
+    logger.debug('Sending data to orbit worker, to update orbit buffer');
     orbitWorker.postMessage({
       isInit: false,
       satId
@@ -56,9 +57,9 @@ function onmessage (message) {
   inProgress[satId] = false;
 }
 
-function setSelectOrbit (satId) {
-  currentSelectId = satId;
-  updateOrbitBuffer(satId);
+function setSelectedSatellite (satelliteId) {
+  currentSelectId = satelliteId;
+  updateOrbitBuffer(satelliteId);
 }
 
 function clearSelectOrbit () {
@@ -106,11 +107,15 @@ function draw (pMatrix, camMatrix) { // lol what do I do here
   gl.uniformMatrix4fv(pathShader.uCamMatrix, false, camMatrix);
   gl.uniformMatrix4fv(pathShader.uPMatrix, false, pMatrix);
 
-  if (currentSelectId !== -1) {
+  if (currentSelectId !== -1 && glBuffers[currentSelectId]) {
     gl.uniform4fv(pathShader.uColor, selectColor);
     gl.bindBuffer(gl.ARRAY_BUFFER, glBuffers[currentSelectId]);
     gl.vertexAttribPointer(pathShader.aPos, 3, gl.FLOAT, false, 0, 0);
     gl.drawArrays(gl.LINE_STRIP, 0, NUM_SEGS + 1);
+  }
+
+  if (currentSelectId !== -1 && !glBuffers[currentSelectId]) {
+    throw new Error(`No id ${currentSelectId} ... ${glBuffers.length}`);
   }
 
   if (currentHoverId !== -1 && currentHoverId !== currentSelectId) { // avoid z-fighting
@@ -137,12 +142,12 @@ function getPathShader () {
   return pathShader;
 }
 
-function onSelectedSatChange (satellite) {
-  if (!satellite) {
+function onSelectedSatChange (event) {
+  if (!event.satId || event.satId === -1) {
     clearSelectOrbit();
-    setSelectOrbit(-1);
+    setSelectedSatellite(-1);
   } else {
-    setSelectOrbit(satellite.id);
+    setSelectedSatellite(event.satId);
   }
 }
 
@@ -189,6 +194,8 @@ function init (appContext) {
   for (let i = 0; i < app.satSet.numSats; i++) {
     glBuffers.push(allocateBuffer());
   }
+
+  logger.debug('Sending data to orbit worker, so it knows about the satellites');
   orbitWorker.postMessage({
     isInit: true,
     satData: app.satSet.satDataString,
@@ -210,7 +217,7 @@ export default {
   allocateBuffer,
   setHoverOrbit,
   clearSelectOrbit,
-  setSelectOrbit,
+  setSelectedSatellite,
   onmessage,
   updateOrbitBuffer
 };

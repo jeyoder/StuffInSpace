@@ -1,52 +1,25 @@
 /* eslint-disable no-loop-func */
-import { R2D } from '../constants';
+import { R2D, Events } from '../constants';
+import windowManager from './window-manager';
+import searchBox from './search-box';
+
+const supporteEvents = [];
 
 let app;
 let groupClicked = false;
+
 const draggableElements = [];
-// let openMenu;
 
-function makeDraggable (selectors) {
-  let elemTop = 0;
-  let elemLeft = 0;
-  let initialX = 0;
-  let initialY = 0;
-
-  const element = document.querySelector(selectors);
-  draggableElements.push(element);
-
-  function onMouseMove (event) {
-    const top = `${elemTop - (initialY - event.clientY)}px`;
-    const left = `${elemLeft - (initialX - event.clientX)}px`;
-    element.style.top = top;
-    element.style.left = left;
+function setLoading (loading) {
+  if (loading) {
+    document.querySelector('body').classList.add('loading');
+  } else {
+    document.querySelector('body').classList.remove('loading');
   }
-
-  element.addEventListener('mousedown', (event) => {
-    event.preventDefault();
-    elemLeft = element.offsetLeft;
-    elemTop = element.offsetTop; // - 250);
-    initialX = event.clientX;
-    initialY = event.clientY;
-
-    element.style.right = 'unset';
-    element.style.bottom = 'unset';
-    element.style.left = `${elemLeft}px`;
-    element.style.top = `${elemTop}px`;
-
-    element.classList.add('dragging');
-    element.addEventListener('mousemove', onMouseMove);
-  });
-
-  element.addEventListener('mouseup', (event) => {
-    event.preventDefault();
-    element.removeEventListener('mousemove', onMouseMove);
-    element.classList.remove('dragging');
-  });
 }
 
 function updateGroupList () {
-  const groupDisplay = document.querySelector('#menu-groups #groups-display');
+  const groupDisplay = document.querySelector('#groups-display');
 
   if (!app.groups) {
     throw new Error('groups is not defined');
@@ -54,26 +27,47 @@ function updateGroupList () {
 
   const groups = app.groups.asArray().sort((entryA, entryB) => entryA.name.localeCompare(entryB.name));
 
-  let html = '<li data-group="<clear>" class="clear-option">Clear</li>';
+  let html = '';
   for (let i = 0; i < groups.length; i++) {
-    html += `<li data-group="${groups[i].id}" id="satgroup-${groups[i].id}">${groups[i].name}</li>\n`;
+    html += `<li data-group="${groups[i].id}" id="satgroup-${groups[i].id}" class="clickable">${groups[i].name}</li>\n`;
   }
 
   groupDisplay.innerHTML = html;
 }
 
-function onSelectedSatChange (sat) {
-  if (sat) {
+function onSelectedSatChange (event) {
+  const { satellite } = event;
+  if (satellite) {
     document.querySelector('#sat-infobox').classList.add('visible');
-    document.querySelector('#sat-info-title').innerHTML = sat.OBJECT_NAME;
-    document.querySelector('#sat-intl-des').innerHTML = sat.intlDes;
-    document.querySelector('#sat-type').innerHTML = sat.OBJECT_TYPE;
-    document.querySelector('#sat-apogee').innerHTML = `${sat.apogee.toFixed(0)} km`;
-    document.querySelector('#sat-perigee').innerHTML = `${sat.perigee.toFixed(0)} km`;
-    document.querySelector('#sat-inclination').innerHTML = `${(sat.inclination * R2D).toFixed(2)}°`;
-    document.querySelector('#sat-period').innerHTML = `${sat.period.toFixed(2)} min`;
+    document.querySelector('#sat-info-title').innerHTML = satellite.OBJECT_NAME;
+    document.querySelector('#sat-intl-des').innerHTML = satellite.intlDes;
+    document.querySelector('#sat-type').innerHTML = satellite.OBJECT_TYPE;
+    document.querySelector('#sat-apogee').innerHTML = `${satellite.apogee.toFixed(0)} km`;
+    document.querySelector('#sat-perigee').innerHTML = `${satellite.perigee.toFixed(0)} km`;
+    document.querySelector('#sat-inclination').innerHTML = `${(satellite.inclination * R2D).toFixed(2)}°`;
+    document.querySelector('#sat-period').innerHTML = `${satellite.period.toFixed(2)} min`;
   } else {
     document.querySelector('#sat-infobox').classList.remove('visible');
+  }
+}
+
+function onSatHover (event) {
+  const {
+    satId, satX, satY, satellite
+  } = event;
+
+  if (!satId || satId === -1) {
+    document.querySelector('#sat-hoverbox').innerHTML = '(none)';
+    document.querySelector('#sat-hoverbox').style.display = 'none';
+    document.querySelector('#canvas').style.cursor = 'default';
+  } else {
+    const satHoverBox = document.querySelector('#sat-hoverbox');
+    satHoverBox.innerHTML = satellite.OBJECT_NAME;
+    satHoverBox.style.display = 'block';
+    satHoverBox.style.position = 'absolute';
+    satHoverBox.style.left = `${satX + 20}px`;
+    satHoverBox.style.top = `${satY - 10}px`;
+    document.querySelector('#canvas').style = { cursor: 'pointer' };
   }
 }
 
@@ -81,8 +75,8 @@ function onSelectedSatChange (sat) {
 function initGroupsListeners (app) {
   document.querySelector('#groups-display').addEventListener('mouseout', () => {
     if (!groupClicked) {
-      if (app.searchBox.isResultBoxOpen()) {
-        app.groups.selectGroup(app.searchBox.getLastResultGroup());
+      if (searchBox.isResultBoxOpen()) {
+        app.groups.selectGroup(searchBox.getLastResultGroup());
       } else {
         app.groups.clearSelect();
       }
@@ -99,10 +93,15 @@ function initGroupsListeners (app) {
       const target = event.currentTarget;
       const groupName = target.dataset.group;
 
-      if (groupName === '<clear>') {
-        app.groups.clearSelect();
+      app.groups.selectGroup(app.groups.getGroup(groupName));
+    });
+
+    listItem.addEventListener('mouseout', () => {
+      const selectedGroup = document.querySelector('#groups-display>li.selected');
+      if (selectedGroup) {
+        app.groups.selectGroup(app.groups.getGroup(selectedGroup.dataset.group));
       } else {
-        app.groups.selectGroup(app.groups.getGroup(groupName));
+        app.groups.selectGroup(undefined);
       }
     });
 
@@ -121,113 +120,30 @@ function initGroupsListeners (app) {
       }
 
       const groupName = target.dataset.group;
-      if (groupName === '<clear>' || groupName === selectedGroupName) {
+      if (groupName === selectedGroupName) {
         app.groups.clearSelect();
-        document.querySelector('#menu-groups .menu-title').innerHTML = 'Groups';
-
-        const clearElement = document.querySelector('#groups-display>li[data-group=\'<clear>\']');
-        clearElement.style.display = 'none';
-
-        app.searchBox.clearResults();
-        app.searchBox.hideResults();
+        searchBox.clearResults();
+        searchBox.hideResults();
       } else {
-        app.selectSat(-1); // clear selected sat
-        app.groups.selectGroup(app.groups.getGroup(groupName));
-        app.searchBox.fillResultBox(app.groups.getGroup(groupName).sats, '');
-
+        event.preventDefault();
+        event.stopPropagation();
+        const satelliteGroups = app.viewer.getSatGroups();
+        app.viewer.setSelectedSatellite(-1); // clear selected sat
+        satelliteGroups.selectGroup(satelliteGroups.getGroup(groupName));
+        searchBox.fillResultBox(satelliteGroups.getGroup(groupName).sats, '');
+        windowManager.openWindow('search-window');
         target.classList.add('selected');
-        // document.querySelector('#menu-groups .clear-option').style.display = 'block';
-        document.querySelector('#menu-groups .menu-title').innerHTML = `Groups (${target.textContent})`;
       }
-
-      document.querySelector('#groups-display').style.display = 'none';
     });
   }
 }
 
-function setLoading (loading) {
-  if (loading) {
-    document.querySelector('body').classList.add('loading');
-  } else {
-    document.querySelector('body').classList.remove('loading');
-  }
-}
+function initEventListeners () {
+  app.groups.reloadGroups();
 
-function init (appContext) {
-  app = appContext;
+  app.addEventListener(Events.selectedSatChange, onSelectedSatChange);
 
-  updateGroupList();
-
-  app.addEventListener('selectedsatchange', onSelectedSatChange);
-  app.addEventListener('satdataloaded', () => {
-    app.groups.reloadGroups();
-
-    const menuItems = document.querySelectorAll('.menu');
-    for (let i = 0; i < menuItems.length; i++) {
-      const menuItem = menuItems[i];
-
-      menuItem.addEventListener('mouseover', (event) => {
-        const target = event.currentTarget;
-        const targetParent = target.parentElement;
-        const subMenu = target.querySelector('.submenu');
-        if (subMenu) {
-          targetParent.classList.add('open');
-          subMenu.style.display = 'block';
-        }
-      });
-
-      menuItem.addEventListener('mouseout', (event) => {
-        const target = event.currentTarget;
-        const targetParent = target.parentElement;
-
-        const subMenu = target.querySelector('.submenu');
-        if (subMenu) {
-          targetParent.classList.remove('open');
-          subMenu.style.display = 'none';
-        }
-      });
-
-      menuItem.addEventListener('click', (event) => {
-        const target = event.currentTarget;
-        const subMenu = target.querySelector('.submenu');
-        const open = target.classList.value.indexOf('open') > -1;
-
-        document.querySelectorAll('.menu').forEach((element) => {
-          element.classList.remove('open');
-        });
-
-        if (subMenu) {
-          if (subMenu && open) {
-            target.classList.remove('open');
-            subMenu.style.display = 'none';
-          } else {
-            target.classList.add('open');
-            subMenu.style.display = 'block';
-          }
-        } else if (target.id === 'search-holder') {
-          app.searchBox.toggleResultsVisible();
-        }
-      });
-    }
-  });
-
-  // document.querySelector('#center-loc').addEventListener('click', (event) => {
-  //   event.preventDefault();
-  //   if (navigator.geolocation) {
-  //     const options = {
-  //       enableHighAccuracy: true,
-  //       timeout: 2000,
-  //       maximumAge: 0
-  //     };
-
-  //     console.log('zzzz');
-  //     navigator.geolocation.getCurrentPosition((pos) => {
-  //       console.log('nnnn');
-  //       console.log('xxxx', pos);
-  //       app.rotateTo(pos.coords.latitude, pos.coords.longitude);
-  //     }, (error) => console.log(error), options);
-  //   }
-  // });
+  app.addEventListener(Events.satHover, onSatHover);
 
   document.querySelector('#zoom-in').addEventListener('click', (event) => {
     event.preventDefault();
@@ -239,8 +155,6 @@ function init (appContext) {
     app.viewer.zoomOut();
   });
 
-  makeDraggable('#sat-infobox');
-  initGroupsListeners(appContext);
   window.addEventListener('resize', () => {
     draggableElements.forEach((element) => {
       if (element.offsetLeft + element.offsetWidth > window.visualViewport.width) {
@@ -254,10 +168,69 @@ function init (appContext) {
       }
     });
   });
+
   setLoading(false);
+}
+
+function onSatMovementChange () {
+  const { selectedSat } = app;
+  if (!selectedSat || selectedSat === -1) {
+    return;
+  }
+  const satData = app.satSet.getSat(selectedSat);
+  document.querySelector('#sat-altitude').innerHTML = `${satData.altitude.toFixed(2)} km`;
+  document.querySelector('#sat-velocity').innerHTML = `${satData.velocity.toFixed(2)} km/s`;
+}
+
+function onSatDataLoaded () {
+  initEventListeners();
+  updateGroupList();
+  setTimeout(() => initGroupsListeners(app), 0);
+}
+
+function getSupportedEvents () {
+  return supporteEvents;
+}
+
+function initMenus () {
+  const elements = document.querySelectorAll('.menu-item');
+  for (let i = 0; i < elements.length; i++) {
+    const element = elements[i];
+    element.addEventListener('click', () => {
+      const action = element.dataset.action;
+      if (action && action.startsWith('open:')) {
+        const parts = action.split(':');
+        windowManager.openWindow(parts[1]);
+      }
+    });
+  }
+}
+
+function getCurrentSearch () {
+  return searchBox.getCurrentSearch();
+}
+
+function init (appContext) {
+  app = appContext;
+  app.windowManager = windowManager;
+
+  windowManager.registerWindow('sat-infobox');
+  windowManager.registerWindow('about-window');
+  windowManager.registerWindow('help-window');
+  windowManager.registerWindow('groups-window');
+  windowManager.registerWindow('search-window');
+
+  searchBox.init(app);
+
+  initMenus();
+
+  app.viewer.addEventListener(Events.satMovementChange, onSatMovementChange);
+  app.addEventListener(Events.satDataLoaded, onSatDataLoaded);
 }
 
 export default {
   setLoading,
-  init
+  init,
+  getSupportedEvents,
+  getCurrentSearch
 };

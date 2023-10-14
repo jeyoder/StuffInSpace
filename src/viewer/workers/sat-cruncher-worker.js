@@ -1,8 +1,8 @@
 import {
   jday, twoline2satrec, eciToGeodetic, gstime, sgp4
 } from 'satellite.js';
-import logger from './utils/logger';
-import constants from './config';
+import logger from '../../utils/logger';
+import constants from '../../config';
 
 const satCache = [];
 const propergateInterval = constants.propergateInterval || 500;

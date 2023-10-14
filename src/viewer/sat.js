@@ -2,13 +2,15 @@
 import { mat4, vec4 } from 'gl-matrix';
 import axios from 'axios';
 
-import logger from './utils/logger';
+import logger from '../utils/logger';
 import { getShaderCode } from './shader-loader';
 import { defaultColorScheme } from './color-scheme';
-import constants from './config';
+import constants from '../config';
 
 // eslint-disable-next-line import/no-unresolved
-import SatCruncherWorker from './sat-cruncher-worker?worker';
+import SatCruncherWorker from './workers/sat-cruncher-worker?worker';
+import EventManager from '../utils/event-manager';
+import { Events } from '../constants';
 
 const tleUrl = `${constants.baseUrl}/data/TLE.json`;
 const hoverColor = [0.1, 1.0, 0.0, 1.0];
@@ -19,6 +21,8 @@ class SatSet {
     // const scope = this;
     this.app = undefined;
     this.satCruncher = undefined;
+    this.eventManager = new EventManager();
+    this.selectedSat = undefined;
 
     try {
       logger.info('Kicking off sat-cruncher-worker');
@@ -84,9 +88,8 @@ class SatSet {
         document.querySelector('#load-cover').classList.add('hidden');
         scope.setColorScheme(scope.currentColorScheme); // force color recalc
         scope.cruncherReady = true;
-        if (scope.cruncherReadyCallback) {
-          scope.cruncherReadyCallback(scope.satData);
-        }
+
+        this.eventManager.fireEvent(Events.cruncherReady, { satData: this.satData });
       }
     } catch (error) {
       logger.debug('Error in worker response', error);
@@ -94,18 +97,91 @@ class SatSet {
     }
   }
 
-  init (app, callback) {
+  addEventListener (eventName, listener) {
+    this.eventManager.addEventListener(eventName, listener);
+  }
+
+  async loadSatelliteData () {
+    const { gl } = this.app;
+
+    const response = await axios.get(tleUrl, {
+      params: {
+        t: Date.now()
+      }
+    });
+
+    try {
+      const startTime = new Date().getTime();
+
+      document.querySelector('#loader-text').innerHTML = 'Crunching numbers...';
+
+      logger.debug('Satellite data received');
+      this.satData = response.data;
+      this.size = this.satData.size;
+
+      // if (true) {
+      // this.satData = this.satData.filter((entry) => entry.OBJECT_TYPE !== 'TBA');
+      // }
+
+      this.satDataString = JSON.stringify(this.satData);
+
+      const postStart = performance.now();
+      logger.debug('Sending data to sat cruncher worker, to perform work');
+      this.satCruncher.postMessage(this.satDataString);
+      const postEnd = performance.now();
+
+      // do some processing on our satData response
+      for (let i = 0; i < this.satData.length; i++) {
+        if (this.satData[i].INTLDES) {
+          let year = this.satData[i].INTLDES.substring(0, 2); // clean up intl des for display
+          const prefix = (year > 50) ? '19' : '20';
+          year = prefix + year;
+          const rest = this.satData[i].INTLDES.substring(2);
+          this.satData[i].intlDes = `${year}-${rest}`;
+        } else {
+          this.satData[i].intlDes = 'unknown';
+        }
+        this.satData[i].id = i;
+      }
+
+      // populate GPU mem buffers, now that we know how many sats there are
+      this.satPosBuf = gl.createBuffer();
+      this.satPos = new Float32Array(this.satData.length * 3);
+
+      const pickColorData = [];
+      this.pickColorBuf = gl.createBuffer();
+      for (let i = 0; i < this.satData.length; i++) {
+        const byteR = (i + 1) & 0xff;
+        const byteG = ((i + 1) & 0xff00) >> 8;
+        const byteB = ((i + 1) & 0xff0000) >> 16;
+        pickColorData.push(byteR / 255.0);
+        pickColorData.push(byteG / 255.0);
+        pickColorData.push(byteB / 255.0);
+      }
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.pickColorBuf);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(pickColorData), gl.STATIC_DRAW);
+
+      this.numSats = this.satData.length;
+
+      this.setColorScheme(defaultColorScheme);
+
+      const end = new Date().getTime();
+      logger.debug(`sat.js init: ${end - startTime} ms (incl post: ${postEnd - postStart} ms)`);
+
+      this.shadersReady = true;
+    } catch (error) {
+      logger.debug('Unable to load TLE data', error);
+    }
+
+    this.eventManager.fireEvent(Events.satDataLoaded, { satData: this.satData });
+
+    return this.satData;
+  }
+
+  async init (app) {
     logger.debug('SatSet init');
     this.app = app;
     const { gl } = app;
-
-    app.addEventListener('selectedsatchange', (satellite) => {
-      if (satellite) {
-        this.selectSat(satellite.id);
-      } else {
-        this.selectSat(-1);
-      }
-    });
 
     this.dotShader = gl.createProgram();
 
@@ -132,86 +208,7 @@ class SatSet {
     this.dotShader.uCamMatrix = gl.getUniformLocation(this.dotShader, 'uCamMatrix');
     this.dotShader.uPMatrix = gl.getUniformLocation(this.dotShader, 'uPMatrix');
 
-    const promise = axios.get(tleUrl, {
-      params: {
-        t: Date.now()
-      }
-    }).then((response) => {
-      try {
-        const startTime = new Date().getTime();
-
-        document.querySelector('#loader-text').innerHTML = 'Crunching numbers...';
-
-        logger.debug('oooo satData');
-        this.satData = response.data;
-        this.size = this.satData.size;
-
-        // if (true) {
-        // this.satData = this.satData.filter((entry) => entry.OBJECT_TYPE !== 'TBA');
-        // }
-
-        this.satDataString = JSON.stringify(this.satData);
-
-        const postStart = performance.now();
-        logger.info('Kicking off this.satCruncher');
-        this.satCruncher.postMessage(this.satDataString); // kick off this.satCruncher
-        const postEnd = performance.now();
-
-        // do some processing on our satData response
-        for (let i = 0; i < this.satData.length; i++) {
-          if (this.satData[i].INTLDES) {
-            let year = this.satData[i].INTLDES.substring(0, 2); // clean up intl des for display
-            const prefix = (year > 50) ? '19' : '20';
-            year = prefix + year;
-            const rest = this.satData[i].INTLDES.substring(2);
-            this.satData[i].intlDes = `${year}-${rest}`;
-          } else {
-            this.satData[i].intlDes = 'unknown';
-          }
-          this.satData[i].id = i;
-        }
-
-        // populate GPU mem buffers, now that we know how many sats there are
-        this.satPosBuf = gl.createBuffer();
-        this.satPos = new Float32Array(this.satData.length * 3);
-
-        const pickColorData = [];
-        this.pickColorBuf = gl.createBuffer();
-        for (let i = 0; i < this.satData.length; i++) {
-          const byteR = (i + 1) & 0xff;
-          const byteG = ((i + 1) & 0xff00) >> 8;
-          const byteB = ((i + 1) & 0xff0000) >> 16;
-          pickColorData.push(byteR / 255.0);
-          pickColorData.push(byteG / 255.0);
-          pickColorData.push(byteB / 255.0);
-        }
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.pickColorBuf);
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(pickColorData), gl.STATIC_DRAW);
-
-        this.numSats = this.satData.length;
-
-        this.setColorScheme(defaultColorScheme);
-
-        const end = new Date().getTime();
-        logger.debug(`sat.js init: ${end - startTime} ms (incl post: ${postEnd - postStart} ms)`);
-
-        this.shadersReady = true;
-
-        if (callback) {
-          callback(this.satData);
-        }
-      } catch (error) {
-        logger.debug('Unable to load TLE data', error);
-      }
-      return this.satData;
-    });
-
-    if (!callback) {
-      return promise;
-    }
-
-    promise.catch((error) => logger.error(error));
-    return undefined;
+    return this.loadSatelliteData();
   }
 
   setColorScheme (scheme) {
@@ -290,26 +287,27 @@ class SatSet {
     }
   }
 
-  getSat (i) {
-    if (!this.satData) {
-      return null;
+  getSat (satelliteId) {
+    if (!satelliteId || satelliteId === -1 || !this.satData) {
+      return undefined;
     }
-    const ret = this.satData[i];
+
+    const ret = this.satData[satelliteId];
     if (!ret) {
       return null;
     }
 
     if (this.gotExtraData) {
-      ret.altitude = this.satAlt[i];
+      ret.altitude = this.satAlt[satelliteId];
       ret.velocity = Math.sqrt(
-        this.satVel[i * 3] * this.satVel[i * 3]
-        + this.satVel[i * 3 + 1] * this.satVel[i * 3 + 1]
-        + this.satVel[i * 3 + 2] * this.satVel[i * 3 + 2]
+        this.satVel[satelliteId * 3] * this.satVel[satelliteId * 3]
+        + this.satVel[satelliteId * 3 + 1] * this.satVel[satelliteId * 3 + 1]
+        + this.satVel[satelliteId * 3 + 2] * this.satVel[satelliteId * 3 + 2]
       );
       ret.position = {
-        x: this.satPos[i * 3],
-        y: this.satPos[i * 3 + 1],
-        z: this.satPos[i * 3 + 2]
+        x: this.satPos[satelliteId * 3],
+        y: this.satPos[satelliteId * 3 + 1],
+        z: this.satPos[satelliteId * 3 + 2]
       };
     }
     return ret;
@@ -381,7 +379,7 @@ class SatSet {
     const { gl } = this.app;
 
     gl.bindBuffer(gl.ARRAY_BUFFER, this.satColorBuf);
-    if (this.hoveringSat !== this.app.selectedSat) {
+    if (this.hoveringSat !== this.selectedSat) {
       gl.bufferSubData(
         gl.ARRAY_BUFFER,
         this.hoveringSat * 4 * 4,
@@ -400,20 +398,22 @@ class SatSet {
     this.hoveringSat = satId;
   }
 
-  selectSat (satelliteIdx) {
-    if (satelliteIdx === this.app.selectedSat) {
+  setSelectedSatellite (satelliteIdx) {
+    if (satelliteIdx === this.selectedSat) {
       return;
     }
 
     const { gl } = this.app;
     gl.bindBuffer(gl.ARRAY_BUFFER, this.satColorBuf);
-    if (this.app.selectedSat !== -1) {
+
+    if (this.selectedSat !== -1) {
       gl.bufferSubData(
         gl.ARRAY_BUFFER,
-        this.app.selectedSat * 4 * 4,
-        new Float32Array(this.currentColorScheme.colorizer(this.app.selectedSat).color)
+        this.selectedSat * 4 * 4,
+        new Float32Array(this.currentColorScheme.colorizer(this.selectedSat).color)
       );
     }
+
     if (satelliteIdx !== -1) {
       gl.bufferSubData(
         gl.ARRAY_BUFFER,
@@ -421,7 +421,8 @@ class SatSet {
         new Float32Array(selectedColor)
       );
     }
-    this.app.selectedSat = satelliteIdx;
+
+    this.selectedSat = satelliteIdx;
   }
 
   onCruncherReady (callback) {

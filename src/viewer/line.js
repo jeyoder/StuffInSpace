@@ -1,5 +1,5 @@
 import orbitDisplay from './orbit-display';
-import logger from './utils/logger';
+import logger from '../utils/logger';
 
 class Line {
   constructor (gl) {
@@ -26,6 +26,7 @@ class Line {
     try {
       if (!shader) {
         logger.warn('shader is null');
+        return;
       }
       this.gl.useProgram(shader);
       this.gl.uniform4fv(shader.uColor, [1.0, 0.0, 1.0, 1.0]);
