@@ -1,9 +1,11 @@
 class EventManager {
-  constructor () {
-    this.listeners = {};
+  listeners: Record<string, Set<any>> = {};
+
+  cobstructor () {
+    // not implemented
   }
 
-  addEventListener (eventName, listener) {
+  addEventListener (eventName: string, listener: any) {
     if (!eventName) {
       throw new Error('undefined eventName');
     }
@@ -21,7 +23,7 @@ class EventManager {
     }
   }
 
-  fireEvent (eventName, data) {
+  fireEvent (eventName: string, data: any) {
     if (!eventName) {
       throw new Error('undefined eventName');
     }

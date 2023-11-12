@@ -3,29 +3,29 @@ import { R2D, Events } from '../constants';
 import windowManager from './window-manager';
 import searchBox from './search-box';
 
-const supporteEvents = [];
+const supporteEvents: string[] = [];
 
-let app;
+let app: any;
 let groupClicked = false;
 
-const draggableElements = [];
+const draggableElements: any[] = [];
 
-function setLoading (loading) {
+function setLoading (loading: boolean) {
   if (loading) {
-    document.querySelector('body').classList.add('loading');
+    document.querySelector('body')?.classList.add('loading');
   } else {
-    document.querySelector('body').classList.remove('loading');
+    document.querySelector('body')?.classList.remove('loading');
   }
 }
 
 function updateGroupList () {
-  const groupDisplay = document.querySelector('#groups-display');
+  const groupDisplay = document.querySelector('#groups-display') as HTMLElement;
 
   if (!app.groups) {
     throw new Error('groups is not defined');
   }
 
-  const groups = app.groups.asArray().sort((entryA, entryB) => entryA.name.localeCompare(entryB.name));
+  const groups = app.groups.asArray().sort((entryA: Record<string, string>, entryB: Record<string, string>) => entryA.name.localeCompare(entryB.name));
 
   let html = '';
   for (let i = 0; i < groups.length; i++) {
@@ -35,45 +35,63 @@ function updateGroupList () {
   groupDisplay.innerHTML = html;
 }
 
-function onSelectedSatChange (event) {
-  const { satellite } = event;
-  if (satellite) {
-    document.querySelector('#sat-infobox').classList.add('visible');
-    document.querySelector('#sat-info-title').innerHTML = satellite.OBJECT_NAME;
-    document.querySelector('#sat-intl-des').innerHTML = satellite.intlDes;
-    document.querySelector('#sat-type').innerHTML = satellite.OBJECT_TYPE;
-    document.querySelector('#sat-apogee').innerHTML = `${satellite.apogee.toFixed(0)} km`;
-    document.querySelector('#sat-perigee').innerHTML = `${satellite.perigee.toFixed(0)} km`;
-    document.querySelector('#sat-inclination').innerHTML = `${(satellite.inclination * R2D).toFixed(2)}°`;
-    document.querySelector('#sat-period').innerHTML = `${satellite.period.toFixed(2)} min`;
-  } else {
-    document.querySelector('#sat-infobox').classList.remove('visible');
+function setHtml (selector: string, html: string) {
+  const element = document.querySelector(selector) as HTMLElement;
+  if (element) {
+    element.innerHTML = html;
   }
 }
 
-function onSatHover (event) {
+function onSelectedSatChange (event: any) {
+  const { satellite } = event;
+  if (satellite) {
+    document.querySelector('#sat-infobox')?.classList.add('visible');
+    setHtml('#sat-info-title', satellite.OBJECT_NAME);
+    setHtml('#sat-intl-des', satellite.intlDes);
+    setHtml('#sat-type', satellite.OBJECT_TYPE);
+    setHtml('#sat-apogee', `${satellite.apogee.toFixed(0)} km`);
+    setHtml('#sat-perigee', `${satellite.perigee.toFixed(0)} km`);
+    setHtml('#sat-inclination', `${(satellite.inclination * R2D).toFixed(2)}°`);
+    setHtml('#sat-period', `${satellite.period.toFixed(2)} min`);
+  } else {
+    document.querySelector('#sat-infobox')?.classList.remove('visible');
+  }
+}
+
+function onSatHover (event: any) {
   const {
     satId, satX, satY, satellite
   } = event;
 
   if (!satId || satId === -1) {
-    document.querySelector('#sat-hoverbox').innerHTML = '(none)';
-    document.querySelector('#sat-hoverbox').style.display = 'none';
-    document.querySelector('#canvas').style.cursor = 'default';
+    setHtml('#sat-hoverbox', '(none)');
+    let element = document.querySelector('#sat-hoverbox') as HTMLElement;
+    if (element) {
+      element.style.display = 'none';
+    }
+    element = document.querySelector('#canvas') as HTMLElement;
+    if (element) {
+      element.style.cursor = 'default';
+    }
   } else {
-    const satHoverBox = document.querySelector('#sat-hoverbox');
-    satHoverBox.innerHTML = satellite.OBJECT_NAME;
-    satHoverBox.style.display = 'block';
-    satHoverBox.style.position = 'absolute';
-    satHoverBox.style.left = `${satX + 20}px`;
-    satHoverBox.style.top = `${satY - 10}px`;
-    document.querySelector('#canvas').style = { cursor: 'pointer' };
+    const satHoverBox = document.querySelector('#sat-hoverbox') as HTMLElement;
+    if (satHoverBox) {
+      satHoverBox.innerHTML = satellite.OBJECT_NAME;
+      satHoverBox.style.display = 'block';
+      satHoverBox.style.position = 'absolute';
+      satHoverBox.style.left = `${satX + 20}px`;
+      satHoverBox.style.top = `${satY - 10}px`;
+    }
+    const element = document.querySelector('#canvas') as HTMLElement;
+    if (element) {
+      element.style.cursor = 'pointer';
+    }
   }
 }
 
 // eslint-disable-next-line no-shadow
-function initGroupsListeners (app) {
-  document.querySelector('#groups-display').addEventListener('mouseout', () => {
+function initGroupsListeners (app: any) {
+  document.querySelector('#groups-display')?.addEventListener('mouseout', () => {
     if (!groupClicked) {
       if (searchBox.isResultBoxOpen()) {
         app.groups.selectGroup(searchBox.getLastResultGroup());
@@ -87,7 +105,7 @@ function initGroupsListeners (app) {
 
   for (let i = 0; i < listItems.length; i++) {
     const listItem = listItems[i];
-    listItem.addEventListener('mouseover', (event) => {
+    listItem.addEventListener('mouseover', (event: any) => {
       app.clicked = false;
 
       const target = event.currentTarget;
@@ -97,7 +115,7 @@ function initGroupsListeners (app) {
     });
 
     listItem.addEventListener('mouseout', () => {
-      const selectedGroup = document.querySelector('#groups-display>li.selected');
+      const selectedGroup = (document.querySelector('#groups-display>li.selected') as HTMLElement);
       if (selectedGroup) {
         app.groups.selectGroup(app.groups.getGroupById(selectedGroup.dataset.group));
       } else {
@@ -105,11 +123,11 @@ function initGroupsListeners (app) {
       }
     });
 
-    listItem.addEventListener('click', (event) => {
+    listItem.addEventListener('click', (event: any) => {
       const target = event.currentTarget;
       groupClicked = true;
 
-      const selectedGroup = document.querySelector('#groups-display>li.selected');
+      const selectedGroup = document.querySelector('#groups-display>li.selected') as HTMLElement;
       let selectedGroupName;
       if (selectedGroup) {
         selectedGroupName = selectedGroup.dataset.group;
@@ -145,18 +163,22 @@ function initEventListeners () {
 
   app.addEventListener(Events.satHover, onSatHover);
 
-  document.querySelector('#zoom-in').addEventListener('click', (event) => {
+  document.querySelector('#zoom-in')?.addEventListener('click', (event: any) => {
     event.preventDefault();
     app.viewer.zoomIn();
   });
 
-  document.querySelector('#zoom-out').addEventListener('click', (event) => {
+  document.querySelector('#zoom-out')?.addEventListener('click', (event: any) => {
     event.preventDefault();
     app.viewer.zoomOut();
   });
 
   window.addEventListener('resize', () => {
     draggableElements.forEach((element) => {
+      if (!window.visualViewport) {
+        return;
+      }
+
       if (element.offsetLeft + element.offsetWidth > window.visualViewport.width) {
         element.style.right = 'unset';
         element.style.left = `${window.visualViewport.width - element.offsetWidth}px`;
@@ -172,10 +194,10 @@ function initEventListeners () {
   setLoading(false);
 }
 
-function onSatMovementChange (event) {
+function onSatMovementChange (event: any) {
   if (event.satId) {
-    document.querySelector('#sat-altitude').innerHTML = `${event.altitude.toFixed(2)} km`;
-    document.querySelector('#sat-velocity').innerHTML = `${event.velocity.toFixed(2)} km/s`;
+    setHtml('#sat-altitude', `${event.altitude.toFixed(2)} km`);
+    setHtml('#sat-velocity', `${event.velocity.toFixed(2)} km/s`);
   }
 }
 
@@ -192,7 +214,7 @@ function getSupportedEvents () {
 function initMenus () {
   const elements = document.querySelectorAll('.menu-item');
   for (let i = 0; i < elements.length; i++) {
-    const element = elements[i];
+    const element = elements[i] as HTMLElement;
     element.addEventListener('click', () => {
       const action = element.dataset.action;
       if (action && action.startsWith('open:')) {
@@ -207,7 +229,7 @@ function getCurrentSearch () {
   return searchBox.getCurrentSearch();
 }
 
-function init (appContext) {
+function init (appContext: any) {
   app = appContext;
   app.windowManager = windowManager;
 

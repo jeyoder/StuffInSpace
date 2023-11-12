@@ -8,7 +8,7 @@ import EventManager from './utils/event-manager';
 const validateProgram = false;
 const eventManager = new EventManager();
 
-let app;
+let app: any;
 
 function processPageParams (updateSearch = true) {
   let title = config.appName;
@@ -16,7 +16,7 @@ function processPageParams (updateSearch = true) {
   const searchParams = new URLSearchParams(document.location.search);
 
   if (searchParams.get('intldes')) {
-    const value = searchParams.get('intldes');
+    const value = searchParams.get('intldes') as string;
     const urlSatId = app.satSet.getIdFromIntlDes(value.toUpperCase());
     if (urlSatId !== null) {
       const satellite = app.satSet.getSat(urlSatId);
@@ -32,7 +32,10 @@ function processPageParams (updateSearch = true) {
     const value = searchParams.get('search');
     if (updateSearch) {
       app.searchBox.doSearch(value);
-      document.querySelector('#search').value = value;
+      const element = document.querySelector('#search') as HTMLInputElement;
+      if (element) {
+        element.value = value || '';
+      }
     }
     title += ` - $${value}`;
   }
@@ -41,6 +44,12 @@ function processPageParams (updateSearch = true) {
 }
 
 class App {
+  satData: any;
+  groups: any;
+  selectedSat: number;
+  validateProgram = false;
+  addEventListener: (eventName: string, listener: any) => void;
+
   constructor () {
     this.satData = [];
     this.groups = undefined;
@@ -52,15 +61,21 @@ class App {
 
   browserUnsupported () {
     logger.error('Unsupported browser. Not WebGL support available');
-    document.querySelector('#canvas-holder').style.display = 'none';
-    document.querySelector('#no-webgl').style.display = 'block';
+    let element = document.querySelector('#canvas-holder') as HTMLElement;
+    if (element) {
+      element.style.display = 'none';
+    }
+    element = document.querySelector('#no-webgl') as HTMLElement;
+    if (element) {
+      element.style.display = 'block';
+    }
   }
 
   updateUrl () {
     let url = config.baseUrl || '/';
-    const paramSlices = [];
+    const paramSlices: any[] = [];
 
-    const query = {};
+    const query: Record<string, any> = {};
 
     if (this.selectedSat && this.selectedSat !== -1) {
       query.intldes = app.satSet.getSat(this.selectedSat).intlDes;
@@ -106,25 +121,25 @@ async function main () {
 
   hud.init(app);
 
-  app.viewer.addEventListener(Events.satHover, (data) => {
+  app.viewer.addEventListener(Events.satHover, (data: any) => {
     eventManager.fireEvent(Events.satHover, data);
   });
 
-  app.viewer.addEventListener(Events.satDataLoaded, (event) => {
+  app.viewer.addEventListener(Events.satDataLoaded, (event: any) => {
     eventManager.fireEvent(Events.satDataLoaded, event);
     hud.setLoading(false);
   });
 
-  app.viewer.addEventListener(Events.selectedSatChange, (event) => {
+  app.viewer.addEventListener(Events.selectedSatChange, (event: any) => {
     eventManager.fireEvent(Events.selectedSatChange, event);
     app.updateUrl();
   });
 
-  app.viewer.addEventListener(Events.satMovementChange, (event) => {
+  app.viewer.addEventListener(Events.satMovementChange, (event: any) => {
     eventManager.fireEvent(Events.satMovementChange, event);
   });
 
-  app.viewer.addEventListener(Events.cruncherReady, (event) => {
+  app.viewer.addEventListener(Events.cruncherReady, (event: any) => {
     eventManager.fireEvent(Events.cruncherReady, event);
     processPageParams();
   });

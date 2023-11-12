@@ -6,30 +6,35 @@ import logger from '../utils/logger';
 
 const NUM_LAT_SEGS = 64;
 const NUM_LON_SEGS = 64;
-let pos = [3.0, 0.0, 1.0];
+let pos = [3.0, 0.0, 1.0] as vec3;
 const radius = 6371.0;
 
-let vertPosBuf;
-let vertNormBuf;
-let texCoordBuf;
-let vertIndexBuf; // GPU mem buffers, data and stuff?
-let vertCount;
+let vertPosBuf: any;
+let vertNormBuf: any;
+let texCoordBuf: any;
+let vertIndexBuf: any; // GPU mem buffers, data and stuff?
+let vertCount: any;
 
-let earthShader;
+let earthShader: any;
 
-let texture;
-let nightTexture;
+let texture: any;
+let nightTexture: any;
 
 let texLoaded = false;
 let nightLoaded = false;
 let loaded = false;
 
-let app;
+let app: any;
+
+console.log('xxx', jday);
 
 function onImageLoaded () {
   if (texLoaded && nightLoaded) {
     loaded = true;
-    document.querySelector('#loader-text').innerHTML = 'Downloading satellites...';
+    const element = document.querySelector('#loader-text');
+    if (element) {
+      element.innerHTML = 'Downloading satellites...';
+    }
   }
 }
 
@@ -168,7 +173,7 @@ function init (appContext) {
   logger.debug(`earth init: ${end} ms`);
 }
 
-function draw (pMatrix, camMatrix) {
+function draw (pMatrix: any, camMatrix: any) {
   if (!loaded) {
     return;
   }

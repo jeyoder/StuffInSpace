@@ -8,13 +8,13 @@ import worker from './workers/orbit-calculation-worker?worker';
 
 const NUM_SEGS = 255;
 
-const inProgress = [];
-const glBuffers = [];
+const inProgress: any[] = [];
+const glBuffers: any[] = [];
 
-let pathShader;
+let pathShader: any;
 
-let selectOrbitBuf;
-let hoverOrbitBuf;
+let selectOrbitBuf: any;
+let hoverOrbitBuf: any;
 
 const selectColor = [0.0, 1.0, 0.0, 1.0];
 const hoverColor = [0.5, 0.5, 1.0, 1.0];
@@ -23,9 +23,9 @@ const groupColor = [0.3, 0.5, 1.0, 0.4];
 let currentHoverId = -1;
 let currentSelectId = -1;
 
-let orbitMvMat;
-let orbitWorker;
-let app;
+let orbitMvMat: any;
+let orbitWorker: any;
+let app: any;
 
 let initialized = false;
 
@@ -37,7 +37,7 @@ function allocateBuffer () {
   return buf;
 }
 
-function updateOrbitBuffer (satId) {
+function updateOrbitBuffer (satId: number) {
   if (!inProgress[satId]) {
     logger.debug('Sending data to orbit worker, to update orbit buffer');
     orbitWorker.postMessage({
@@ -48,7 +48,7 @@ function updateOrbitBuffer (satId) {
   }
 }
 
-function onmessage (message) {
+function onmessage (message: any) {
   const gl = app.gl;
   const { satId } = message.data;
   const pointsOut = new Float32Array(message.data.pointsOut);
@@ -57,7 +57,7 @@ function onmessage (message) {
   inProgress[satId] = false;
 }
 
-function setSelectedSatellite (satelliteId) {
+function setSelectedSatellite (satelliteId: number) {
   currentSelectId = satelliteId;
   updateOrbitBuffer(satelliteId);
 }
@@ -69,7 +69,7 @@ function clearSelectOrbit () {
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array((NUM_SEGS + 1) * 3), gl.DYNAMIC_DRAW);
 }
 
-function setHoverOrbit (satId) {
+function setHoverOrbit (satId: number) {
   if (satId === currentHoverId) {
     return;
   }
@@ -89,12 +89,12 @@ function clearHoverOrbit () {
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array((NUM_SEGS + 1) * 3), gl.DYNAMIC_DRAW);
 }
 
-function draw (pMatrix, camMatrix) { // lol what do I do here
+function draw (pMatrix: any, camMatrix: any) { // lol what do I do here
   if (!initialized) {
     return;
   }
 
-  const gl = app.gl;
+  const gl = app.gl as WebGL2RenderingContext;
 
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
   gl.useProgram(pathShader);
@@ -127,7 +127,7 @@ function draw (pMatrix, camMatrix) { // lol what do I do here
   if (app.groups.selectedGroup) {
     gl.uniform4fv(pathShader.uColor, groupColor);
     const satellites = app.groups.selectedGroup.sats;
-    satellites.forEach((satellite) => {
+    satellites.forEach((satellite: any) => {
       const id = satellite.satId;
       if (glBuffers[id]) {
         gl.bindBuffer(gl.ARRAY_BUFFER, glBuffers[id]);
@@ -147,7 +147,7 @@ function getPathShader () {
   return pathShader;
 }
 
-function onSelectedSatChange (event) {
+function onSelectedSatChange (event: any) {
   if (!event.satId || event.satId === -1) {
     clearSelectOrbit();
     setSelectedSatellite(-1);
@@ -156,7 +156,7 @@ function onSelectedSatChange (event) {
   }
 }
 
-function init (appContext) {
+function init (appContext: any) {
   app = appContext;
   const startTime = performance.now();
   const gl = app.gl;
@@ -164,7 +164,7 @@ function init (appContext) {
   app.addEventListener('selectedsatchange', onSelectedSatChange);
 
   logger.info('Kicking off orbit-calculation-worker');
-  orbitWorker = worker();
+  orbitWorker = new worker();
   orbitWorker.onmessage = onmessage;
 
   orbitMvMat = mat4.create();
