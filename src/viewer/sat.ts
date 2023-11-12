@@ -17,48 +17,63 @@ const hoverColor = [0.1, 1.0, 0.0, 1.0];
 const selectedColor = [0.0, 1.0, 1.0, 1.0];
 
 class SatSet {
-  constructor () {
-    // const scope = this;
-    this.app = undefined;
-    this.satCruncher = undefined;
-    this.eventManager = new EventManager();
-    this.selectedSat = undefined;
+  app: any;
+  satCruncher: any;
+  eventManager: any;
+  selectedSat: any;
+  gotExtraData: boolean = false;
+  cruncherReadyCallback?: () => void;
+  currentColorScheme = undefined;
+  satData: any;
+  satExtraData: any;
+  size = 0;
+  satPos: Float32Array = new Float32Array();
+  satVel: Float32Array = new Float32Array();
+  satAlt: Float32Array = new Float32Array();
+  hoveringSat = -1;
 
+  numSats = 0;
+  shadersReady = false;
+  cruncherReady = false;
+  lastDrawTime = 0;
+  satDataString?: string;
+  satPosBuf: any;
+  pickColorBuf: any;
+  satColorBuf: any;
+  pickableBuf: any;
+  dotShader?: WebGLShader;
+
+  constructor () {
     try {
       logger.info('Kicking off sat-cruncher-worker');
-      this.satCruncher = SatCruncherWorker();
+      this.satCruncher = new SatCruncherWorker();
+      this.satCruncher.onmessage = this.onMessage.bind(this);
     } catch (_error) {
       logger.error('unsupported browser');
       // TODO this.app isn't defined at this point
       this.app?.browserUnsupported();
     }
 
-    this.cruncherReadyCallback = undefined;
-    this.satData = undefined;
-    this.size = 0;
-    this.satPos = [];
-    this.satVel = [];
-    this.satAlt = [];
-    this.hoveringSat = -1;
-
-    this.numSats = 0;
-    this.shadersReady = false;
-    this.cruncherReady = false;
-    this.lastDrawTime = 0;
-    this.gotExtraData = false;
-
-    // eslint-disable-next-line func-names, space-before-function-paren
-    this.satCruncher.onmessage = this.onMessage.bind(this);
+    this.eventManager = new EventManager();
   }
 
-  async onMessage (message) {
+  async onMessage (message: any) {
     const scope = this;
+    if (!scope || !scope.satData) {
+      return;
+    }
+
     try {
       if (!this.gotExtraData) { // store extra data that comes from crunching
         const start = performance.now();
 
         if (message.data.extraData) {
           scope.satExtraData = JSON.parse(message.data.extraData);
+
+          if (!scope.satExtraData) {
+            return;
+          }
+
 
           for (let i = 0; i < this.numSats; i++) {
             scope.satData[i].inclination = scope.satExtraData[i].inclination;
@@ -85,7 +100,7 @@ class SatSet {
       scope.satAlt = new Float32Array(message.data.satAlt);
 
       if (!this.cruncherReady) {
-        document.querySelector('#load-cover').classList.add('hidden');
+        document.querySelector('#load-cover')?.classList.add('hidden');
         scope.setColorScheme(scope.currentColorScheme); // force color recalc
         scope.cruncherReady = true;
 
@@ -97,7 +112,7 @@ class SatSet {
     }
   }
 
-  addEventListener (eventName, listener) {
+  addEventListener (eventName: string, listener: any) {
     this.eventManager.addEventListener(eventName, listener);
   }
 
@@ -113,7 +128,10 @@ class SatSet {
     try {
       const startTime = new Date().getTime();
 
-      document.querySelector('#loader-text').innerHTML = 'Crunching numbers...';
+      const loaderTextElement = document.querySelector('#loader-text');
+      if (loaderTextElement) {
+        loaderTextElement.innerHTML = 'Crunching numbers...';
+      }
 
       logger.debug('Satellite data received');
       this.satData = response.data;
@@ -178,18 +196,27 @@ class SatSet {
     return this.satData;
   }
 
-  async init (app) {
+  async init (app: any) {
     logger.debug('SatSet init');
     this.app = app;
-    const { gl } = app;
+    const gl = app.gl as WebGL2RenderingContext;
 
-    this.dotShader = gl.createProgram();
+    this.dotShader = gl.createProgram() as WebGLShader;
+    if (!this.dotShader) {
+      throw new Error('Could not create shader');
+    }
 
-    const vertShader = gl.createShader(gl.VERTEX_SHADER);
+    const vertShader = gl.createShader(gl.VERTEX_SHADER) as WebGLShader;
+    if (!vertShader) {
+      throw new Error('Could not create shader');
+    }
     gl.shaderSource(vertShader, getShaderCode('dot-vertex.glsl'));
     gl.compileShader(vertShader);
 
-    const fragShader = gl.createShader(gl.FRAGMENT_SHADER);
+    const fragShader = gl.createShader(gl.FRAGMENT_SHADER) as WebGLShader;
+    if (!fragShader) {
+      throw new Error('Could not create shader');
+    }
     gl.shaderSource(fragShader, getShaderCode('dot-fragment.glsl'));
     gl.compileShader(fragShader);
 
@@ -202,16 +229,16 @@ class SatSet {
       gl.validateProgram(this.dotShader);
     }
 
-    this.dotShader.aPos = gl.getAttribLocation(this.dotShader, 'aPos');
-    this.dotShader.aColor = gl.getAttribLocation(this.dotShader, 'aColor');
-    this.dotShader.uMvMatrix = gl.getUniformLocation(this.dotShader, 'uMvMatrix');
-    this.dotShader.uCamMatrix = gl.getUniformLocation(this.dotShader, 'uCamMatrix');
-    this.dotShader.uPMatrix = gl.getUniformLocation(this.dotShader, 'uPMatrix');
+    (this.dotShader as any).aPos = gl.getAttribLocation(this.dotShader, 'aPos');
+    (this.dotShader as any).aColor = gl.getAttribLocation(this.dotShader, 'aColor');
+    (this.dotShader as any).uMvMatrix = gl.getUniformLocation(this.dotShader, 'uMvMatrix');
+    (this.dotShader as any).uCamMatrix = gl.getUniformLocation(this.dotShader, 'uCamMatrix');
+    (this.dotShader as any).uPMatrix = gl.getUniformLocation(this.dotShader, 'uPMatrix');
 
     return this.loadSatelliteData();
   }
 
-  setColorScheme (scheme) {
+  setColorScheme (scheme: any) {
     this.currentColorScheme = scheme;
     const buffers = scheme.calculateColorBuffers();
     if (buffers) {
@@ -220,7 +247,7 @@ class SatSet {
     }
   }
 
-  draw (pMatrix, camMatrix) {
+  draw (pMatrix: any, camMatrix: any) {
     const { gl } = this.app;
 
     try {
@@ -234,20 +261,24 @@ class SatSet {
         this.satPos[i] += this.satVel[i] * dt;
       }
 
+      if (!this.dotShader) {
+        return;
+      }
+
       gl.useProgram(this.dotShader);
       gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
-      gl.uniformMatrix4fv(this.dotShader.uMvMatrix, false, mat4.create());
-      gl.uniformMatrix4fv(this.dotShader.uCamMatrix, false, camMatrix);
-      gl.uniformMatrix4fv(this.dotShader.uPMatrix, false, pMatrix);
+      gl.uniformMatrix4fv((this.dotShader as any).uMvMatrix, false, mat4.create());
+      gl.uniformMatrix4fv((this.dotShader as any).uCamMatrix, false, camMatrix);
+      gl.uniformMatrix4fv((this.dotShader as any).uPMatrix, false, pMatrix);
 
       gl.bindBuffer(gl.ARRAY_BUFFER, this.satPosBuf);
       gl.bufferData(gl.ARRAY_BUFFER, this.satPos, gl.STREAM_DRAW);
-      gl.vertexAttribPointer(this.dotShader.aPos, 3, gl.FLOAT, false, 0, 0);
+      gl.vertexAttribPointer((this.dotShader as any).aPos, 3, gl.FLOAT, false, 0, 0);
 
       gl.bindBuffer(gl.ARRAY_BUFFER, this.satColorBuf);
-      gl.enableVertexAttribArray(this.dotShader.aColor);
-      gl.vertexAttribPointer(this.dotShader.aColor, 4, gl.FLOAT, false, 0, 0);
+      gl.enableVertexAttribArray((this.dotShader as any).aColor);
+      gl.vertexAttribPointer((this.dotShader as any).aColor, 4, gl.FLOAT, false, 0, 0);
 
       gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
       gl.enable(gl.BLEND);
@@ -287,7 +318,7 @@ class SatSet {
     }
   }
 
-  getSat (satelliteId) {
+  getSat (satelliteId: number) {
     if (!satelliteId || satelliteId === -1 || !this.satData) {
       return undefined;
     }
@@ -313,7 +344,7 @@ class SatSet {
     return ret;
   }
 
-  getIdFromIntlDes (intlDes) {
+  getIdFromIntlDes (intlDes: any) {
     for (let i = 0; i < this.satData.length; i++) {
       if (this.satData[i].INTLDES === intlDes || this.satData[i].intlDes === intlDes) {
         return i;
@@ -322,7 +353,7 @@ class SatSet {
     return null;
   }
 
-  getScreenCoords (i, pMatrix, camMatrix) {
+  getScreenCoords (i: number, pMatrix: any, camMatrix: any) {
     const pos = this.getSat(i).position;
     const posVec4 = vec4.fromValues(pos.x, pos.y, pos.z, 1);
 
@@ -341,7 +372,7 @@ class SatSet {
     };
   }
 
-  searchNameRegex (regex) {
+  searchNameRegex (regex: RegExp) {
     const res = [];
     for (let i = 0; i < this.satData.length; i++) {
       if (regex.test(this.satData[i].OBJECT_NAME)) {
@@ -351,17 +382,17 @@ class SatSet {
     return res;
   }
 
-  search (query) {
+  search (query: Record<string, any>) {
     const keys = Object.keys(query);
     let data = Object.assign([], this.satData);
     for (let i = 0; i < keys.length; i++) {
       const key = keys[i];
-      data = data.filter((entry) => entry[key] === query[key]);
+      data = data.filter((entry: Record<string, any>) => entry[key] === query[key]);
     }
     return data;
   }
 
-  searchName (name) {
+  searchName (name: string) {
     const res = [];
     for (let i = 0; i < this.satData.length; i++) {
       if (this.satData[i].OBJECT_NAME === name) {
@@ -371,7 +402,7 @@ class SatSet {
     return res;
   }
 
-  setHover (satId) {
+  setHover (satId: number) {
     if (satId === this.hoveringSat) {
       return;
     }
@@ -383,7 +414,7 @@ class SatSet {
       gl.bufferSubData(
         gl.ARRAY_BUFFER,
         this.hoveringSat * 4 * 4,
-        new Float32Array(this.currentColorScheme.colorizer(this.hoveringSat).color)
+        new Float32Array((this.currentColorScheme as any).colorizer(this.hoveringSat).color)
       );
     }
 
@@ -398,7 +429,7 @@ class SatSet {
     this.hoveringSat = satId;
   }
 
-  setSelectedSatellite (satelliteIdx) {
+  setSelectedSatellite (satelliteIdx: number) {
     if (satelliteIdx === this.selectedSat) {
       return;
     }
@@ -407,11 +438,13 @@ class SatSet {
     gl.bindBuffer(gl.ARRAY_BUFFER, this.satColorBuf);
 
     if (this.selectedSat !== -1) {
-      gl.bufferSubData(
-        gl.ARRAY_BUFFER,
-        this.selectedSat * 4 * 4,
-        new Float32Array(this.currentColorScheme.colorizer(this.selectedSat).color)
-      );
+      if (this.currentColorScheme) {
+        gl.bufferSubData(
+          gl.ARRAY_BUFFER,
+          this.selectedSat * 4 * 4,
+          new Float32Array((this.currentColorScheme as any).colorizer(this.selectedSat).color)
+        );
+      }
     }
 
     if (satelliteIdx !== -1) {
@@ -425,7 +458,7 @@ class SatSet {
     this.selectedSat = satelliteIdx;
   }
 
-  onCruncherReady (callback) {
+  onCruncherReady (callback: () => void) {
     this.cruncherReadyCallback = callback;
     if (this.cruncherReady) {
       callback();

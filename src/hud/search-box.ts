@@ -3,12 +3,12 @@ import logger from '../utils/logger';
 
 const SEARCH_LIMIT = 200;
 
-let app;
+let app: any;
 let hovering = false;
 let hoverSatId = -1;
 
 let resultsOpen = false;
-let lastResultGroup;
+let lastResultGroup: SatGroup;
 
 function isResultBoxOpen () {
   return resultsOpen;
@@ -20,7 +20,7 @@ function getLastResultGroup () {
 
 function getCurrentSearch () {
   if (resultsOpen) {
-    return document.querySelector('#search').value;
+    return (document.querySelector('#search') as HTMLInputElement).value;
   }
   return null;
 }
@@ -40,8 +40,12 @@ function clearHover () {
   app.viewer.setHover(hoverSatId);
 }
 
-function setResultsVisible (visible) {
-  const searchResultsElem = document.querySelector('#search-results');
+function setResultsVisible (visible: boolean) {
+  const searchResultsElem = document.querySelector('#search-results') as HTMLElement;
+  if (!searchResultsElem) {
+    return;
+  }
+
   if (visible) {
     searchResultsElem.style.display = 'block';
   } else {
@@ -63,9 +67,9 @@ function hideResults () {
   app.groups.clearSelect();
 }
 
-function fillResultBox (results, searchStr) {
+function fillResultBox (results: any, searchStr: string) {
   const satData = app.satData;
-  const resultBox = document.querySelector('#search-results');
+  const resultBox = document.querySelector('#search-results') as HTMLElement;
 
   let html = '';
   for (let i = 0; i < results.length; i++) {
@@ -105,10 +109,12 @@ function fillResultBox (results, searchStr) {
 
 function clearResults () {
   const searchResultsElem = document.querySelector('#search-results');
-  searchResultsElem.innerHTML = '';
+  if (searchResultsElem) {
+    searchResultsElem.innerHTML = '';
+  }
 }
 
-function doSearch (str) {
+function doSearch (str: string) {
   const satData = app.satData;
 
   app.viewer.setSelectedSatellite(-1);
@@ -161,8 +167,10 @@ function doSearch (str) {
 
 function registerListeners () {
   const searchResultsElem = document.querySelector('#search-results');
-
-  searchResultsElem.addEventListener('click', (event) => {
+  if (!searchResultsElem) {
+    return;
+  }
+  searchResultsElem.addEventListener('click', (event: any) => {
     const target = event.target;
     const satId = target.dataset.satId;
     clearHover();
@@ -170,18 +178,18 @@ function registerListeners () {
     app.viewer.setSelectedSatellite(satId);
   });
 
-  document.querySelector('#search').addEventListener('input', () => {
-    const searchStr = document.querySelector('#search').value;
+  document.querySelector('#search')?.addEventListener('input', () => {
+    const searchStr = (document.querySelector('#search') as HTMLInputElement)?.value;
     doSearch(searchStr);
   });
 
-  document.querySelector('#all-objects-link').addEventListener('click', () => {
+  document.querySelector('#all-objects-link')?.addEventListener('click', () => {
     const selectedSatelltie = app.viewer.getSelectedSatellite();
     if (selectedSatelltie && selectedSatelltie !== -1) {
       const intldes = app.viewer.getSatellite(selectedSatelltie).intlDes;
       const searchStr = intldes.slice(0, 8);
       doSearch(searchStr);
-      document.querySelector('#search').value = searchStr;
+      (document.querySelector('#search') as HTMLInputElement).value = searchStr;
       if (app.windowManager) {
         app.windowManager.openWindow('search-window');
       }
@@ -189,7 +197,7 @@ function registerListeners () {
   });
 }
 
-function init (appContext) {
+function init (appContext: any) {
   app = appContext;
   registerListeners();
 }

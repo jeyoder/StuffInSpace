@@ -2,17 +2,22 @@ import { defaultColorScheme, groupColorScheme } from './color-scheme';
 import SatGroup from './sat-group';
 
 class SatGroups {
-  constructor (appContext) {
+  app: any;
+  groups: any;
+  selectedGroup: any;
+  sats: any[] = [];
+
+  constructor (appContext?: Record<string, any>) {
     this.app = appContext;
     this.groups = {};
     this.selectedGroup = null;
   }
 
-  asArray () {
+  asArray (): SatGroup[] {
     return Object.values(this.groups);
   }
 
-  selectGroup (group) {
+  selectGroup (group: SatGroup) {
     this.selectedGroup = group;
     if (!group) {
       this.clearSelect();
@@ -22,7 +27,7 @@ class SatGroups {
     this.app.satSet.setColorScheme(groupColorScheme);
   }
 
-  forEach (callback) {
+  forEach (callback: (satId: number) => void) {
     for (let i = 0; i < this.sats.length; i++) {
       callback(this.sats[i].satId);
     }
@@ -33,7 +38,7 @@ class SatGroups {
     this.app.satSet.setColorScheme(defaultColorScheme);
   }
 
-  getGroupById (groupId) {
+  getGroupById (groupId: string): SatGroup {
     return this.groups[groupId];
   }
 
@@ -48,7 +53,7 @@ class SatGroups {
     }
   }
 
-  init (appContext, satelliteGroups) {
+  init (appContext: any, satelliteGroups: Record<string, any>[]) {
     this.app = appContext;
     const groupConfigs = satelliteGroups || this.app.config.satelliteGroups;
     for (let i = 0; i < groupConfigs.length; i++) {

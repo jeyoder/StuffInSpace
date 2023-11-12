@@ -1,5 +1,11 @@
 class ColorScheme {
-  constructor (colorizer, schemeName) {
+  colorizer: any;
+  schemeName: string;
+  app: any;
+  colorBuf: any;
+  pickableBuf: any;
+
+  constructor (colorizer: any, schemeName: string) {
     this.colorizer = colorizer;
     this.schemeName = schemeName;
     this.app = undefined;
@@ -31,9 +37,10 @@ class ColorScheme {
     };
   }
 
-  init (app) {
+  init (app: any) {
     this.app = app;
-    const { gl } = app;
+
+    const gl = app.gl as WebGL2RenderingContext;
 
     this.colorBuf = gl.createBuffer();
     this.pickableBuf = gl.createBuffer();
@@ -44,7 +51,7 @@ class ColorScheme {
   }
 }
 
-const defaultColorScheme = new ColorScheme(((app, satId) => {
+const defaultColorScheme = new ColorScheme(((app: any, satId: number) => {
   const { satSet } = app;
   const sat = satSet.getSat(satId);
   let color = [1.0, 1.0, 0.0, 1.0];
@@ -68,7 +75,7 @@ const defaultColorScheme = new ColorScheme(((app, satId) => {
   };
 }), 'default');
 
-const apogeeColorScheme = new ColorScheme((app, satId) => {
+const apogeeColorScheme = new ColorScheme((app: any, satId: number) => {
   const { satSet } = app;
   const ap = satSet.getSat(satId).apogee;
   const gradientAmt = Math.min(ap / 45000, 1.0);
@@ -78,7 +85,7 @@ const apogeeColorScheme = new ColorScheme((app, satId) => {
   };
 }, 'apogee');
 
-const velocityColorScheme = new ColorScheme((app, satId) => {
+const velocityColorScheme = new ColorScheme((app: any, satId: number) => {
   const { satSet } = app;
   const vel = satSet.getSat(satId).velocity;
   const gradientAmt = Math.min(vel / 15, 1.0);
@@ -88,7 +95,7 @@ const velocityColorScheme = new ColorScheme((app, satId) => {
   };
 }, 'velocity');
 
-const groupColorScheme = new ColorScheme((app, satId) => {
+const groupColorScheme = new ColorScheme((app: any, satId: number) => {
   const { groups } = app;
   if (groups.selectedGroup.hasSat(satId)) {
     return {
@@ -102,7 +109,7 @@ const groupColorScheme = new ColorScheme((app, satId) => {
   };
 }, 'group');
 
-function initColorSchemes (app) {
+function initColorSchemes (app: any) {
   apogeeColorScheme.init(app);
   velocityColorScheme.init(app);
   groupColorScheme.init(app);

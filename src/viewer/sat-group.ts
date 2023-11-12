@@ -2,7 +2,13 @@ import orbitDisplay from './orbit-display';
 import satSet from './sat';
 
 class SatGroup {
-  constructor (groupId, name, groupType, data) {
+  sats: any[];
+  id: string;
+  name: string;
+  groupType: string;
+  data: any;
+
+  constructor (groupId: string, name: string, groupType: string, data: any) {
     this.sats = [];
     this.id = groupId;
     this.name = name;
@@ -50,11 +56,11 @@ class SatGroup {
     }
   }
 
-  getSat (satId) {
+  getSat (satId: number) {
     return this.sats.find((satellite) => satellite.id === satId);
   }
 
-  hasSat (satId) {
+  hasSat (satId: number) {
     const len = this.sats.length;
     for (let i = 0; i < len; i++) {
       if (this.sats[i].satId === satId) {

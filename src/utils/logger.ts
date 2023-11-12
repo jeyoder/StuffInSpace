@@ -1,17 +1,18 @@
 /* eslint-disable no-console */
+import { all } from 'axios';
 import constants from '../config';
 
 const logLevels = ['error', 'warn', 'info', 'debug'];
-const enabledOutputs = {};
-let allOutputs = {};
+const enabledOutputs: Record<string, any>  = {};
+let allOutputs: Record<string, any> = {};
 
-function log (scope, level, output, ...args) {
+function log (scope: any, level: string, output: (level: string, ...args: any) => void, ...args: any) {
   if (scope.enabledOutputs[level]) {
     output(level.toUpperCase(), ...args);
   }
 }
 
-function setLogLevel (level) {
+function setLogLevel (level: string) {
   const levelIdx = logLevels.indexOf(level.toLowerCase());
 
   if (levelIdx < 0) {
@@ -25,12 +26,15 @@ function setLogLevel (level) {
 
 function getLogger () {
   return {
-    ...allOutputs,
+    error: allOutputs.error,
+    warn: allOutputs.warn,
+    info: allOutputs.info,
+    debug: allOutputs.debug,
     setLogLevel
   };
 }
 
-function init () {
+function init (this: any) {
   allOutputs = {
     error: log.bind(this, { enabledOutputs }, 'error', console.error),
     warn: log.bind(this, { enabledOutputs }, 'warn', console.warn),

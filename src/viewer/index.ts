@@ -1,4 +1,4 @@
-import { vec3, vec4, mat4 } from 'gl-matrix';
+import { vec3, vec4, mat4, ReadonlyMat4 } from 'gl-matrix';
 import { Events } from '../constants';
 import logger from '../utils/logger';
 import { loadShaders, getShaderCode } from './shader-loader';
@@ -10,11 +10,12 @@ import orbitDisplay from './orbit-display';
 import satGroups from './sat-groups';
 import { initColorSchemes } from './color-scheme';
 import EventManager from '../utils/event-manager';
+import SatGroup from './sat-group';
 
-const supporteEvents = [];
+const supporteEvents: any[] = [];
 const eventManager = new EventManager();
 
-let app;
+let app: any;
 let camYaw = 0;
 let camPitch = 0.5;
 
@@ -36,7 +37,7 @@ let camYawSpeed = 0;
 
 let pickFb;
 let pickTex;
-let pickColorBuf;
+let pickColorBuf: any;
 
 let pMatrix = mat4.create();
 let camMatrix = mat4.create();
@@ -46,7 +47,7 @@ let mouseX = 0;
 let mouseY = 0;
 let mouseSat = -1;
 
-let dragPoint = [0, 0, 0];
+let dragPoint = [0, 0, 0] as vec3;
 let screenDragPoint = [0, 0];
 let dragStartPitch = 0;
 let dragStartYaw = 0;
@@ -59,21 +60,21 @@ const initialRotSpeed = 0.000075;
 // let debugContext;
 // let debugImageData;
 
-let debugLine;
-let debugLine2;
-let debugLine3;
+let debugLine: any;
+let debugLine2: any;
+let debugLine3: any;
 
-let selectedSat;
+let selectedSat: any;
 
-let oldT = new Date();
+let oldT = Date.now();
 
-function getCanvas () {
+function getCanvas (): HTMLCanvasElement {
   const elementId = 'canvas';
   const canvas = document.querySelector(`#${elementId}`);
-  return canvas;
+  return canvas as HTMLCanvasElement;
 }
 
-function webGlInit () {
+function webGlInit (): WebGL2RenderingContext {
   const canvas = getCanvas(); // document.querySelector('#canvas')[0];
 
   canvas.width = window.innerWidth;
@@ -85,12 +86,17 @@ function webGlInit () {
     premultipliedAlpha: false
   };
 
-  const gl = canvas.getContext('webgl2', glOptions)
+  const gl: RenderingContext | null = (
+    canvas.getContext('webgl2', glOptions)
     || canvas.getContext('webgl', glOptions)
-    || canvas.getContext('experimental-webgl', glOptions);
+    || canvas.getContext('experimental-webgl', glOptions)
+  );
 
-  if (!gl) {
+  console.log(gl);
+
+  if (!gl || !(gl instanceof WebGL2RenderingContext)) {
     app.browserUnsupported();
+    throw new Error('Unsupported browser');
   }
 
   gl.viewport(0, 0, canvas.width, canvas.height);
@@ -100,27 +106,36 @@ function webGlInit () {
 
   const pFragShader = gl.createShader(gl.FRAGMENT_SHADER);
   const pFragCode = getShaderCode('pick-fragment.glsl');
+  if (!pFragShader) {
+    throw new Error('Could not create shader');
+  }
   gl.shaderSource(pFragShader, pFragCode);
   gl.compileShader(pFragShader);
 
   const pVertShader = gl.createShader(gl.VERTEX_SHADER);
   const pVertCode = getShaderCode('pick-vertex.glsl');
+  if (!pVertShader) {
+    throw new Error('Could not create shader');
+  }
   gl.shaderSource(pVertShader, pVertCode);
   gl.compileShader(pVertShader);
 
   const pickShaderProgram = gl.createProgram();
+  if (!pickShaderProgram) {
+    throw new Error('Could not create program');
+  }
   gl.attachShader(pickShaderProgram, pVertShader);
   gl.attachShader(pickShaderProgram, pFragShader);
   gl.linkProgram(pickShaderProgram);
 
-  pickShaderProgram.aPos = gl.getAttribLocation(pickShaderProgram, 'aPos');
-  pickShaderProgram.aColor = gl.getAttribLocation(pickShaderProgram, 'aColor');
-  pickShaderProgram.aPickable = gl.getAttribLocation(pickShaderProgram, 'aPickable');
-  pickShaderProgram.uCamMatrix = gl.getUniformLocation(pickShaderProgram, 'uCamMatrix');
-  pickShaderProgram.uMvMatrix = gl.getUniformLocation(pickShaderProgram, 'uMvMatrix');
-  pickShaderProgram.uPMatrix = gl.getUniformLocation(pickShaderProgram, 'uPMatrix');
+  (pickShaderProgram as any).aPos = gl.getAttribLocation(pickShaderProgram, 'aPos');
+  (pickShaderProgram as any).aColor = gl.getAttribLocation(pickShaderProgram, 'aColor');
+  (pickShaderProgram as any).aPickable = gl.getAttribLocation(pickShaderProgram, 'aPickable');
+  (pickShaderProgram as any).uCamMatrix = gl.getUniformLocation(pickShaderProgram, 'uCamMatrix');
+  (pickShaderProgram as any).uMvMatrix = gl.getUniformLocation(pickShaderProgram, 'uMvMatrix');
+  (pickShaderProgram as any).uPMatrix = gl.getUniformLocation(pickShaderProgram, 'uPMatrix');
 
-  gl.pickShaderProgram = pickShaderProgram;
+  (gl as any).pickShaderProgram = pickShaderProgram;
 
   pickFb = gl.createFramebuffer();
   gl.bindFramebuffer(gl.FRAMEBUFFER, pickFb);
@@ -140,7 +155,7 @@ function webGlInit () {
   gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, pickTex, 0);
   gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, rb);
 
-  gl.pickFb = pickFb;
+  (gl as any).pickFb = pickFb;
 
   pickColorBuf = new Uint8Array(4);
 
@@ -151,7 +166,7 @@ function webGlInit () {
     0, 0, -1, 0,
     0, 1, 0, 0,
     0, 0, 0, 1
-  ];
+  ] as ReadonlyMat4;
   mat4.mul(pMatrix, pMatrix, eciToOpenGlMat); // pMat = pMat * ecioglMat
 
   return gl;
@@ -161,7 +176,7 @@ function getCamDist () {
   return zoomLevel ** ZOOM_EXP * (DIST_MAX - DIST_MIN) + DIST_MIN;
 }
 
-function getCamPos () {
+function getCamPos (): vec3 {
   const r = getCamDist();
   const z = r * Math.sin(camPitch);
   const rYaw = r * Math.cos(camPitch);
@@ -170,12 +185,12 @@ function getCamPos () {
   return [x, y, z];
 }
 
-function unProject (mx, my) {
+function unProject (mx: number, my: number): [number, number, number] {
   const gl = app.gl;
 
   const glScreenX = (mx / (gl.drawingBufferWidth * 2)) - 1.0;
   const glScreenY = 1.0 - (my / (gl.drawingBufferHeight * 2));
-  const screenVec = [glScreenX, glScreenY, -0.01, 1.0]; // gl screen coords
+  const screenVec = [glScreenX, glScreenY, -0.01, 1.0] as vec4; // gl screen coords
 
   const comboPMat = mat4.create();
   mat4.mul(comboPMat, pMatrix, camMatrix);
@@ -187,7 +202,7 @@ function unProject (mx, my) {
   return [worldVec[0] / worldVec[3], worldVec[1] / worldVec[3], worldVec[2] / worldVec[3]];
 }
 
-function getEarthScreenPoint (x, y) {
+function getEarthScreenPoint (x: number, y: number): vec3 {
   const rayOrigin = getCamPos();
   const ptThru = unProject(x, y);
 
@@ -214,7 +229,7 @@ function getEarthScreenPoint (x, y) {
   return ptSurf;
 }
 
-function earthHitTest (x, y) {
+function earthHitTest (x: number, y: number) {
   const gl = app.gl;
   gl.bindFramebuffer(gl.FRAMEBUFFER, gl.pickFb);
   gl.readPixels(x, gl.drawingBufferHeight - y, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pickColorBuf);
@@ -224,7 +239,7 @@ function earthHitTest (x, y) {
     && pickColorBuf[2] === 0);
 }
 
-function hoverBoxOnSat (satId, satX, satY) {
+function hoverBoxOnSat (satId: number, satX: number, satY: number) {
   // No need to fie event if we are still not hovering on anything
   if (lastHoverSatId === satId) {
     return;
@@ -241,7 +256,7 @@ function hoverBoxOnSat (satId, satX, satY) {
   lastHoverSatId = satId;
 }
 
-function getSatIdFromCoord (x, y) {
+function getSatIdFromCoord (x: number, y: number) {
   const gl = app.gl;
   gl.bindFramebuffer(gl.FRAMEBUFFER, gl.pickFb);
   gl.readPixels(x, gl.drawingBufferHeight - y, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pickColorBuf);
@@ -254,7 +269,7 @@ function getSatIdFromCoord (x, y) {
   return ((pickB << 16) | (pickG << 8) | (pickR)) - 1;
 }
 
-function setHover (satelliteId) {
+function setHover (satelliteId: number) {
   app.orbitDisplay.setHoverOrbit(satelliteId);
   app.satSet.setHover(satelliteId);
 }
@@ -282,7 +297,7 @@ function updateHover () {
   }
 }
 
-function normalizeAngle (angle) {
+function normalizeAngle (angle: number) {
   angle %= Math.PI * 2;
   if (angle > Math.PI) {
     angle -= Math.PI * 2;
@@ -293,13 +308,13 @@ function normalizeAngle (angle) {
   return angle;
 }
 
-function camSnap (pitch, yaw) {
+function camSnap (pitch: number, yaw: number) {
   camPitchTarget = pitch;
   camYawTarget = normalizeAngle(yaw);
   camSnapMode = true;
 }
 
-function camSnapToSat (satId) {
+function camSnapToSat (satId: number) {
   /* this function runs every frame that a satellite is seleected. However, the user might have broken out of the
   zoom snap or angle snap. If so, don't change those targets. */
 
@@ -368,7 +383,7 @@ function drawScene () {
 }
 
 function drawLoop () {
-  const newT = new Date();
+  const newT = Date.now();
   const dt = Math.min(newT - oldT, 1000);
   oldT = newT;
 
@@ -456,7 +471,7 @@ function drawLoop () {
   requestAnimationFrame(drawLoop);
 }
 
-function zoomIn () {
+function zoomIn (_zoomDelta: number) {
   zoomTarget -= 0.04;
   if (zoomTarget < 0) {
     zoomTarget = 0;
@@ -465,7 +480,7 @@ function zoomIn () {
   camZoomSnappedOnSat = false;
 }
 
-function zoomOut () {
+function zoomOut (_zoomDelta: number) {
   zoomTarget += 0.04;
   if (zoomTarget > 1) {
     zoomTarget = 1;
@@ -474,7 +489,7 @@ function zoomOut () {
   camZoomSnappedOnSat = false;
 }
 
-function setSelectedSatellite (satelliteId) {
+function setSelectedSatellite (satelliteId: number) {
   if (satelliteId !== -1) {
     camZoomSnappedOnSat = true;
     camAngleSnappedOnSat = true;
@@ -511,7 +526,7 @@ function initEventListeners () {
     resizing = true;
   });
 
-  window.addEventListener('gesturestart', (event) => {
+  window.addEventListener('gesturestart', (event: any) => {
     event.preventDefault();
     let scale = event.scale;
     if (scale > 1) {
@@ -534,7 +549,7 @@ function initEventListeners () {
   });
 
   // Safari specific
-  window.addEventListener('gesturechange', (event) => {
+  window.addEventListener('gesturechange', (event: any) => {
     event.preventDefault();
     let scale = event.scale;
     if (scale > 1) {
@@ -550,82 +565,84 @@ function initEventListeners () {
 
   const canvasElement = document.querySelector('#canvas');
 
-  canvasElement.addEventListener('touchmove', (event) => {
-    event.preventDefault();
-    if (isDragging) {
-      dragHasMoved = true;
-      camAngleSnappedOnSat = false;
+  if (canvasElement) {
+    canvasElement.addEventListener('touchmove', (event: any) => {
+      event.preventDefault();
+      if (isDragging) {
+        dragHasMoved = true;
+        camAngleSnappedOnSat = false;
+        camZoomSnappedOnSat = false;
+      }
+      mouseX = event.touches[0].clientX;
+      mouseY = event.touches[0].clientY;
+    }, { passive: false });
+
+    canvasElement.addEventListener('mousemove', (event: any) => {
+      if (isDragging) {
+        dragHasMoved = true;
+        camAngleSnappedOnSat = false;
+        camZoomSnappedOnSat = false;
+      }
+      mouseX = event.clientX;
+      mouseY = event.clientY;
+    });
+
+    canvasElement.addEventListener('wheel', (event: any) => {
+      let delta = event.deltaY;
+      if (event.deltaMode === 1) {
+        delta *= 33.3333333;
+      }
+      zoomTarget += delta * 0.0002;
+      if (zoomTarget > 1) {
+        zoomTarget = 1;
+      }
+      if (zoomTarget < 0) {
+        zoomTarget = 0;
+      }
+      initialRotation = false;
       camZoomSnappedOnSat = false;
-    }
-    mouseX = event.touches[0].clientX;
-    mouseY = event.touches[0].clientY;
-  }, { passive: false });
+    }, { passive: true });
 
-  canvasElement.addEventListener('mousemove', (event) => {
-    if (isDragging) {
-      dragHasMoved = true;
-      camAngleSnappedOnSat = false;
-      camZoomSnappedOnSat = false;
-    }
-    mouseX = event.clientX;
-    mouseY = event.clientY;
-  });
+    canvasElement.addEventListener('mousedown', (event: any) => {
+      dragPoint = getEarthScreenPoint(event.clientX, event.clientY);
+      screenDragPoint = [event.clientX, event.clientY];
+      dragStartPitch = camPitch;
+      dragStartYaw = camYaw;
+      isDragging = true;
+      camSnapMode = false;
+      initialRotation = false;
+    });
 
-  canvasElement.addEventListener('wheel', (event) => {
-    let delta = event.deltaY;
-    if (event.deltaMode === 1) {
-      delta *= 33.3333333;
-    }
-    zoomTarget += delta * 0.0002;
-    if (zoomTarget > 1) {
-      zoomTarget = 1;
-    }
-    if (zoomTarget < 0) {
-      zoomTarget = 0;
-    }
-    initialRotation = false;
-    camZoomSnappedOnSat = false;
-  }, { passive: true });
+    canvasElement.addEventListener('touchstart', (event: any) => {
+      const x = event.touches[0].clientX;
+      const y = event.touches[0].clientY;
+      dragPoint = getEarthScreenPoint(x, y);
+      screenDragPoint = [x, y];
+      dragStartPitch = camPitch;
+      dragStartYaw = camYaw;
+      isDragging = true;
+      camSnapMode = false;
+      initialRotation = false;
+    }, { passive: false });
 
-  canvasElement.addEventListener('mousedown', (event) => {
-    dragPoint = getEarthScreenPoint(event.clientX, event.clientY);
-    screenDragPoint = [event.clientX, event.clientY];
-    dragStartPitch = camPitch;
-    dragStartYaw = camYaw;
-    isDragging = true;
-    camSnapMode = false;
-    initialRotation = false;
-  });
+    canvasElement.addEventListener('mouseup', (event: any) => {
+      if (!dragHasMoved) {
+        const clickedSatelliteId = getSatIdFromCoord(event.clientX, event.clientY);
+        selectedSat = clickedSatelliteId;
+        setSelectedSatellite(selectedSat);
+      }
 
-  canvasElement.addEventListener('touchstart', (event) => {
-    const x = event.touches[0].clientX;
-    const y = event.touches[0].clientY;
-    dragPoint = getEarthScreenPoint(x, y);
-    screenDragPoint = [x, y];
-    dragStartPitch = camPitch;
-    dragStartYaw = camYaw;
-    isDragging = true;
-    camSnapMode = false;
-    initialRotation = false;
-  }, { passive: false });
+      dragHasMoved = false;
+      isDragging = false;
+      initialRotation = false;
+    });
 
-  canvasElement.addEventListener('mouseup', (event) => {
-    if (!dragHasMoved) {
-      const clickedSatelliteId = getSatIdFromCoord(event.clientX, event.clientY);
-      selectedSat = clickedSatelliteId;
-      setSelectedSatellite(selectedSat);
-    }
-
-    dragHasMoved = false;
-    isDragging = false;
-    initialRotation = false;
-  });
-
-  canvasElement.addEventListener('touchend', () => {
-    dragHasMoved = false;
-    isDragging = false;
-    initialRotation = false;
-  }, { passive: true });
+    canvasElement.addEventListener('touchend', () => {
+      dragHasMoved = false;
+      isDragging = false;
+      initialRotation = false;
+    }, { passive: true });
+  }
 }
 
 function getSupportedEvents () {
@@ -640,15 +657,15 @@ function getSatSet () {
   return satSet;
 }
 
-function getSatellite (satelliteId) {
+function getSatellite (satelliteId: number) {
   return satSet.getSat(satelliteId);
 }
 
-function setSatelliteGroup (satelliteGroup) {
+function setSatelliteGroup (satelliteGroup: SatGroup) {
   satGroups.selectGroup(satelliteGroup);
 }
 
-async function onSatSetLoaded ({ satData }) {
+async function onSatSetLoaded ({ satData }: any) {
   app.satData = satData;
   satGroups.init(app, app.config.satelliteGroups);
   await orbitDisplay.init(app);
@@ -659,16 +676,16 @@ async function onSatSetLoaded ({ satData }) {
   drawLoop();
 }
 
-function addEventListener (eventName, listener) {
+function addEventListener (eventName: string, listener: any) {
   eventManager.addEventListener(eventName, listener);
 }
 
-async function init (appContext) {
+async function init (appContext: any) {
   app = appContext;
 
-  for (let i = 0; i < supporteEvents.length; i++) {
-    this.listeners[supporteEvents[i]] = new Set();
-  }
+  // for (let i = 0; i < supporteEvents.length; i++) {
+  //   listeners[supporteEvents[i]] = new Set();
+  // }
 
   await loadShaders();
 
