@@ -1,14 +1,14 @@
 class ColorScheme {
   name: string;
-  colorizer: (satelliteId: number) => void
+  colorizer: (satellite: Record<string, any>) => { color: number[], pickable: boolean };
 
-  constructor (name: string, colorizer: (satelliteId: number) => void) {
+  constructor (name: string, colorizer: (satellite: Record<string, any>) => { color: number[], pickable: boolean }) {
     this.name = name;
     this.colorizer = colorizer;
   }
 
-  colorize (satelliteId: number) {
-    this.colorizer(satelliteId);
+  getSatelliteColor (satellite: Record<string, any>): { color: number[], pickable: boolean } {
+    return this.colorizer(satellite);
   }
 }
 

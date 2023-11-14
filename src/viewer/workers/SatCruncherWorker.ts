@@ -1,15 +1,15 @@
 import {
-  jday, twoline2satrec, eciToGeodetic, gstime, sgp4
+  jday, twoline2satrec, eciToGeodetic, gstime, sgp4, SatRec
 } from 'satellite.js';
 import logger from '../../utils/logger';
 import constants from '../../config';
 
-const satCache = [];
+const satCache: SatRec[] = [];
 const propergateInterval = constants.propergateInterval || 500;
 const oneOnce = true;
-let satPos;
-let satVel;
-let satAlt;
+let satPos: Float32Array
+let satVel: Float32Array;
+let satAlt: Float32Array;
 
 function propagate () {
   const now = new Date();
@@ -26,7 +26,7 @@ function propagate () {
 
   for (let i = 0; i < satCache.length; i++) {
     const m = (j - satCache[i].jdsatepoch) * 1440.0; // 1440 = minutes_per_day
-    const pv = sgp4(satCache[i], m);
+    const pv: any = sgp4(satCache[i], m);
     let x; let y; let z; let vx; let vy; let vz; let alt;
     try {
       x = pv.position.x; // translation of axes from earth-centered inertial
@@ -45,14 +45,17 @@ function propagate () {
       vz = 0;
       alt = 0;
     }
-    //    logger.debug('x: ' + x + ' y: ' + y + ' z: ' + z);
-    satPos[i * 3] = x;
-    satPos[i * 3 + 1] = y;
-    satPos[i * 3 + 2] = z;
+
+    const pxToRadius = 3185.5;
+
+    // switched z & y, relative to original code, due to difference in axis
+    satPos[i * 3] = x / pxToRadius;
+    satPos[i * 3 + 1] = z / pxToRadius;
+    satPos[i * 3 + 2] = y / pxToRadius;
 
     satVel[i * 3] = vx;
-    satVel[i * 3 + 1] = vy;
-    satVel[i * 3 + 2] = vz;
+    satVel[i * 3 + 1] = vz;
+    satVel[i * 3 + 2] = vy;
 
     satAlt[i] = alt;
   }
@@ -62,8 +65,8 @@ function propagate () {
       satPos: satPos.buffer,
       satVel: satVel.buffer,
       satAlt: satAlt.buffer
-    },
-    [satPos.buffer, satVel.buffer, satAlt.buffer]
+    }
+    // [satPos.buffer, satVel.buffer, satAlt.buffer]
   );
   satPos = new Float32Array(satCache.length * 3);
   satVel = new Float32Array(satCache.length * 3);
@@ -89,7 +92,7 @@ onmessage = function (message) {
 
     const extraData = [];
     for (let i = 0; i < len; i++) {
-      const extra = {};
+      const extra: Record<string, any> = {};
       // perform and store sat init calcs
       const satrec = twoline2satrec(satData[i].TLE_LINE1, satData[i].TLE_LINE2);
 

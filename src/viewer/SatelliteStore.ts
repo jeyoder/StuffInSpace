@@ -1,24 +1,49 @@
+import EventManager from "../utils/event-manager";
+
 class SatelliteStore {
+  eventManager: EventManager;
   satData: Record<string, any>[] = [];
   satelliteVelocities: Float32Array = new Float32Array();
   satellitePositions: Float32Array = new Float32Array();
   satelliteAltitudes: Float32Array = new Float32Array();
   gotExtraData = false;
+  gotPositionalData = false;
 
-  setSatData (satData: Record<string, any>[]) {
-    this.satData = satData;
+  constructor () {
+    this.eventManager = new EventManager();
   }
 
-  setSatExtraData (satelliteVelocities: Float32Array, satellitePositions: Float32Array, satelliteAltitudes: Float32Array) {
+  setSatelliteData (satData: Record<string, any>[], includesExtraData = false) {
+    this.satData = satData;
+    this.gotExtraData = includesExtraData;
+    this.eventManager.fireEvent('satdataloaded', undefined);
+  }
+
+  setPositionalData (satelliteVelocities: Float32Array, satellitePositions: Float32Array, satelliteAltitudes: Float32Array) {
     this.satelliteVelocities = satelliteVelocities;
     this.satellitePositions = satellitePositions;
     this.satelliteAltitudes = satelliteAltitudes;
-    this.gotExtraData = true;
+    this.gotPositionalData = true;
   }
-
 
   getSatData (): Record<string, any>[] {
     return this.satData || [];
+  }
+
+  getPositions () {
+    return this.satellitePositions;
+  }
+
+  getAltitudes () {
+    return this.satelliteAltitudes;
+  }
+
+  getVelocitities() {
+    return this.satelliteVelocities;
+  }
+
+  size () : number {
+    return this.satData.length;
   }
 
   searchNameRegex (regex: RegExp) {
@@ -60,30 +85,36 @@ class SatelliteStore {
     return null;
   }
 
-  getSat (satelliteId: number) {
+  getSatellite (satelliteId: number) {
     if (!satelliteId || satelliteId === -1 || !this.satData) {
       return undefined;
     }
 
-    const ret = this.satData[satelliteId];
-    if (!ret) {
+    const satellite = this.satData[satelliteId];
+
+    if (!satellite) {
       return null;
     }
 
-    if (this.gotExtraData) {
-      ret.altitude = this.satelliteAltitudes[satelliteId];
-      ret.velocity = Math.sqrt(
+    if (this.gotPositionalData) {
+      satellite.altitude = this.satelliteAltitudes[satelliteId];
+      satellite.velocity = Math.sqrt(
         this.satelliteVelocities[satelliteId * 3] * this.satelliteVelocities[satelliteId * 3]
         + this.satelliteVelocities[satelliteId * 3 + 1] * this.satelliteVelocities[satelliteId * 3 + 1]
         + this.satelliteVelocities[satelliteId * 3 + 2] * this.satelliteVelocities[satelliteId * 3 + 2]
       );
-      ret.position = {
+      satellite.position = {
         x: this.satellitePositions[satelliteId * 3],
         y: this.satellitePositions[satelliteId * 3 + 1],
         z: this.satellitePositions[satelliteId * 3 + 2]
       };
     }
-    return ret;
+
+    return satellite;
+  }
+
+  addEventListener(eventName: string, listener: any) {
+    this.eventManager.addEventListener(eventName, listener);
   }
 }
 

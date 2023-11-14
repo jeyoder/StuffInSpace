@@ -54,6 +54,7 @@ function propagate () {
       alt = 0;
     }
     //    logger.debug('x: ' + x + ' y: ' + y + ' z: ' + z);
+
     satPos[i * 3] = x;
     satPos[i * 3 + 1] = y;
     satPos[i * 3 + 2] = z;

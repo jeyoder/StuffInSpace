@@ -1,7 +1,6 @@
-import orbitDisplay from './Orbits';
 import satelliteStore from './SatelliteStore';
 
-class SatGroup {
+class SatelliteGroup {
   sats: any[];
   id: string;
   name: string;
@@ -77,4 +76,4 @@ class SatGroup {
   // }
 }
 
-export default SatGroup;
+export default SatelliteGroup;

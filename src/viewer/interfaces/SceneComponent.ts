@@ -1,7 +1,7 @@
 import SatelliteOrbitScene from '../SatelliteOrbitScene';
 
 interface SceneComponent {
-  init (scene: SatelliteOrbitScene): void | Promise<void>;
+  init (scene: SatelliteOrbitScene, context: Record<string, any>): void | Promise<void>;
   update (scene?: SatelliteOrbitScene): void | Promise<void>;
 }
 

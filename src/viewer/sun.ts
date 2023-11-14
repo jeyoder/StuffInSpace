@@ -1,7 +1,6 @@
+import { DateTime } from 'luxon';
 import * as THREE from 'three';
 import SceneComponent from './interfaces/SceneComponent';
-
-type Mesh = THREE.Mesh;
 
 class Sun implements SceneComponent {
   static deg2RadMult = (Math.PI / 180);
@@ -15,21 +14,26 @@ class Sun implements SceneComponent {
   }
 
   calculateSunLoc () {
+    // This is a simple sun location calculator. Here until I get
+    // original code back in
     const distance = 25;
 
-    // let time = DateTime.utc();
+    let hour = this.hour;
+    // if we aren't overriding the hour, then calculate from actual time
+    if (hour === undefined) {
+      let time = DateTime.utc();
 
-    // time = time.set({ hour: 18 });
+      time = time.set({ hour: 18 });
+      hour = time.hour;
+    }
 
     // adjust by 180, since left of texture is at 0
-    const angle = ((this.hour / 24) * 360) + + 180;
+    const angle = ((hour / 24) * 360) + + 180;
 
     const point = {
       x: distance * Math.cos( this.degreesToReadians(angle) ),
       z: distance * Math.sin( this.degreesToReadians(angle) ),
     };
-
-    // console.log('..', time.hour, 'angle: ', angle, point);
 
     return point;
   }
@@ -48,10 +52,9 @@ class Sun implements SceneComponent {
     this.lightSourceGeometery.position.set(coords.x, coords.y, coords.z)
     scene.add( this.lightSourceGeometery );
 
-    // setInterval(() => {
-    //   this.hour += 0.1;
-    //   // this.updateLightSource();
-    // }, 50);
+    setInterval(() => {
+      this.hour += 0.05;
+    }, 100);
   }
 
   update(_scene?: THREE.Scene | undefined): void | Promise<void> {

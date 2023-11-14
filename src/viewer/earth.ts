@@ -16,10 +16,10 @@ class Earth implements SceneComponent {
 
 
   init (scene: SatelliteOrbitScene) {
-    const dayTexture = new THREE.TextureLoader().load(`${this.basePath}/8081_earthmap4k.jpg`);
-    const nightTexture = new THREE.TextureLoader().load(`${this.basePath}/8081_earthlights4k.jpg`);
-    const bumpTexture = new THREE.TextureLoader().load(`${this.basePath}/8081_earthbump4k.jpg`);
-    const earthSpecularMap = new THREE.TextureLoader().load(`${this.basePath}/8081_earthspec4k.jpg`);
+    const dayTexture = new THREE.TextureLoader().load(`${this.basePath}/earth-blue-marble.jpg`);
+    const nightTexture = new THREE.TextureLoader().load(`${this.basePath}/nightearth-4096.png`);
+    const bumpTexture = new THREE.TextureLoader().load(`${this.basePath}/earth-topology.png`);
+    const earthSpecularMap = new THREE.TextureLoader().load(`${this.basePath}/earth-water.png`);
 
     const dayMaterial = new THREE.MeshPhongMaterial({
       map: dayTexture,
