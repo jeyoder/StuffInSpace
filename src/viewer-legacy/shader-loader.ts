@@ -13,10 +13,10 @@ const shaders = [
   'path-vertex.glsl'
 ];
 
-const shaderData = {};
+const shaderData: Record<string, string> = {};
 const basePath = `${constants.baseUrl}/shaders`;
 
-async function loadShader (name) {
+async function loadShader (name: string) {
   logger.debug(`Loading shader ${name}`);
   const response = await axios.get(`${basePath}/${name}`);
   shaderData[name] = response.data;
@@ -32,7 +32,7 @@ async function loadShaders () {
   }
 }
 
-function getShaderCode (name) {
+function getShaderCode (name: string) {
   return shaderData[name];
 }
 

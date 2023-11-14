@@ -2,7 +2,7 @@ import logger from './utils/logger';
 import config from './config';
 import hud from './hud';
 import { Events } from './constants';
-import viewer from './viewer';
+import viewer from './viewer-legacy';
 import EventManager from './utils/event-manager';
 
 const validateProgram = false;

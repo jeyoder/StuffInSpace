@@ -1,61 +1,68 @@
-import { jday } from 'satellite.js';
+import * as THREE from 'three';
+import SceneComponent from './interfaces/SceneComponent';
 
-const D2R = Math.PI / 180.0;
+type Mesh = THREE.Mesh;
 
-function currentDirection () {
-  const now = new Date();
-  let j = jday(
-    now.getUTCFullYear(),
-    now.getUTCMonth() + 1, // Note, this function requires months in range 1-12.
-    now.getUTCDate(),
-    now.getUTCHours(),
-    now.getUTCMinutes(),
-    now.getUTCSeconds()
-  );
-  j += now.getUTCMilliseconds() * 1.15741e-8; // days per millisecond
+class Sun implements SceneComponent {
+  static deg2RadMult = (Math.PI / 180);
 
-  return this.getDirection(j);
+  lightSouce: THREE.Object3D | undefined;
+  lightSourceGeometery: THREE.Object3D | undefined;
+  hour = 0;
+
+  degreesToReadians (degrees: number) {
+    return degrees * Sun.deg2RadMult;
+  }
+
+  calculateSunLoc () {
+    const distance = 25;
+
+    // let time = DateTime.utc();
+
+    // time = time.set({ hour: 18 });
+
+    // adjust by 180, since left of texture is at 0
+    const angle = ((this.hour / 24) * 360) + + 180;
+
+    const point = {
+      x: distance * Math.cos( this.degreesToReadians(angle) ),
+      z: distance * Math.sin( this.degreesToReadians(angle) ),
+    };
+
+    // console.log('..', time.hour, 'angle: ', angle, point);
+
+    return point;
+  }
+
+  init (scene: THREE.Scene) {
+    this.calculateSunLoc();
+    const sunLoc = this.calculateSunLoc();
+    const coords = { x: sunLoc.x, y: 0, z: sunLoc.z};
+
+    this.lightSouce = new THREE.PointLight(0xffffff, 2000);
+    this.lightSouce.position.set(coords.x, coords.y, coords.z);
+    scene.add(this.lightSouce);
+
+    const geometry = new THREE.SphereGeometry(0.1, 32, 32);
+    this.lightSourceGeometery = new THREE.Mesh( geometry );
+    this.lightSourceGeometery.position.set(coords.x, coords.y, coords.z)
+    scene.add( this.lightSourceGeometery );
+
+    // setInterval(() => {
+    //   this.hour += 0.1;
+    //   // this.updateLightSource();
+    // }, 50);
+  }
+
+  update(_scene?: THREE.Scene | undefined): void | Promise<void> {
+    const sunLoc = this.calculateSunLoc();
+    const coords = { x: sunLoc.x, y: 0, z: sunLoc.z};
+
+    if (this.lightSouce && this.lightSourceGeometery) {
+      this.lightSouce.position.set(coords.x, coords.y, coords.z);
+      this.lightSourceGeometery.position.set(coords.x, coords.y, coords.z);
+    }
+  }
 }
 
-function getDirection (jd) {
-  const n = jd - 2451545;
-  let L = (280.460) + (0.9856474 * n); // mean longitude of sun
-  let g = (357.528) + (0.9856003 * n); // mean anomaly
-  L %= 360.0;
-  g %= 360.0;
-
-  const ecLon = L + 1.915 * Math.sin(g * D2R) + 0.020 * Math.sin(2 * g * D2R);
-  const ob = this.getObliquity(jd);
-
-  const x = Math.cos(ecLon * D2R);
-  const y = Math.cos(ob * D2R) * Math.sin(ecLon * D2R);
-  const z = Math.sin(ob * D2R) * Math.sin(ecLon * D2R);
-
-  return [x, y, z];
-}
-
-function getObliquity (jd) {
-  const t = (jd - 2451545) / 3652500;
-  // oObliquity in arcseconds
-  const obliquity = (
-    84381.448
-    - 4680.93 * t
-    - 1.55 * t ** 2
-    + 1999.25 * t ** 3
-    - 51.38 * t ** 4
-    - 249.67 * t ** 5
-    - 39.05 * t ** 6
-    + 7.12 * t ** 7
-    + 27.87 * t ** 8
-    + 5.79 * t ** 9
-    + 2.45 * t ** 10
-  );
-
-  return obliquity / 3600.0;
-}
-
-export default {
-  currentDirection,
-  getDirection,
-  getObliquity
-};
+export default Sun;

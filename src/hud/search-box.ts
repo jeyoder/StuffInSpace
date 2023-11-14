@@ -1,4 +1,4 @@
-import SatGroup from '../viewer/sat-group';
+import SatGroup from '../viewer-legacy/sat-group';
 import logger from '../utils/logger';
 
 const SEARCH_LIMIT = 200;

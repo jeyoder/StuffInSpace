@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="styles/perfect-scrollbar.min.css" type="text/css">
     <link rel="stylesheet" href="styles/style.css" type="text/css">
 
-    <script type="module" src="src/main.ts"></script>
+    <script type="module" src="src/viewer/index.ts"></script>
 
     <title>Stuff in Space</title>
   </head>
@@ -19,7 +19,7 @@
   <div id="no-webgl">
     Stuff in Space requires <a href="https://caniuse.com/#feat=webgl">WebGL</a> and <a href="https://caniuse.com/#feat=webworkers">Web Worker</a> support.
   </div>
-  <div id="canvas-holder">
+  <div id="canvas-holder" style="display: none">
     <canvas id="canvas"></canvas>
 
     <div id="mobile-hamburger"><span class="material-symbols-outlined">menu</span></div>

@@ -5,7 +5,7 @@ const constants = {
   baseUrl,
   propergateInterval: 1000, // milliseconds
   pushHistory: false,
-  logLevel: 'info',
+  logLevel: 'debug',
   satelliteGroups: [
     {
       id: 'GPSGroup',
