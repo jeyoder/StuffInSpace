@@ -1,5 +1,5 @@
 import axios from 'axios';
-import EventManager from "../utils/event-manager";
+import EventManager from '../utils/event-manager';
 import logger from '../utils/logger';
 
 const config = {
@@ -15,34 +15,54 @@ class SatelliteStore {
   satelliteAltitudes: Float32Array = new Float32Array();
   gotExtraData = false;
   gotPositionalData = false;
+  loaded = false;
 
-  constructor () {
+  constructor (options: Record<string, any> = {}) {
     this.eventManager = new EventManager();
+    if (options.tleUrl) {
+      this.tleUrl = options.tleUrl;
+    }
   }
 
   async loadSatelliteData () {
-      logger.debug('Loading satellite data');
-      try {
-        const response = await axios.get(this.tleUrl, {
-          params: {
-            t: Date.now()
-          }
-        });
-
-        if (response.data) {
-          this.satData = response.data;
+    logger.debug('Loading satellite data');
+    try {
+      const response = await axios.get(this.tleUrl, {
+        params: {
+          t: Date.now()
         }
+      });
 
-        this.eventManager.fireEvent('satdataloaded', this.satData);
-      } catch (error) {
-        logger.error('error loading TLE data', error);
+      if (response.data) {
+        this.satData = response.data;
+
+        for (let i = 0; i < this.satData.length; i++) {
+          if (this.satData[i].INTLDES) {
+            let year = this.satData[i].INTLDES.substring(0, 2); // clean up intl des for display
+            const prefix = (year > 50) ? '19' : '20';
+            year = prefix + year;
+            const rest = this.satData[i].INTLDES.substring(2);
+            this.satData[i].intlDes = `${year}-${rest}`;
+          } else {
+            this.satData[i].intlDes = 'unknown';
+          }
+          this.satData[i].id = i;
+        }
       }
+
+      this.eventManager.fireEvent('satdataloaded', this.satData);
+      this.loaded = true;
+    } catch (error) {
+      logger.error('error loading TLE data', error);
+    }
   }
 
   setSatelliteData (satData: Record<string, any>[], includesExtraData = false) {
     this.satData = satData;
     this.gotExtraData = includesExtraData;
-    this.eventManager.fireEvent('satdataloaded', undefined);
+    if (includesExtraData) {
+      this.eventManager.fireEvent('satextradataloaded', this.satData);
+    }
   }
 
   setPositionalData (satelliteVelocities: Float32Array, satellitePositions: Float32Array, satelliteAltitudes: Float32Array) {
@@ -64,11 +84,11 @@ class SatelliteStore {
     return this.satelliteAltitudes;
   }
 
-  getVelocitities() {
+  getVelocitities () {
     return this.satelliteVelocities;
   }
 
-  size () : number {
+  size (): number {
     return this.satData.length;
   }
 
@@ -139,12 +159,9 @@ class SatelliteStore {
     return satellite;
   }
 
-  addEventListener(eventName: string, listener: any) {
+  addEventListener (eventName: string, listener: any) {
     this.eventManager.addEventListener(eventName, listener);
   }
 }
 
-const instance = new SatelliteStore();
-
-export default instance;
-export { SatelliteStore, instance as globalStore };
+export default SatelliteStore;

@@ -6,8 +6,8 @@ import constants from '../../config';
 
 const satCache: SatRec[] = [];
 const propergateInterval = constants.propergateInterval || 500;
-const oneOnce = true;
-let satPos: Float32Array
+const runOnce = false;
+let satPos: Float32Array;
 let satVel: Float32Array;
 let satAlt: Float32Array;
 
@@ -73,7 +73,7 @@ function propagate () {
   satAlt = new Float32Array(satCache.length);
   // logger.debug('sat-cruncher propagate: ' + (performance.now() - start) + ' ms');
 
-  if (!oneOnce) {
+  if (!runOnce) {
     setTimeout(
       propagate,
       propergateInterval

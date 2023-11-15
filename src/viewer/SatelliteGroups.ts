@@ -1,13 +1,21 @@
 import SatGroup from './SatelliteGroup';
 import logger from '../utils/logger';
+import SatelliteStore from './SatelliteStore';
 
 class SatelliteGroups {
   groups: Record<string, SatGroup> = {};
   selectedGroup?: SatGroup;
   sats: any[] = [];
+  satelliteStore: SatelliteStore;
 
-  constructor (satelliteGroups: Record<string, any>[]) {
+  constructor (satelliteGroups: Record<string, any>[], satelliteStore: SatelliteStore) {
+    if (!satelliteStore) {
+      throw new Error('satelliteStore is required');
+    }
+
+    this.satelliteStore = satelliteStore;
     this.resetConfig(satelliteGroups);
+    this.satelliteStore.addEventListener('satdataloaded', this.onSatDataLoaded.bind(this));
   }
 
   asArray (): SatGroup[] {
@@ -59,9 +67,14 @@ class SatelliteGroups {
         groupConfigs[i].id.toLowerCase(),
         groupConfigs[i].name,
         groupConfigs[i].groupType,
-        groupConfigs[i].data
+        groupConfigs[i].data,
+        this.satelliteStore as SatelliteStore
       );
     }
+  }
+
+  onSatDataLoaded () {
+    this.reloadGroups();
   }
 }
 

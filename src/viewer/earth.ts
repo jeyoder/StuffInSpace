@@ -1,4 +1,4 @@
-import { Color, TextureLoader, MeshPhongMaterial, SphereGeometry, Mesh, Group } from 'three';
+import { Color, TextureLoader, MeshPhongMaterial, SphereGeometry, Mesh, Group } from '../utils/three';
 import SceneComponent from './interfaces/SceneComponent';
 import SatelliteOrbitScene from './SatelliteOrbitScene';
 
@@ -35,11 +35,8 @@ class Earth implements SceneComponent {
     scene.add(this.sphere);
   }
 
-  update(_scene?: SatelliteOrbitScene | undefined): void | Promise<void> {
-    if (this.sphere) {
-    //  this.sphere.rotation.y += 0.005;
-    //  this.
-    }
+  update (): void {
+    // do nothing
   }
 
   getMesh () {

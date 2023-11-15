@@ -1,16 +1,15 @@
-// import THREE, { Object3D } from "three";
-import { Points, PointsMaterial, BufferGeometry, Float32BufferAttribute, AdditiveBlending } from 'three';
-import axios from 'axios';
+import { Points, PointsMaterial, BufferGeometry, Float32BufferAttribute, AdditiveBlending } from '../utils/three';
 import SceneComponent from './interfaces/SceneComponent';
-import satelliteStore from './SatelliteStore';
+import SatelliteStore from './SatelliteStore';
 import SatCruncherWorker from './workers/SatCruncherWorker?worker';
 import logger from '../utils/logger';
 import SatelliteOrbitScene from './SatelliteOrbitScene';
 import ColorScheme from './color-schemes/ColorScheme';
 import DefaultColorScheme from './color-schemes/DefaultColorScheme';
+import SelectableSatellite from './interfaces/SelectableSatellite';
 
 // type Mesh = Mesh;
-class Satellites implements SceneComponent{
+class Satellites implements SceneComponent, SelectableSatellite {
   worker?: Worker;
   currentColorScheme?: ColorScheme = new DefaultColorScheme();
   numSats: number = 1;
@@ -22,6 +21,9 @@ class Satellites implements SceneComponent{
   scene?: SatelliteOrbitScene;
   particles?: Points;
   geometry?: BufferGeometry;
+  satelliteStore?: SatelliteStore;
+  selectedSatelliteIdx = -1;
+  hoverSatelliteIdx = -1;
 
   setColorScheme (colorScheme: ColorScheme) {
     this.currentColorScheme = colorScheme;
@@ -37,11 +39,14 @@ class Satellites implements SceneComponent{
 
         // update point colours
         if (this.geometry.attributes.color && this.currentColorScheme) {
-          let colors: number[] = [];
-          const satellites = satelliteStore.satData;
+          const colors: number[] = [];
+          if (!this.satelliteStore) {
+            return;
+          }
+          const satellites = this.satelliteStore.satData;
           for (let i = 0; i < satellites.length; i++) {
             const color = this.currentColorScheme?.getSatelliteColor(satellites[i])?.color || [0, 0, 0];
-            colors.push(color[0], color[1], color[2])
+            colors.push(color[0], color[1], color[2]);
           }
           this.geometry.setAttribute('color', new Float32BufferAttribute( colors, 3 ) );
         }
@@ -50,7 +55,11 @@ class Satellites implements SceneComponent{
   }
 
   onMessage (message: any) {
-    let satData = satelliteStore.getSatData();
+    if (!this.satelliteStore) {
+      return;
+    }
+
+    const satData = this.satelliteStore.getSatData();
     if (!satData) {
       return;
     }
@@ -58,7 +67,7 @@ class Satellites implements SceneComponent{
     let satExtraData: Record<string, any>[];
 
     try {
-      if (!satelliteStore.gotExtraData) { // store extra data that comes from crunching
+      if (!this.satelliteStore.gotExtraData) { // store extra data that comes from crunching
         const start = performance.now();
 
         if (message.data.extraData) {
@@ -82,10 +91,10 @@ class Satellites implements SceneComponent{
             satData[i].period = satExtraData[i].period;
           }
 
-          satelliteStore.setSatelliteData(satData);
+          this.satelliteStore.setSatelliteData(satData);
 
           logger.debug(`sat.js copied extra data in ${performance.now() - start} ms`);
-          satelliteStore.setSatelliteData(satData, true);
+          this.satelliteStore.setSatelliteData(satData, true);
           return;
         }
       }
@@ -94,9 +103,9 @@ class Satellites implements SceneComponent{
       this.satVel = new Float32Array(message.data.satVel);
       this.satAlt = new Float32Array(message.data.satAlt);
 
-      satelliteStore.setPositionalData(
+      this.satelliteStore.setPositionalData(
         this.satVel, this.satPos, this.satAlt
-      )
+      );
 
       if (!this.cruncherReady) {
         document.querySelector('#load-cover')?.classList.add('hidden');
@@ -111,11 +120,14 @@ class Satellites implements SceneComponent{
     }
   }
 
-  async onSatDataLoaded () {
-    if (this.worker) {
-      const satDataString = JSON.stringify(satelliteStore.satData);
+  onSatDataLoaded () {
+    if (!this.satelliteStore) {
+      return;
+    }
 
-      console.log('zzzzLLLL');
+    if (this.worker) {
+      const satDataString = JSON.stringify(this.satelliteStore.satData);
+
       logger.debug('Sending data to sat cruncher worker, to perform work');
       this.worker.postMessage(satDataString);
     } else {
@@ -123,21 +135,35 @@ class Satellites implements SceneComponent{
     }
   }
 
-  async init (scene: SatelliteOrbitScene) {
+  setSelectedSatellite (satelliteIdx: number) {
+    this.selectedSatelliteIdx = satelliteIdx;
+  }
+
+  setHoverSatellite (satelliteIdx: number) {
+    this.hoverSatelliteIdx = satelliteIdx;
+  }
+
+  async init (scene: SatelliteOrbitScene, context: Record<string, any>) {
+    this.satelliteStore = context.satelliteStore;
+
     this.scene = scene;
     logger.info('Kicking off sat-cruncher-worker');
     this.worker = new SatCruncherWorker();
     this.worker.onmessage = this.onMessage.bind(this);
 
-    satelliteStore.addEventListener('satdataloaded', this.onSatDataLoaded.bind(this));
-    await satelliteStore.loadSatelliteData();
+    if (!this.satelliteStore) {
+      return;
+    }
+
+    this.satelliteStore.addEventListener('satdataloaded', this.onSatDataLoaded.bind(this));
+    await this.satelliteStore.loadSatelliteData();
 
     const geometry = new BufferGeometry();
-    let vertices: Float32Array = new Float32Array();
-    let colors: number[] = [];
+    const vertices: Float32Array = new Float32Array();
+    const colors: number[] = [];
 
-    vertices.fill(0, 0, satelliteStore.satData.length * 3);
-    colors.fill(0, 0, satelliteStore.satData.length * 3);
+    vertices.fill(0, 0, this.satelliteStore.satData.length * 3);
+    colors.fill(0, 0, this.satelliteStore.satData.length * 3);
 
     geometry.setAttribute( 'position', new Float32BufferAttribute( vertices, 3 ) );
     geometry.setAttribute( 'color', new Float32BufferAttribute( colors, 3 ) );
@@ -157,12 +183,12 @@ class Satellites implements SceneComponent{
       this.scene.add( this.particles );
     }
 
-    if (satelliteStore.gotExtraData) {
+    if (this.satelliteStore.gotExtraData) {
       this.updateSatellites();
     }
   }
 
-  update(_scene?: SatelliteOrbitScene | undefined): void | Promise<void> {
+  update (): void {
     // do nothing for now
   }
 }

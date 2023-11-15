@@ -1,17 +1,17 @@
 /* eslint-disable no-loop-func */
-import { R2D, Events } from '../constants';
+import { R2D, Events } from '@/constants';
+import SatelliteGroup from '@satellite-viewer/SatelliteGroup';
+import { Viewer } from '@satellite-viewer/index';
 import HudWindowManager from './HudWindowManager';
 import searchBox from './SearchBox';
-import SatelliteGroup from '../viewer/SatelliteGroup';
-import { Viewer } from '../viewer';
 
 const supporteEvents: string[] = [];
+const windowManager = new HudWindowManager();
+const draggableElements: any[] = [];
 
 let groupClicked = false;
 let viewer: Viewer;
-let windowManager = new HudWindowManager();
 
-const draggableElements: any[] = [];
 
 function setLoading (loading: boolean) {
   if (loading) {
@@ -138,6 +138,8 @@ function initGroupsListeners () {
     });
 
     listItem.addEventListener('click', (event: any) => {
+      event.preventDefault();
+
       const target = event.currentTarget;
       groupClicked = true;
 
@@ -147,12 +149,15 @@ function initGroupsListeners () {
         selectedGroupName = selectedGroup.dataset.group;
       }
 
+      console.dir(event.target);
+
       for (let j = 0; j < listItems.length; j++) {
         listItems[j].classList.remove('selected');
       }
 
       const satelliteGroups = viewer.getSatelliteGroups();
       const groupName = target.dataset.group;
+      let group = undefined;
       if (groupName === selectedGroupName) {
         if (satelliteGroups) {
           satelliteGroups.clearSelect();
@@ -162,20 +167,26 @@ function initGroupsListeners () {
       } else {
         event.preventDefault();
         event.stopPropagation();
-        const satelliteGroups = viewer.getSatelliteGroups();
         if (satelliteGroups) {
           viewer.setSelectedSatellite(-1); // clear selected sat
           if (satelliteGroups) {
-            satelliteGroups.selectGroup(satelliteGroups.getGroupById(groupName));
+            group = satelliteGroups.getGroupById(groupName);
           }
-          const group = satelliteGroups.getGroupById(groupName);
+
           if (group) {
+            target.classList.add('selected');
             searchBox.fillResultBox(group.sats, '');
             windowManager.openWindow('search-window');
-            target.classList.add('selected');
+            group.reload();
           }
         }
       }
+
+      if (satelliteGroups) {
+        satelliteGroups.selectGroup(group);
+        viewer.setSelectedSatelliteGroup(group);
+      }
+
     });
   }
 }
@@ -275,10 +286,8 @@ function init (viewerInstance: Viewer) {
 
   viewer.addEventListener(Events.satMovementChange, onSatMovementChange);
   if (!viewer.ready) {
-    console.log('xxxA');
     viewer.addEventListener(Events.satDataLoaded, onSatDataLoaded);
   } else {
-    console.log('xxxB');
     onSatDataLoaded();
   }
 }

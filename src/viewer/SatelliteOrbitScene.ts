@@ -1,4 +1,4 @@
-import { Scene } from 'three';
+import { Scene } from '../utils/three';
 
 class SatelliteOrbitScene extends Scene {
   static earthRadiusInKm = 6371;

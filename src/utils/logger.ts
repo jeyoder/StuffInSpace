@@ -1,5 +1,4 @@
 /* eslint-disable no-console */
-import { all } from 'axios';
 import constants from '../config';
 
 const logLevels = ['error', 'warn', 'info', 'debug'];

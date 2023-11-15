@@ -1,4 +1,4 @@
-import { TextureLoader } from 'three';
+import { TextureLoader } from '../utils/three';
 import SceneComponent from './interfaces/SceneComponent';
 import SatelliteOrbitScene from './SatelliteOrbitScene';
 
@@ -9,7 +9,7 @@ class Universe implements SceneComponent {
     scene.background = texture;
   }
 
-  update(_scene?: SatelliteOrbitScene): void | Promise<void> {
+  update (): void  {
     // do nothing
   }
 }

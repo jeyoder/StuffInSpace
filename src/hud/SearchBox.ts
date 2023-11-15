@@ -1,12 +1,12 @@
-import SatelliteGroup from '../viewer/SatelliteGroup';
-import logger from '../utils/logger';
-import { Viewer } from '../viewer';
+import logger from '@/utils/logger';
+import { Viewer } from '@satellite-viewer/index';
+import SatelliteGroup from '@satellite-viewer/SatelliteGroup';
 import HudWindowManager from './HudWindowManager';
 
 const SEARCH_LIMIT = 200;
 
 let viewer: Viewer;
-let windowManager: HudWindowManager
+let windowManager: HudWindowManager;
 let hovering = false;
 let hoverSatId = -1;
 
@@ -81,7 +81,11 @@ function fillResultBox (results: any, searchStr: string) {
   }
 
   let html = '';
+
   for (let i = 0; i < results.length; i++) {
+    if (results[i].satId === undefined) {
+      continue;
+    }
 
     const satellite = satelliteStore.getSatellite(results[i].satId);
     if (!satellite) {
@@ -143,7 +147,7 @@ function doSearch (str: string) {
 
   const results = [];
   for (let i = 0; i < satData.length; i++) {
-    if (satData[i].OBJECT_NAME.indexOf(str) !== -1) {
+    if (satData[i]?.OBJECT_NAME.indexOf(str) !== -1) {
       results.push({
         isIntlDes: false,
         strIndex: satData[i].OBJECT_NAME.indexOf(str),
@@ -151,7 +155,8 @@ function doSearch (str: string) {
       });
     }
 
-    if (satData[i].intlDes.indexOf(str) !== -1) {
+    if (satData[i].intlDes && satData[i].intlDes.indexOf(str) !== -1) {
+      console.log(satData[i]);
       results.push({
         isIntlDes: true,
         strIndex: satData[i].intlDes.indexOf(str),
@@ -170,7 +175,10 @@ function doSearch (str: string) {
     idList.push(results[i].satId);
   }
 
-  const dispGroup = new SatelliteGroup('search-results', 'Search Results', 'idList', idList);
+  const dispGroup = new SatelliteGroup(
+    'search-results', 'Search Results', 'idList', idList,
+    satelliteStore
+  );
   dispGroup.reload();
   lastResultGroup = dispGroup;
 

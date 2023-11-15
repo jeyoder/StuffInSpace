@@ -2,6 +2,7 @@
 import { defineConfig, loadEnv, splitVendorChunkPlugin } from 'vite';
 import { visualizer } from 'rollup-plugin-visualizer';
 import { threeMinifier } from '@yushijinhun/three-minifier-rollup';
+import path from 'path';
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
@@ -16,9 +17,15 @@ export default defineConfig(({ mode }) => {
       outDir: 'dist'
     },
     base: env.BASE_URL || '/',
+    resolve: {
+      alias: {
+        '@': path.resolve(__dirname, './src'),
+        '@satellite-viewer': path.resolve(__dirname, './src/viewer')
+      },
+    },
     plugins: [
-      splitVendorChunkPlugin(),
       { ...threeMinifier(), enforce: 'pre' },
+      splitVendorChunkPlugin(),
       visualizer()
     ]
   };

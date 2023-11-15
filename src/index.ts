@@ -1,13 +1,12 @@
 import { createViewer } from './viewer/index';
+import config from './config';
+
 import hud from './hud';
 
 async function main () {
-  const viewer = await createViewer();
-  console.log('xxx')
+  const viewer = createViewer(config);
   await viewer.init();
-  console.log('yyy')
   viewer.animate();
-  console.log('zzz')
 
   hud.init(viewer);
 }

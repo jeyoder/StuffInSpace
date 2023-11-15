@@ -1,32 +1,38 @@
-import satelliteStore from './SatelliteStore';
+import SatelliteStore from './SatelliteStore';
 
 class SatelliteGroup {
-  sats: any[];
+  sats: { satId: number, isIntlDes: boolean, strIndex: number }[] = [];
   id: string;
   name: string;
   groupType: string;
   data: any;
+  private satelliteStore: SatelliteStore;
 
-  constructor (groupId: string, name: string, groupType: string, data: any) {
-    this.sats = [];
+  constructor (groupId: string, name: string, groupType: string, data: any, satelliteStore: SatelliteStore) {
     this.id = groupId;
     this.name = name;
     this.groupType = groupType;
     this.data = data;
+    this.satelliteStore = satelliteStore;
+
+    if (!this.satelliteStore) {
+      throw new Error('satelliteStore is required');
+    }
   }
 
   reload () {
     this.sats = [];
+
     if (this.groupType === 'intlDes') {
       for (let i = 0; i < this.data.length; i++) {
         this.sats.push({
-          satId: satelliteStore.getIdFromIntlDes(this.data[i]),
+          satId: this.satelliteStore.getIdFromIntlDes(this.data[i]) as number,
           isIntlDes: true,
           strIndex: 0
         });
       }
     } else if (this.groupType === 'nameRegex') {
-      const satIdList = satelliteStore.searchNameRegex(this.data);
+      const satIdList = this.satelliteStore.searchNameRegex(this.data);
       for (let i = 0; i < satIdList.length; i++) {
         this.sats.push({
           satId: satIdList[i],
@@ -44,7 +50,7 @@ class SatelliteGroup {
       }
     } else if (this.groupType === 'objectType') {
       const field = 'OBJECT_TYPE';
-      const satIdList = satelliteStore.search({ [field]: this.data });
+      const satIdList = this.satelliteStore.search({ [field]: this.data });
       for (let i = 0; i < satIdList.length; i++) {
         this.sats.push({
           satId: satIdList[i].id,
@@ -56,7 +62,7 @@ class SatelliteGroup {
   }
 
   getSat (satId: number) {
-    return this.sats.find((satellite) => satellite.id === satId);
+    return this.satelliteStore.satData.find((satellite) => satellite.id === satId);
   }
 
   hasSat (satId: number) {
@@ -68,12 +74,6 @@ class SatelliteGroup {
     }
     return false;
   }
-
-  // updateOrbits () {
-  //   for (let i = 0; i < this.sats.length; i++) {
-  //     orbitDisplay.updateOrbitBuffer(this.sats[i].satId);
-  //   }
-  // }
 }
 
 export default SatelliteGroup;
