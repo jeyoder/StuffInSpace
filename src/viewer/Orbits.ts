@@ -1,4 +1,4 @@
-import * as THREE from 'three';
+import { LineBasicMaterial, Color, Line, BufferGeometry, Float32BufferAttribute } from 'three';
 import SceneComponent from './interfaces/SceneComponent';
 import OrbitCalculationWorker from './workers/OrbitCalculationWorker?worker';
 import SatelliteGroup from './SatelliteGroup';
@@ -19,7 +19,7 @@ class Orbits implements SceneComponent {
   selectColor = [0.0, 1.0, 0.0, 1.0];
   hoverColor = [0.5, 0.5, 1.0, 1.0];
   groupColor = [0.3, 0.5, 1.0, 0.4];
-  orbitTracks: (THREE.Line | undefined)[] = [];
+  orbitTracks: (Line | undefined)[] = [];
 
   updateOrbits (satelliteIdx: number) {
     if (!this.inProgress[satelliteIdx]) {
@@ -76,14 +76,14 @@ class Orbits implements SceneComponent {
         color = this.groupColor;
       }
 
-      const material = new THREE.LineBasicMaterial({
-        color: new THREE.Color(color[0], color[1], color[2]),
+      const material = new LineBasicMaterial({
+        color: new Color(color[0], color[1], color[2]),
         linewidth: 10
       });
 
-      const geometry = new THREE.BufferGeometry();
-      geometry.setAttribute( 'position', new THREE.Float32BufferAttribute( message.data.pointsOut, 3 ) );
-      const line = new THREE.Line( geometry, material );
+      const geometry = new BufferGeometry();
+      geometry.setAttribute( 'position', new Float32BufferAttribute( message.data.pointsOut, 3 ) );
+      const line = new Line( geometry, material );
       this.scene.add(line);
       this.orbitTracks[satId] = line;
     }
@@ -143,7 +143,7 @@ class Orbits implements SceneComponent {
     }
   }
 
-  update(_scene?: THREE.Scene | undefined): void | Promise<void> {
+  update(_scene?: SatelliteOrbitScene): void | Promise<void> {
 
   }
 }

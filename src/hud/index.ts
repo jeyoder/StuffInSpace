@@ -1,12 +1,15 @@
 /* eslint-disable no-loop-func */
 import { R2D, Events } from '../constants';
-import windowManager from './window-manager';
-import searchBox from './search-box';
+import HudWindowManager from './HudWindowManager';
+import searchBox from './SearchBox';
+import SatelliteGroup from '../viewer/SatelliteGroup';
+import { Viewer } from '../viewer';
 
 const supporteEvents: string[] = [];
 
-let app: any;
 let groupClicked = false;
+let viewer: Viewer;
+let windowManager = new HudWindowManager();
 
 const draggableElements: any[] = [];
 
@@ -20,12 +23,12 @@ function setLoading (loading: boolean) {
 
 function updateGroupList () {
   const groupDisplay = document.querySelector('#groups-display') as HTMLElement;
+  const satelliteGroups = viewer.getSatelliteGroups();
+  let groups: SatelliteGroup[] = [];
 
-  if (!app.groups) {
-    throw new Error('groups is not defined');
+  if (satelliteGroups) {
+    groups = satelliteGroups.asArray().sort((entryA: SatelliteGroup, entryB: SatelliteGroup) => entryA.name.localeCompare(entryB.name));
   }
-
-  const groups = app.groups.asArray().sort((entryA: Record<string, string>, entryB: Record<string, string>) => entryA.name.localeCompare(entryB.name));
 
   let html = '';
   for (let i = 0; i < groups.length; i++) {
@@ -90,13 +93,16 @@ function onSatHover (event: any) {
 }
 
 // eslint-disable-next-line no-shadow
-function initGroupsListeners (app: any) {
+function initGroupsListeners () {
   document.querySelector('#groups-display')?.addEventListener('mouseout', () => {
     if (!groupClicked) {
-      if (searchBox.isResultBoxOpen()) {
-        app.groups.selectGroup(searchBox.getLastResultGroup());
-      } else {
-        app.groups.clearSelect();
+      const satelliteGroups = viewer.getSatelliteGroups();
+      if (satelliteGroups) {
+        if (searchBox.isResultBoxOpen()) {
+          satelliteGroups.selectGroup(searchBox.getLastResultGroup());
+        } else {
+          satelliteGroups.clearSelect();
+        }
       }
     }
   });
@@ -106,20 +112,28 @@ function initGroupsListeners (app: any) {
   for (let i = 0; i < listItems.length; i++) {
     const listItem = listItems[i];
     listItem.addEventListener('mouseover', (event: any) => {
-      app.clicked = false;
-
       const target = event.currentTarget;
       const groupName = target.dataset.group;
 
-      app.groups.selectGroup(app.groups.getGroupById(groupName));
+      const satelliteGroups = viewer.getSatelliteGroups();
+      if (satelliteGroups) {
+        satelliteGroups.selectGroup(
+          satelliteGroups.getGroupById(groupName)
+        );
+      }
     });
 
     listItem.addEventListener('mouseout', () => {
-      const selectedGroup = (document.querySelector('#groups-display>li.selected') as HTMLElement);
-      if (selectedGroup) {
-        app.groups.selectGroup(app.groups.getGroupById(selectedGroup.dataset.group));
-      } else {
-        app.groups.selectGroup(undefined);
+      const satelliteGroups = viewer.getSatelliteGroups();
+      if (satelliteGroups) {
+        const selectedGroup = (document.querySelector('#groups-display>li.selected') as HTMLElement);
+        if (selectedGroup) {
+          satelliteGroups.selectGroup(
+            satelliteGroups.getGroupById(selectedGroup.dataset.group as string)
+          );
+        } else {
+          satelliteGroups.selectGroup(undefined);
+        }
       }
     });
 
@@ -137,40 +151,52 @@ function initGroupsListeners (app: any) {
         listItems[j].classList.remove('selected');
       }
 
+      const satelliteGroups = viewer.getSatelliteGroups();
       const groupName = target.dataset.group;
       if (groupName === selectedGroupName) {
-        app.groups.clearSelect();
+        if (satelliteGroups) {
+          satelliteGroups.clearSelect();
+        }
         searchBox.clearResults();
         searchBox.hideResults();
       } else {
         event.preventDefault();
         event.stopPropagation();
-        const satelliteGroups = app.viewer.getSatGroups();
-        app.viewer.setSelectedSatellite(-1); // clear selected sat
-        satelliteGroups.selectGroup(satelliteGroups.getGroupById(groupName));
-        searchBox.fillResultBox(satelliteGroups.getGroupById(groupName).sats, '');
-        windowManager.openWindow('search-window');
-        target.classList.add('selected');
+        const satelliteGroups = viewer.getSatelliteGroups();
+        if (satelliteGroups) {
+          viewer.setSelectedSatellite(-1); // clear selected sat
+          if (satelliteGroups) {
+            satelliteGroups.selectGroup(satelliteGroups.getGroupById(groupName));
+          }
+          const group = satelliteGroups.getGroupById(groupName);
+          if (group) {
+            searchBox.fillResultBox(group.sats, '');
+            windowManager.openWindow('search-window');
+            target.classList.add('selected');
+          }
+        }
       }
     });
   }
 }
 
 function initEventListeners () {
-  app.groups.reloadGroups();
+  const satelliteGroups = viewer.getSatelliteGroups();
 
-  app.addEventListener(Events.selectedSatChange, onSelectedSatChange);
+  satelliteGroups?.reloadGroups();
 
-  app.addEventListener(Events.satHover, onSatHover);
+  // app.addEventListener(Events.selectedSatChange, onSelectedSatChange);
+
+  // app.addEventListener(Events.satHover, onSatHover);
 
   document.querySelector('#zoom-in')?.addEventListener('click', (event: any) => {
     event.preventDefault();
-    app.viewer.zoomIn();
+    viewer.zoomIn();
   });
 
   document.querySelector('#zoom-out')?.addEventListener('click', (event: any) => {
     event.preventDefault();
-    app.viewer.zoomOut();
+    viewer.zoomOut();
   });
 
   window.addEventListener('resize', () => {
@@ -204,7 +230,12 @@ function onSatMovementChange (event: any) {
 function onSatDataLoaded () {
   initEventListeners();
   updateGroupList();
-  setTimeout(() => initGroupsListeners(app), 0);
+  setTimeout(() => initGroupsListeners(), 0);
+
+  const loaderElement = document.querySelector('#load-cover');
+  if (loaderElement) {
+    loaderElement.classList.add('hidden');
+  }
 }
 
 function getSupportedEvents () {
@@ -229,9 +260,8 @@ function getCurrentSearch () {
   return searchBox.getCurrentSearch();
 }
 
-function init (appContext: any) {
-  app = appContext;
-  app.windowManager = windowManager;
+function init (viewerInstance: Viewer) {
+  viewer = viewerInstance;
 
   windowManager.registerWindow('sat-infobox');
   windowManager.registerWindow('about-window');
@@ -239,12 +269,18 @@ function init (appContext: any) {
   windowManager.registerWindow('groups-window');
   windowManager.registerWindow('search-window');
 
-  searchBox.init(app);
+  searchBox.init(viewer, windowManager);
 
   initMenus();
 
-  app.viewer.addEventListener(Events.satMovementChange, onSatMovementChange);
-  app.addEventListener(Events.satDataLoaded, onSatDataLoaded);
+  viewer.addEventListener(Events.satMovementChange, onSatMovementChange);
+  if (!viewer.ready) {
+    console.log('xxxA');
+    viewer.addEventListener(Events.satDataLoaded, onSatDataLoaded);
+  } else {
+    console.log('xxxB');
+    onSatDataLoaded();
+  }
 }
 
 export default {

@@ -1,14 +1,17 @@
-import SatGroup from '../viewer-legacy/sat-group';
+import SatelliteGroup from '../viewer/SatelliteGroup';
 import logger from '../utils/logger';
+import { Viewer } from '../viewer';
+import HudWindowManager from './HudWindowManager';
 
 const SEARCH_LIMIT = 200;
 
-let app: any;
+let viewer: Viewer;
+let windowManager: HudWindowManager
 let hovering = false;
 let hoverSatId = -1;
 
 let resultsOpen = false;
-let lastResultGroup: SatGroup;
+let lastResultGroup: SatelliteGroup;
 
 function isResultBoxOpen () {
   return resultsOpen;
@@ -37,7 +40,7 @@ function clearHover () {
   hovering = false;
   hoverSatId = -1;
 
-  app.viewer.setHover(hoverSatId);
+  viewer.setHoverSatellite(hoverSatId);
 }
 
 function setResultsVisible (visible: boolean) {
@@ -64,40 +67,47 @@ function showResults () {
 
 function hideResults () {
   setResultsVisible(false);
-  app.groups.clearSelect();
+  const satelliteGroups = viewer.getSatelliteGroups();
+  if (satelliteGroups) {
+    satelliteGroups.clearSelect();
+  }
 }
 
 function fillResultBox (results: any, searchStr: string) {
-  const satData = app.satData;
   const resultBox = document.querySelector('#search-results') as HTMLElement;
+  const satelliteStore = viewer.getSatelliteStore();
+  if (!satelliteStore) {
+    return;
+  }
 
   let html = '';
   for (let i = 0; i < results.length; i++) {
-    const sat = satData[results[i].satId];
-    if (!sat) {
+
+    const satellite = satelliteStore.getSatellite(results[i].satId);
+    if (!satellite) {
       logger.warn('satellite not found', results[i].satId);
       continue;
     }
 
-    html += `<div class="search-result" data-sat-id="${sat.id}">`;
+    html += `<div class="search-result" data-sat-id="${satellite.id}">`;
     if (results[i].isIntlDes) {
-      html += sat.OBJECT_NAME;
+      html += satellite.OBJECT_NAME;
     } else {
-      html += sat.OBJECT_NAME.substring(0, results[i].strIndex);
+      html += satellite.OBJECT_NAME.substring(0, results[i].strIndex);
       html += '<span class="search-hilight">';
-      html += sat.OBJECT_NAME.substring(results[i].strIndex, results[i].strIndex + searchStr.length);
+      html += satellite.OBJECT_NAME.substring(results[i].strIndex, results[i].strIndex + searchStr.length);
       html += '</span>';
-      html += sat.OBJECT_NAME.substring(results[i].strIndex + searchStr.length);
+      html += satellite.OBJECT_NAME.substring(results[i].strIndex + searchStr.length);
     }
     html += '<div class="search-result-intldes">';
     if (results[i].isIntlDes) {
-      html += sat.intlDes.substring(0, results[i].strIndex);
+      html += satellite.intlDes.substring(0, results[i].strIndex);
       html += '<span class="search-hilight">';
-      html += sat.intlDes.substring(results[i].strIndex, results[i].strIndex + searchStr.length);
+      html += satellite.intlDes.substring(results[i].strIndex, results[i].strIndex + searchStr.length);
       html += '</span>';
-      html += sat.intlDes.substring(results[i].strIndex + searchStr.length);
+      html += satellite.intlDes.substring(results[i].strIndex + searchStr.length);
     } else {
-      html += sat.intlDes;
+      html += satellite.intlDes;
     }
     html += '</div></div>';
   }
@@ -115,9 +125,14 @@ function clearResults () {
 }
 
 function doSearch (str: string) {
-  const satData = app.satData;
+  const satelliteStore = viewer.getSatelliteStore();
+  if (!satelliteStore) {
+    return;
+  }
 
-  app.viewer.setSelectedSatellite(-1);
+  const satData = satelliteStore.getSatData();
+
+  viewer.setSelectedSatellite(-1);
 
   if (str.length === 0) {
     hideResults();
@@ -155,14 +170,17 @@ function doSearch (str: string) {
     idList.push(results[i].satId);
   }
 
-  const dispGroup = new SatGroup('search-results', 'Search Results', 'idList', idList);
+  const dispGroup = new SatelliteGroup('search-results', 'Search Results', 'idList', idList);
   dispGroup.reload();
   lastResultGroup = dispGroup;
 
-  app.groups.selectGroup(dispGroup);
+  const satelliteGroups = viewer.getSatelliteGroups();
+  if (satelliteGroups) {
+    satelliteGroups.selectGroup(dispGroup);
+  }
 
   fillResultBox(results, str);
-  app.updateUrl();
+  // app.updateUrl();
 }
 
 function registerListeners () {
@@ -175,7 +193,7 @@ function registerListeners () {
     const satId = target.dataset.satId;
     clearHover();
 
-    app.viewer.setSelectedSatellite(satId);
+    viewer.setSelectedSatellite(satId);
   });
 
   document.querySelector('#search')?.addEventListener('input', () => {
@@ -184,21 +202,22 @@ function registerListeners () {
   });
 
   document.querySelector('#all-objects-link')?.addEventListener('click', () => {
-    const selectedSatelltie = app.viewer.getSelectedSatellite();
-    if (selectedSatelltie && selectedSatelltie !== -1) {
-      const intldes = app.viewer.getSatellite(selectedSatelltie).intlDes;
+    const selectedSatellite = viewer.getSelectedSatellite();
+    if (selectedSatellite) {
+      const intldes = selectedSatellite.intlDes;
       const searchStr = intldes.slice(0, 8);
       doSearch(searchStr);
       (document.querySelector('#search') as HTMLInputElement).value = searchStr;
-      if (app.windowManager) {
-        app.windowManager.openWindow('search-window');
+      if (windowManager) {
+        windowManager.openWindow('search-window');
       }
     }
   });
 }
 
-function init (appContext: any) {
-  app = appContext;
+function init (viewerInstance: Viewer, windowManagerInstance: HudWindowManager) {
+  viewer = viewerInstance;
+  windowManager = windowManagerInstance;
   registerListeners();
 }
 

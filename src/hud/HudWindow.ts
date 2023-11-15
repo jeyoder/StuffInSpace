@@ -1,6 +1,13 @@
 class Window {
-  constructor (windowId, options = {}) {
-    this.element = document.querySelector(`#${windowId}`);
+  element?: HTMLElement;
+  id: string;
+  options?: Record<string, any>;
+  listeners: Record<string, Set<(data: any) => void>>  ={};
+  firstOpen = true;
+  windowManager: any;
+
+  constructor (windowId: string, options: Record<string, any> = {}) {
+    this.element = document.querySelector(`#${windowId}`) as HTMLElement;
     this.id = windowId;
     this.options = options;
     this.listeners = {};
@@ -8,11 +15,15 @@ class Window {
     this.initEvents();
   }
 
-  setWindowManager (windowManager) {
+  setWindowManager (windowManager: any) {
     this.windowManager = windowManager;
   }
 
   open () {
+    if (!this.element) {
+      return;
+    }
+
     this.firstOpen = false;
     this.element.classList.add('active');
     this.element.classList.add('visible');
@@ -21,16 +32,27 @@ class Window {
   }
 
   close () {
+    if (!this.element) {
+      return;
+    }
+
     this.element.classList.remove('active');
     this.element.classList.remove('visible');
     this.element.classList.add('hidden');
   }
 
   isOpen () {
-    return this.element.classList.contains('visible');
+    if (this.element) {
+      return this.element.classList.contains('visible');
+    }
+    return false;
   }
 
   initEvents () {
+    if (!this.element) {
+      return;
+    }
+
     const closeButton = this.element.querySelector('.window-close');
     if (closeButton) {
       closeButton.addEventListener('click', () => {
@@ -39,16 +61,28 @@ class Window {
     }
   }
 
-  moveTo (x, y) {
+  moveTo (x: number, y: number) {
+    if (!this.element) {
+      return;
+    }
+
     this.element.style.top = `${y}px`;
     this.element.style.left = `${x}px`;
   }
 
   getLocation () {
-    if (this.element.style.x) {
+    if (!this.element) {
       return {
-        x: this.element.style.x,
-        y: this.element.style.y
+        x: 0,
+        y: 0
+      };
+    }
+
+    const style: Record<string, any> = this.element.style as any;
+    if (style.x) {
+      return {
+        x: style.x,
+        y: style.y
       };
     }
 
@@ -58,7 +92,7 @@ class Window {
     };
   }
 
-  addEventListener (eventName, listener) {
+  addEventListener (eventName: string, listener: (data: any) => void) {
     if (!this.listeners[eventName]) {
       this.listeners[eventName] = new Set();
     }
@@ -70,7 +104,7 @@ class Window {
     }
   }
 
-  fireEvent (eventName, data) {
+  fireEvent (eventName: string, data: any) {
     if (this.listeners[eventName]) {
       const listenerSet = this.listeners[eventName];
       listenerSet.forEach((listener) => {

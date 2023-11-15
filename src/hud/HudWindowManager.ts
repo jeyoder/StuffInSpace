@@ -1,20 +1,18 @@
-import Window from './window';
+import HudWindow from './HudWindow';
 
 const windowBaseZ = 100;
 
 class WindowManager {
-  constructor () {
-    this.windows = [];
-    this.windowsById = {};
-    this.initialOpen = false;
-  }
+  windows: HudWindow[] = [];
+  windowsById: Record<string, HudWindow> = {};
+  initialOpen = false;
 
-  bringWindowToFront (window) {
+  bringWindowToFront (window: HudWindow) {
     const windowElement = window.element;
 
     let windowIdx = -1;
     for (let i = 0; i < this.windows.length; i++) {
-      if (this.windows[i].id === windowElement.id) {
+      if (this.windows[i].id === windowElement?.id) {
         windowIdx = i;
         break;
       }
@@ -26,12 +24,15 @@ class WindowManager {
     }
 
     for (let i = 0; i < this.windows.length; i++) {
-      this.windows[i].element.style.zIndex = windowBaseZ + i + 1;
+      const window = this.windows[i];
+      if (window &&  window.element && window.element.style) {
+        (window.element.style as any).zIndex = windowBaseZ + i + 1;
+      }
     }
   }
 
-  registerWindow (windowId, options = {}) {
-    const window = new Window(windowId, options);
+  registerWindow (windowId: string, options: Record<string, any> = {}) {
+    const window = new HudWindow(windowId, options);
     window.setWindowManager(this);
     this.windows.push(window);
     this.windowsById[windowId] = window;
@@ -48,7 +49,7 @@ class WindowManager {
     return undefined;
   }
 
-  openWindow (windowId) {
+  openWindow (windowId: string) {
     const newWindowOffset = 42;
     const initialLocation = { x: 100, y: 100 };
 
@@ -70,16 +71,20 @@ class WindowManager {
       // logic to tile windows
       if (firstOpen && topWindow) {
         const location = topWindow.getLocation();
-        x = location.x + newWindowOffset;
-        y = location.y + newWindowOffset;
+        if (location) {
+          x = location.x + newWindowOffset;
+          y = location.y + newWindowOffset;
+        }
       }
 
       windowToOpen.open();
 
       if (!this.initialOpen && !firstOpen) {
         const location = windowToOpen.getLocation();
-        x = location.x;
-        y = location.y;
+        if (location) {
+          x = location.x;
+          y = location.y;
+        }
       }
 
       if (x > window.innerWidth || x < 0) {
@@ -96,27 +101,34 @@ class WindowManager {
     }
   }
 
-  closeWindow (windowId) {
+  closeWindow (windowId: string) {
     const window = this.windowsById[windowId];
     if (window) {
       window.close();
     }
   }
 
-  makeDraggable (window) {
+  makeDraggable (window: HudWindow) {
     let elemTop = 0;
     let elemLeft = 0;
     let initialX = 0;
     let initialY = 0;
 
     const element = window.element;
+
+    if (!element) {
+      return;
+    }
+
     const dragZone = element.querySelector('.drag-zone') || element;
 
-    function onMouseMove (event) {
+    function onMouseMove (event: any) {
       const top = `${elemTop - (initialY - event.clientY)}px`;
       const left = `${elemLeft - (initialX - event.clientX)}px`;
-      element.style.top = top;
-      element.style.left = left;
+      if (element && element.style) {
+        element.style.top = top;
+        element.style.left = left;
+      }
     }
 
     element.classList.add('draggable');
@@ -125,7 +137,7 @@ class WindowManager {
       this.bringWindowToFront(window);
     });
 
-    dragZone.addEventListener('mousedown', (event) => {
+    dragZone.addEventListener('mousedown', (event: any) => {
       event.preventDefault();
       elemLeft = element.offsetLeft;
       elemTop = element.offsetTop; // - 250);
@@ -143,13 +155,13 @@ class WindowManager {
       dragZone.addEventListener('mousemove', onMouseMove);
     });
 
-    element.addEventListener('mouseup', (event) => {
+    element.addEventListener('mouseup', (event: any)  => {
       event.preventDefault();
       dragZone.removeEventListener('mousemove', onMouseMove);
       element.classList.remove('dragging');
     });
 
-    element.addEventListener('mouseout', (event) => {
+    element.addEventListener('mouseout', (event: any) => {
       event.preventDefault();
       dragZone.removeEventListener('mousemove', onMouseMove);
       element.classList.remove('dragging');
@@ -157,4 +169,4 @@ class WindowManager {
   }
 }
 
-export default new WindowManager();
+export default WindowManager;

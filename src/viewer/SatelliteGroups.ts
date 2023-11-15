@@ -14,7 +14,7 @@ class SatelliteGroups {
     return Object.values(this.groups);
   }
 
-  selectGroup (group: SatGroup) {
+  selectGroup (group?: SatGroup) {
     this.selectedGroup = group;
     if (!group) {
       this.clearSelect();

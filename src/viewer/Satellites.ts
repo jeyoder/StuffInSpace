@@ -1,8 +1,7 @@
 // import THREE, { Object3D } from "three";
-import * as THREE from 'three';
+import { Points, PointsMaterial, BufferGeometry, Float32BufferAttribute, AdditiveBlending } from 'three';
 import axios from 'axios';
 import SceneComponent from './interfaces/SceneComponent';
-import config from '../config';
 import satelliteStore from './SatelliteStore';
 import SatCruncherWorker from './workers/SatCruncherWorker?worker';
 import logger from '../utils/logger';
@@ -10,22 +9,19 @@ import SatelliteOrbitScene from './SatelliteOrbitScene';
 import ColorScheme from './color-schemes/ColorScheme';
 import DefaultColorScheme from './color-schemes/DefaultColorScheme';
 
-// type Mesh = THREE.Mesh;
+// type Mesh = Mesh;
 class Satellites implements SceneComponent{
-  tleUrl = `${config.baseUrl}/data/TLE.json`;
   worker?: Worker;
   currentColorScheme?: ColorScheme = new DefaultColorScheme();
   numSats: number = 1;
-  size = 0;
   maxSize = 0;
   satPos: Float32Array = new Float32Array();
   satVel: Float32Array = new Float32Array();
   satAlt: Float32Array = new Float32Array();
   cruncherReady = false;
-  satDataString?: string;
   scene?: SatelliteOrbitScene;
-  particles?: THREE.Points;
-  geometry?: THREE.BufferGeometry;
+  particles?: Points;
+  geometry?: BufferGeometry;
 
   setColorScheme (colorScheme: ColorScheme) {
     this.currentColorScheme = colorScheme;
@@ -36,7 +32,7 @@ class Satellites implements SceneComponent{
       if (this.geometry && this.geometry.attributes) {
         // update satellite positions
         if (this.geometry.attributes.position) {
-          this.geometry.setAttribute('position', new THREE.Float32BufferAttribute( this.satPos, 3 ) );
+          this.geometry.setAttribute('position', new Float32BufferAttribute( this.satPos, 3 ) );
         }
 
         // update point colours
@@ -47,7 +43,7 @@ class Satellites implements SceneComponent{
             const color = this.currentColorScheme?.getSatelliteColor(satellites[i])?.color || [0, 0, 0];
             colors.push(color[0], color[1], color[2])
           }
-          this.geometry.setAttribute('color', new THREE.Float32BufferAttribute( colors, 3 ) );
+          this.geometry.setAttribute('color', new Float32BufferAttribute( colors, 3 ) );
         }
       }
     }
@@ -104,7 +100,6 @@ class Satellites implements SceneComponent{
 
       if (!this.cruncherReady) {
         document.querySelector('#load-cover')?.classList.add('hidden');
-        // this.setColorScheme(this.currentColorScheme); // force color recalc
         this.cruncherReady = true;
 
         // this.eventManager.fireEvent(Events.cruncherReady, { satData: satData });
@@ -116,22 +111,11 @@ class Satellites implements SceneComponent{
     }
   }
 
-  async loadSatelliteData () {
+  async onSatDataLoaded () {
     if (this.worker) {
-      logger.debug('Loading satellite data');
-      const response = await axios.get(this.tleUrl, {
-        params: {
-          t: Date.now()
-        }
-      });
+      const satDataString = JSON.stringify(satelliteStore.satData);
 
-      logger.debug('Satellite data received');
-      const satData = response.data;
-      this.size = satData.length;
-      satelliteStore.setSatelliteData(satData);
-
-      const satDataString = JSON.stringify(satData);
-
+      console.log('zzzzLLLL');
       logger.debug('Sending data to sat cruncher worker, to perform work');
       this.worker.postMessage(satDataString);
     } else {
@@ -144,32 +128,30 @@ class Satellites implements SceneComponent{
     logger.info('Kicking off sat-cruncher-worker');
     this.worker = new SatCruncherWorker();
     this.worker.onmessage = this.onMessage.bind(this);
-    await this.loadSatelliteData();
 
-    const geometry = new THREE.BufferGeometry();
+    satelliteStore.addEventListener('satdataloaded', this.onSatDataLoaded.bind(this));
+    await satelliteStore.loadSatelliteData();
+
+    const geometry = new BufferGeometry();
     let vertices: Float32Array = new Float32Array();
     let colors: number[] = [];
 
     vertices.fill(0, 0, satelliteStore.satData.length * 3);
     colors.fill(0, 0, satelliteStore.satData.length * 3);
 
-    // for (let i = 0; i < satelliteStore.satData.length; i++) {
-    //   colors.push(0, 0, 0);
-    // }
+    geometry.setAttribute( 'position', new Float32BufferAttribute( vertices, 3 ) );
+    geometry.setAttribute( 'color', new Float32BufferAttribute( colors, 3 ) );
 
-    geometry.setAttribute( 'position', new THREE.Float32BufferAttribute( vertices, 3 ) );
-    geometry.setAttribute( 'color', new THREE.Float32BufferAttribute( colors, 3 ) );
-
-    const material= new THREE.PointsMaterial({
+    const material= new PointsMaterial({
       color: 'grey',
       size: 3,
       sizeAttenuation: false,
       vertexColors: true,
-      blending: THREE.AdditiveBlending
+      blending: AdditiveBlending
     });
 
     this.geometry = geometry;
-    this.particles = new THREE.Points( geometry, material );
+    this.particles = new Points( geometry, material );
 
     if (this.scene) {
       this.scene.add( this.particles );

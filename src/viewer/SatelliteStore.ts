@@ -1,6 +1,13 @@
+import axios from 'axios';
 import EventManager from "../utils/event-manager";
+import logger from '../utils/logger';
+
+const config = {
+  baseUrl: import.meta.env.BASE_URL
+};
 
 class SatelliteStore {
+  tleUrl = `${config.baseUrl}/data/TLE.json`;
   eventManager: EventManager;
   satData: Record<string, any>[] = [];
   satelliteVelocities: Float32Array = new Float32Array();
@@ -11,6 +18,25 @@ class SatelliteStore {
 
   constructor () {
     this.eventManager = new EventManager();
+  }
+
+  async loadSatelliteData () {
+      logger.debug('Loading satellite data');
+      try {
+        const response = await axios.get(this.tleUrl, {
+          params: {
+            t: Date.now()
+          }
+        });
+
+        if (response.data) {
+          this.satData = response.data;
+        }
+
+        this.eventManager.fireEvent('satdataloaded', this.satData);
+      } catch (error) {
+        logger.error('error loading TLE data', error);
+      }
   }
 
   setSatelliteData (satData: Record<string, any>[], includesExtraData = false) {
@@ -85,7 +111,7 @@ class SatelliteStore {
     return null;
   }
 
-  getSatellite (satelliteId: number) {
+  getSatellite (satelliteId: number): Record<string, any> | undefined {
     if (!satelliteId || satelliteId === -1 || !this.satData) {
       return undefined;
     }
@@ -93,7 +119,7 @@ class SatelliteStore {
     const satellite = this.satData[satelliteId];
 
     if (!satellite) {
-      return null;
+      return undefined;
     }
 
     if (this.gotPositionalData) {
@@ -118,4 +144,7 @@ class SatelliteStore {
   }
 }
 
-export default new SatelliteStore();
+const instance = new SatelliteStore();
+
+export default instance;
+export { SatelliteStore, instance as globalStore };

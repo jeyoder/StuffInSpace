@@ -1,5 +1,7 @@
 // eslint-disable-next-line import/no-extraneous-dependencies
-import { defineConfig, loadEnv } from 'vite';
+import { defineConfig, loadEnv, splitVendorChunkPlugin } from 'vite';
+import { visualizer } from 'rollup-plugin-visualizer';
+import { threeMinifier } from '@yushijinhun/three-minifier-rollup';
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
@@ -13,6 +15,11 @@ export default defineConfig(({ mode }) => {
     build: {
       outDir: 'dist'
     },
-    base: env.BASE_URL || '/'
+    base: env.BASE_URL || '/',
+    plugins: [
+      splitVendorChunkPlugin(),
+      { ...threeMinifier(), enforce: 'pre' },
+      visualizer()
+    ]
   };
 });

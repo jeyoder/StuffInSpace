@@ -1,13 +1,18 @@
 class EventManager {
   listeners: Record<string, Set<any>> = {};
+  supportedEvents: string[] | undefined;
 
-  cobstructor () {
-    // not implemented
+  constructor (supportedEvents?: string[]) {
+    this.supportedEvents = supportedEvents;
   }
 
   addEventListener (eventName: string, listener: any) {
     if (!eventName) {
-      throw new Error('undefined eventName');
+      throw new Error('eventName must not be undefined');
+    }
+
+    if (this.supportedEvents && this.supportedEvents.indexOf(eventName) < 0) {
+      throw new Error(`unsupported event ${eventName}`);
     }
 
     eventName = eventName.toLowerCase();

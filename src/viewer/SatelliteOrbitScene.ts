@@ -1,6 +1,6 @@
-import * as THREE from 'three';
+import { Scene } from 'three';
 
-class SatelliteOrbitScene extends THREE.Scene {
+class SatelliteOrbitScene extends Scene {
   static earthRadiusInKm = 6371;
   pxToRadius = 3185.5;
 
