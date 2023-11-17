@@ -24,6 +24,10 @@ module.exports = {
     browser: true
   },
 
+  ignorePatterns: [
+    'vite.config.js'
+  ],
+
   // Rules order is important, please avoid shuffling them
   extends: [
     // Base ESLint recommended rules
