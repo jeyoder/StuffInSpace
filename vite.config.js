@@ -2,7 +2,6 @@
 import { defineConfig, loadEnv, splitVendorChunkPlugin } from 'vite';
 import { visualizer } from 'rollup-plugin-visualizer';
 import { threeMinifier } from '@yushijinhun/three-minifier-rollup';
-import tsconfigPaths from 'vite-tsconfig-paths'
 import path from 'path';
 
 export default defineConfig(({ mode }) => {
@@ -25,7 +24,6 @@ export default defineConfig(({ mode }) => {
       },
     },
     plugins: [
-      tsconfigPaths(),
       // TODO attempting to reduce threejs bundle size. Still a WIP
       { ...threeMinifier(), enforce: 'pre' },
       splitVendorChunkPlugin(),
