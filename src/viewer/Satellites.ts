@@ -1,4 +1,6 @@
-import { Points, PointsMaterial, BufferGeometry, Float32BufferAttribute, AdditiveBlending } from '../utils/three';
+import { Points, PointsMaterial, BufferGeometry, Float32BufferAttribute, AdditiveBlending, Color, TextureLoader } from '../utils/three';
+import { ShaderMaterial } from 'three';
+
 import SceneComponent from './interfaces/SceneComponent';
 import SatelliteStore from './SatelliteStore';
 import SatCruncherWorker from './workers/SatCruncherWorker?worker';
@@ -7,9 +9,11 @@ import SatelliteOrbitScene from './SatelliteOrbitScene';
 import ColorScheme from './color-schemes/ColorScheme';
 import DefaultColorScheme from './color-schemes/DefaultColorScheme';
 import SelectableSatellite from './interfaces/SelectableSatellite';
+import ShaderStore from './ShaderStore';
 
 // type Mesh = Mesh;
 class Satellites implements SceneComponent, SelectableSatellite {
+  baseUrl = '';
   worker?: Worker;
   currentColorScheme?: ColorScheme = new DefaultColorScheme();
   numSats: number = 1;
@@ -22,6 +26,7 @@ class Satellites implements SceneComponent, SelectableSatellite {
   particles?: Points;
   geometry?: BufferGeometry;
   satelliteStore?: SatelliteStore;
+  shaderStore?: ShaderStore;
   selectedSatelliteIdx = -1;
   hoverSatelliteIdx = -1;
 
@@ -143,13 +148,71 @@ class Satellites implements SceneComponent, SelectableSatellite {
     this.hoverSatelliteIdx = satelliteIdx;
   }
 
+  private initGeometry () {
+    if (!this.satelliteStore) {
+      throw new Error('satelliteStore is not available');
+    }
+
+    if (!this.shaderStore) {
+      throw new Error('sahderStore is not available');
+    }
+
+    const geometry = new BufferGeometry();
+    const vertices: Float32Array = new Float32Array();
+    const sizes: Float32Array = new Float32Array();
+    const colors: number[] = [];
+
+    vertices.fill(0, 0, this.satelliteStore.satData.length * 3);
+    colors.fill(0, 0, this.satelliteStore.satData.length * 3);
+    sizes.fill(10, 0, this.satelliteStore.satData.length);
+
+    geometry.setAttribute('position', new Float32BufferAttribute( vertices, 3 ) );
+    geometry.setAttribute('color', new Float32BufferAttribute( colors, 3 ) );
+    geometry.setAttribute('size', new Float32BufferAttribute( sizes, 1 ) );
+
+    const material= new PointsMaterial({
+      color: 'grey',
+      size: 3,
+      sizeAttenuation: false,
+      vertexColors: true,
+      blending: AdditiveBlending,
+    });
+
+    const shader = this.shaderStore.getShader('dot2');
+
+    console.log('shader', shader, shader.vertex);
+
+    // const material = new ShaderMaterial({
+    //   uniforms: {
+    //     color: { value: new Color( 0xffffff ) },
+    //     pointTexture: { value: new TextureLoader().load(`${this.baseUrl}/images/spark1.png' ) }
+    //   },
+    //   vertexShader: shader.vertex,
+    //   fragmentShader: shader.fragment,
+    //   blending: AdditiveBlending,
+    //   depthTest: false,
+    //   transparent: true
+    // });
+
+    this.geometry = geometry;
+    this.particles = new Points( geometry, material );
+
+    if (this.scene) {
+      this.scene.add( this.particles );
+    }
+  }
+
   async init (scene: SatelliteOrbitScene, context: Record<string, any>) {
     this.satelliteStore = context.satelliteStore;
-
+    this.shaderStore = context.shaderStore;
     this.scene = scene;
     logger.info('Kicking off sat-cruncher-worker');
     this.worker = new SatCruncherWorker();
     this.worker.onmessage = this.onMessage.bind(this);
+
+    if (context?.config) {
+      this.baseUrl = context.config.baseUrl;
+    }
 
     if (!this.satelliteStore) {
       return;
@@ -158,30 +221,7 @@ class Satellites implements SceneComponent, SelectableSatellite {
     this.satelliteStore.addEventListener('satdataloaded', this.onSatDataLoaded.bind(this));
     await this.satelliteStore.loadSatelliteData();
 
-    const geometry = new BufferGeometry();
-    const vertices: Float32Array = new Float32Array();
-    const colors: number[] = [];
-
-    vertices.fill(0, 0, this.satelliteStore.satData.length * 3);
-    colors.fill(0, 0, this.satelliteStore.satData.length * 3);
-
-    geometry.setAttribute( 'position', new Float32BufferAttribute( vertices, 3 ) );
-    geometry.setAttribute( 'color', new Float32BufferAttribute( colors, 3 ) );
-
-    const material= new PointsMaterial({
-      color: 'grey',
-      size: 3,
-      sizeAttenuation: false,
-      vertexColors: true,
-      blending: AdditiveBlending
-    });
-
-    this.geometry = geometry;
-    this.particles = new Points( geometry, material );
-
-    if (this.scene) {
-      this.scene.add( this.particles );
-    }
+    this.initGeometry();
 
     if (this.satelliteStore.gotExtraData) {
       this.updateSatellites();

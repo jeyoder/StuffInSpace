@@ -1,6 +1,6 @@
 const baseUrl = import.meta.env.BASE_URL;
 
-const constants = {
+const config = {
   appName: 'Stuff in Space',
   baseUrl,
   propergateInterval: 1000, // milliseconds
@@ -78,4 +78,4 @@ const constants = {
   ]
 };
 
-export default constants;
+export default config;

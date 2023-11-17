@@ -13,6 +13,8 @@ import SatelliteGroups from './SatelliteGroups';
 import SatelliteStore from './SatelliteStore';
 import EventManager from '../utils/event-manager';
 import SatelliteGroup from './SatelliteGroup';
+import ShaderStore from './ShaderStore';
+import logger from '@/utils/logger';
 
 // function idleRotateCamera (camera: Camera, time: number = 0) {
 //   const distance = 13;
@@ -46,6 +48,7 @@ class Viewer {
   context: Record<string, any> = {};
   satelliteGroups?: SatelliteGroups;
   satelliteStore?: SatelliteStore;
+  shaderStore?: ShaderStore;
   selectedSatelliteIdx: number = -1;
   eventManager = new EventManager();
   ready = false;
@@ -103,9 +106,14 @@ class Viewer {
       this.satelliteStore
     );
 
+    this.shaderStore = new ShaderStore(this.config.baseUrl);
+    logger.debug('loading shaders');
+    await this.shaderStore.load();
+
     this.context.satelliteGroups = this.satelliteGroups;
     this.context.config = this.config;
     this.context.satelliteStore = this.satelliteStore;
+    this.context.shaderStore = this.shaderStore;
 
     this.satelliteStore.addEventListener('satdataloaded', this.onSatDataLoaded.bind(this));
 

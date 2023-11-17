@@ -19,7 +19,8 @@
     "gl-matrix": "^3.4.3",
     "luxon": "^3.4.4",
     "satellite.js": "^5.0.0",
-    "three": "^0.158.0"
+    "three": "^0.158.0",
+    "vite-tsconfig-paths": "^4.2.1"
   },
   "devDependencies": {
     "@types/luxon": "^3.3.4",

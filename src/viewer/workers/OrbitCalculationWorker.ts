@@ -1,8 +1,8 @@
-import { jday, twoline2satrec, sgp4, EciVec3 } from 'satellite.js';
+import { jday, twoline2satrec, sgp4, EciVec3, SatRec } from 'satellite.js';
 import logger from '../../utils/logger';
 
 let numSegs: number;
-const satCache: Record<string, any> = [];
+const satCache: SatRec[] = [];
 let id: number;
 
 function processOrbit (satId: number) {
