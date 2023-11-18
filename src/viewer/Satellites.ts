@@ -1,5 +1,5 @@
-import { Points, PointsMaterial, BufferGeometry, Float32BufferAttribute, AdditiveBlending, Color, TextureLoader } from '../utils/three';
-import { ShaderMaterial } from 'three';
+import { Points, PointsMaterial, BufferGeometry, Float32BufferAttribute, AdditiveBlending, Color, TextureLoader, SubtractiveBlending } from '../utils/three';
+import { CanvasTexture, ShaderMaterial } from 'three';
 
 import SceneComponent from './interfaces/SceneComponent';
 import SatelliteStore from './SatelliteStore';
@@ -170,17 +170,51 @@ class Satellites implements SceneComponent, SelectableSatellite {
     geometry.setAttribute('color', new Float32BufferAttribute( colors, 3 ) );
     geometry.setAttribute('size', new Float32BufferAttribute( sizes, 1 ) );
 
+    const canvas = document.createElement( 'CANVAS' ) as HTMLCanvasElement;
+    canvas.width = 128;
+    canvas.height = 128;
+
+    const context = canvas.getContext( '2d' ) as CanvasRenderingContext2D;
+    context.globalAlpha = 0.3;
+    context.filter = 'blur(16px)';
+    context.fillStyle = 'white';
+    context.beginPath();
+    context.arc( 64, 64, 40, 0, 2*Math.PI );
+    context.fill( );
+    context.globalAlpha = 1;
+    context.filter = 'blur(5px)';
+    context.fillStyle = 'white';
+    context.beginPath();
+    context.arc( 64, 64, 16, 0, 2 * Math.PI );
+    context.fill( );
+
+    const texture = new CanvasTexture( canvas );
+
+    // const texture = new TextureLoader().load(`${this.baseUrl}/images/spark1.png`);
+    // const material= new PointsMaterial({
+    //   color: 'grey',
+    //   // map: texture,
+    //   size: 3,
+    //   sizeAttenuation: false,
+    //   vertexColors: true,
+    //   blending: AdditiveBlending,
+    //   depthTest: true
+    // });
+
+
     const material= new PointsMaterial({
-      color: 'grey',
-      size: 3,
-      sizeAttenuation: false,
+      color: 'white',
       vertexColors: true,
+      size: 0.1,
+      sizeAttenuation: true,
+      map: texture,
+      transparent: true,
       blending: AdditiveBlending,
+      depthTest: true,
+      depthWrite: false
     });
 
-    const shader = this.shaderStore.getShader('dot2');
-
-    console.log('shader', shader, shader.vertex);
+    // const shader = this.shaderStore.getShader('dot2');
 
     // const material = new ShaderMaterial({
     //   uniforms: {

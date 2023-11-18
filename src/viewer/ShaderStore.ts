@@ -43,6 +43,11 @@ class ShaderStore {
     }
   }
 
+  addShader (name: string, fragmentCode: string, vertexCode: string) {
+    this.shaderData[`${name}-fragment`] = fragmentCode;
+    this.shaderData[`${name}-vertex`] = vertexCode;
+  }
+
   getFragmentShader (name: string) {
     return this.shaderData[`${name}-fragment`];
   }

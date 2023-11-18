@@ -6,7 +6,7 @@ import SatelliteOrbitScene from './SatelliteOrbitScene';
 class Sun implements SceneComponent {
   static deg2RadMult = (Math.PI / 180);
 
-  speedy = false;
+  fastTime = false;
   showGeometry = false;
   lightSouce: Object3D | undefined;
   lightSourceGeometery: Object3D | undefined;
@@ -27,14 +27,12 @@ class Sun implements SceneComponent {
     let hour = this.hour;
     // if we aren't overriding the hour, then calculate from actual time
     if (hour === undefined || hour === -1) {
-      let time = DateTime.utc();
-
-      time = time.set({ hour: 18 });
+      const time = DateTime.utc();
       hour = time.hour;
     }
 
     // adjust by 180, since left of texture is at 0
-    const angle = ((hour / 24) * 360) + + 180;
+    const angle = ((hour / 24) * 360) + 180;
 
     const point = {
       x: distance * Math.cos( this.degreesToReadians(angle) ),
@@ -45,6 +43,15 @@ class Sun implements SceneComponent {
   }
 
   init (scene: SatelliteOrbitScene) {
+    // Speedily rotate simulated sun
+    if (this.fastTime) {
+      setInterval(() => {
+        this.hour += 0.05;
+      }, 100);
+    } else {
+      this.hour = -1;
+    }
+
     this.calculateSunLoc();
     const sunLoc = this.calculateSunLoc();
     const coords = { x: sunLoc.x, y: 0, z: sunLoc.z};
@@ -63,28 +70,19 @@ class Sun implements SceneComponent {
     }
 
     scene.add(this.objectGroup);
-
-    // Speedily rotate simulated sun
-    if (this.speedy) {
-      setInterval(() => {
-        this.hour += 0.05;
-      }, 100);
-    } else {
-      this.hour = -1;
-    }
   }
 
   update (): void {
-    const sunLoc = this.calculateSunLoc();
-    const coords = { x: sunLoc.x, y: 0, z: sunLoc.z};
+    // const sunLoc = this.calculateSunLoc();
+    // const coords = { x: sunLoc.x, y: 0, z: sunLoc.z};
 
-    if (this.lightSouce) {
-      this.lightSouce.position.set(coords.x, coords.y, coords.z);
-    }
+    // if (this.lightSouce) {
+    //   this.lightSouce.position.set(coords.x, coords.y, coords.z);
+    // }
 
-    if (this.lightSourceGeometery) {
-      this.lightSourceGeometery.position.set(coords.x, coords.y, coords.z);
-    }
+    // if (this.lightSourceGeometery) {
+    //   this.lightSourceGeometery.position.set(coords.x, coords.y, coords.z);
+    // }
   }
 
   setVisible (visible: boolean): void {

@@ -19,11 +19,11 @@
     "gl-matrix": "^3.4.3",
     "luxon": "^3.4.4",
     "satellite.js": "^5.0.0",
-    "three": "^0.158.0"
+    "three": "^0.157.0"
   },
   "devDependencies": {
     "@types/luxon": "^3.3.4",
-    "@types/three": "^0.158.2",
+    "@types/three": "^0.157.0",
     "@typescript-eslint/eslint-plugin": "^6.11.0",
     "@yushijinhun/three-minifier-rollup": "^0.4.0",
     "eslint": "^8.53.0",
