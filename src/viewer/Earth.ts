@@ -9,7 +9,7 @@ class Earth implements SceneComponent {
   radiusInKm = 6371.0;
   pxToRadius = 3185.5;
   addAtmosphere = false;
-  addClouds = false;
+  addClouds = true;
 
   sphere: Mesh | undefined = undefined;
   group: Group | undefined = undefined;

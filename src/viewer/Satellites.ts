@@ -1,6 +1,12 @@
-import { Points, PointsMaterial, BufferGeometry, Float32BufferAttribute, AdditiveBlending, Color, TextureLoader, SubtractiveBlending } from '../utils/three';
-import { CanvasTexture, ShaderMaterial } from 'three';
-
+import {
+  Points,
+  BufferGeometry,
+  Float32BufferAttribute,
+  AdditiveBlending,
+  TextureLoader,
+  Color,
+  ShaderMaterial
+} from '../utils/three';
 import SceneComponent from './interfaces/SceneComponent';
 import SatelliteStore from './SatelliteStore';
 import SatCruncherWorker from './workers/SatCruncherWorker?worker';
@@ -51,9 +57,10 @@ class Satellites implements SceneComponent, SelectableSatellite {
           const satellites = this.satelliteStore.satData;
           for (let i = 0; i < satellites.length; i++) {
             const color = this.currentColorScheme?.getSatelliteColor(satellites[i])?.color || [0, 0, 0];
-            colors.push(color[0], color[1], color[2]);
+            // colors.push(color[0], color[1], color[2]);
+            colors.push(color[0], color[1], color[2], color[3]);
           }
-          this.geometry.setAttribute('color', new Float32BufferAttribute( colors, 3 ) );
+          this.geometry.setAttribute('color', new Float32BufferAttribute( colors, 4 ) );
         }
       }
     }
@@ -167,66 +174,24 @@ class Satellites implements SceneComponent, SelectableSatellite {
     sizes.fill(10, 0, this.satelliteStore.satData.length);
 
     geometry.setAttribute('position', new Float32BufferAttribute( vertices, 3 ) );
-    geometry.setAttribute('color', new Float32BufferAttribute( colors, 3 ) );
+    geometry.setAttribute('color', new Float32BufferAttribute( colors, 4 ) );
     geometry.setAttribute('size', new Float32BufferAttribute( sizes, 1 ) );
 
-    const canvas = document.createElement( 'CANVAS' ) as HTMLCanvasElement;
-    canvas.width = 128;
-    canvas.height = 128;
+    const texture = new TextureLoader().load(`${this.baseUrl}/images/circle.png`);
+    const shader = this.shaderStore.getShader('dot2');
 
-    const context = canvas.getContext( '2d' ) as CanvasRenderingContext2D;
-    context.globalAlpha = 0.3;
-    context.filter = 'blur(16px)';
-    context.fillStyle = 'white';
-    context.beginPath();
-    context.arc( 64, 64, 40, 0, 2*Math.PI );
-    context.fill( );
-    context.globalAlpha = 1;
-    context.filter = 'blur(5px)';
-    context.fillStyle = 'white';
-    context.beginPath();
-    context.arc( 64, 64, 16, 0, 2 * Math.PI );
-    context.fill( );
-
-    const texture = new CanvasTexture( canvas );
-
-    // const texture = new TextureLoader().load(`${this.baseUrl}/images/spark1.png`);
-    // const material= new PointsMaterial({
-    //   color: 'grey',
-    //   // map: texture,
-    //   size: 3,
-    //   sizeAttenuation: false,
-    //   vertexColors: true,
-    //   blending: AdditiveBlending,
-    //   depthTest: true
-    // });
-
-
-    const material= new PointsMaterial({
-      color: 'white',
-      vertexColors: true,
-      size: 0.1,
-      sizeAttenuation: true,
-      map: texture,
-      transparent: true,
+    const material = new ShaderMaterial({
+      uniforms: {
+        color: { value: new Color( 0xffffff ) },
+        pointTexture: { value: texture }
+      },
+      clipping: true,
+      vertexShader: shader.vertex,
+      fragmentShader: shader.fragment,
       blending: AdditiveBlending,
       depthTest: true,
-      depthWrite: false
+      transparent: true
     });
-
-    // const shader = this.shaderStore.getShader('dot2');
-
-    // const material = new ShaderMaterial({
-    //   uniforms: {
-    //     color: { value: new Color( 0xffffff ) },
-    //     pointTexture: { value: new TextureLoader().load(`${this.baseUrl}/images/spark1.png' ) }
-    //   },
-    //   vertexShader: shader.vertex,
-    //   fragmentShader: shader.fragment,
-    //   blending: AdditiveBlending,
-    //   depthTest: false,
-    //   transparent: true
-    // });
 
     this.geometry = geometry;
     this.particles = new Points( geometry, material );

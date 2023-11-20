@@ -6,6 +6,8 @@ export { PointLight } from 'three/src/lights/PointLight.js';
 export { MeshPhongMaterial } from 'three/src/materials/MeshPhongMaterial.js';
 export { LineBasicMaterial } from 'three/src/materials/LineBasicMaterial.js';
 export { PointsMaterial } from 'three/src/materials/PointsMaterial.js';
+export { ShaderMaterial } from 'three/src/materials/ShaderMaterial.js';
+
 export { Mesh } from 'three/src/objects/Mesh.js';
 export { Group } from 'three/src/objects/Group.js';
 export { Line } from 'three/src/objects/Line.js';

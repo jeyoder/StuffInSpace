@@ -15,6 +15,7 @@ import EventManager from '../utils/event-manager';
 import SatelliteGroup from './SatelliteGroup';
 import ShaderStore from './ShaderStore';
 import logger from '@/utils/logger';
+import { Raycaster, Vector2 } from 'three';
 
 // function idleRotateCamera (camera: Camera, time: number = 0) {
 //   const distance = 13;
@@ -52,6 +53,7 @@ class Viewer {
   selectedSatelliteIdx: number = -1;
   eventManager = new EventManager();
   ready = false;
+  raycaster?: Raycaster;
 
   satellites?: Satellites;
   orbits?: Orbits;
@@ -99,6 +101,8 @@ class Viewer {
 
     this.camera.position.z = 5;
 
+    this.raycaster = new Raycaster();
+
     this.satelliteStore = new SatelliteStore(this.config);
 
     this.satelliteGroups = new SatelliteGroups(
@@ -129,6 +133,23 @@ class Viewer {
     this.controls.maxDistance = 100;
 
     window.addEventListener('resize', this.onWindowResize.bind(this));
+
+    const canvasElement = this.renderer.domElement;
+    canvasElement.addEventListener('click', (event:MouseEvent) => {
+      if (!this.raycaster || !this.scene) {
+        return;
+      }
+      const bounds = canvasElement.getBoundingClientRect();
+      const mouse: Vector2 = new Vector2();
+      mouse.x = ( (event.clientX - bounds.left) / canvasElement.clientWidth ) * 2 - 1;
+      mouse.y = - ( (event.clientY - bounds.top) / canvasElement.clientHeight ) * 2 + 1;
+      this.raycaster.setFromCamera( mouse, this.camera as PerspectiveCamera);
+      const intersects = this.raycaster.intersectObjects(this.scene.children, true);
+      if (intersects.length > 0) {
+        console.log('>>>', intersects);
+        // Do stuff
+      }
+    });
   }
 
   animate () {
