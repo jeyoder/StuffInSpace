@@ -568,6 +568,17 @@ body.loading .toolbar {
   font-size: 30px !important;
 }
 
+.attribution {
+  position: absolute;
+  bottom: 13px;
+  left: 13px;
+  font-size: 12px;
+}
+
+.attribution .updated {
+  font-style: italic;
+}
+
 @media screen and (max-width: 400px) {
   /* #mobile-hamburger {
     display: block;

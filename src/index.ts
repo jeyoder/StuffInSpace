@@ -11,4 +11,6 @@ async function main () {
   hud.init(viewer);
 }
 
-main().catch(error => console.error(error));
+document.addEventListener('DOMContentLoaded', () => {
+  main().catch(error => console.error(error));
+});

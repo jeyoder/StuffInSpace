@@ -7,9 +7,11 @@ const config = {
 };
 
 class SatelliteStore {
-  tleUrl = `${config.baseUrl}/data/TLE.json`;
+  tleUrl = `${config.baseUrl}/data/attributed-TLE.json`;
   eventManager: EventManager;
   satData: Record<string, any>[] = [];
+  attribution?: Record<string, any>;
+  updateDate?: Date;
   satelliteVelocities: Float32Array = new Float32Array();
   satellitePositions: Float32Array = new Float32Array();
   satelliteAltitudes: Float32Array = new Float32Array();
@@ -34,7 +36,13 @@ class SatelliteStore {
       });
 
       if (response.data) {
-        this.satData = response.data;
+        if (Array.isArray(response.data)) {
+          this.satData = response.data;
+        } else {
+          this.satData = response.data.data;
+          this.attribution = response.data.source;
+          this.updateDate = response.data.date;
+        }
 
         for (let i = 0; i < this.satData.length; i++) {
           if (this.satData[i].INTLDES) {
@@ -57,6 +65,14 @@ class SatelliteStore {
     }
   }
 
+  getAttribution (): Record<string, any> | undefined {
+    return this.attribution;
+  }
+
+  getUpdatedDate (): Date | undefined {
+    return this.updateDate;
+  }
+
   setSatelliteData (satData: Record<string, any>[], includesExtraData = false) {
     this.satData = satData;
     this.gotExtraData = includesExtraData;
@@ -70,6 +86,18 @@ class SatelliteStore {
     this.satellitePositions = satellitePositions;
     this.satelliteAltitudes = satelliteAltitudes;
     this.gotPositionalData = true;
+  }
+
+  getSatellitePosition (satId: number): number[] | undefined {
+    const offset = satId * 3;
+    if (this.satellitePositions && offset < this.satellitePositions.length) {
+      return [
+        this.satellitePositions[offset],
+        this.satellitePositions[offset + 1],
+        this.satellitePositions[offset + 3]
+      ];
+    }
+    return undefined;
   }
 
   getSatData (): Record<string, any>[] {

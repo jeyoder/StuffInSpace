@@ -5,7 +5,9 @@ import {
   AdditiveBlending,
   TextureLoader,
   Color,
-  ShaderMaterial
+  ShaderMaterial,
+  Object3D,
+  PointsMaterial
 } from '../utils/three';
 import SceneComponent from './interfaces/SceneComponent';
 import SatelliteStore from './SatelliteStore';
@@ -115,6 +117,7 @@ class Satellites implements SceneComponent, SelectableSatellite {
       this.satVel = new Float32Array(message.data.satVel);
       this.satAlt = new Float32Array(message.data.satAlt);
 
+      // console.log(JSON.stringify(this.satPos));
       this.satelliteStore.setPositionalData(
         this.satVel, this.satPos, this.satAlt
       );
@@ -180,18 +183,26 @@ class Satellites implements SceneComponent, SelectableSatellite {
     const texture = new TextureLoader().load(`${this.baseUrl}/images/circle.png`);
     const shader = this.shaderStore.getShader('dot2');
 
-    const material = new ShaderMaterial({
-      uniforms: {
-        color: { value: new Color( 0xffffff ) },
-        pointTexture: { value: texture }
-      },
-      clipping: true,
-      vertexShader: shader.vertex,
-      fragmentShader: shader.fragment,
+    const material = new PointsMaterial ({
+      color: 'grey',
+      size: 3,
+      sizeAttenuation: false,
+      vertexColors: true,
       blending: AdditiveBlending,
-      depthTest: true,
-      transparent: true
+      depthTest: true
     });
+    // const material = new ShaderMaterial({
+    //   uniforms: {
+    //     color: { value: new Color( 0xffffff ) },
+    //     pointTexture: { value: texture }
+    //   },
+    //   clipping: true,
+    //   vertexShader: shader.vertex,
+    //   fragmentShader: shader.fragment,
+    //   blending: AdditiveBlending,
+    //   depthTest: true,
+    //   transparent: true
+    // });
 
     this.geometry = geometry;
     this.particles = new Points( geometry, material );
@@ -199,6 +210,10 @@ class Satellites implements SceneComponent, SelectableSatellite {
     if (this.scene) {
       this.scene.add( this.particles );
     }
+  }
+
+  getObject3D (): Object3D | undefined {
+    return this.particles;
   }
 
   async init (scene: SatelliteOrbitScene, context: Record<string, any>) {

@@ -12,6 +12,28 @@ const draggableElements: any[] = [];
 let groupClicked = false;
 let viewer: Viewer;
 
+function showAttribution (visible: true) {
+  let attributionElem = document.querySelector('.attribution');
+  if (!attributionElem) {
+    attributionElem = document.createElement('div');
+    attributionElem.className = 'attribution';
+    document.querySelector('body')?.appendChild(attributionElem);
+  }
+
+  if (attributionElem) {
+    if (visible) {
+      const satelliteStore = viewer.getSatelliteStore();
+      if (satelliteStore && satelliteStore.getAttribution()) {
+        const attribution = satelliteStore.getAttribution() || {};
+        const updatedDate = satelliteStore.getUpdatedDate();
+        attributionElem.innerHTML = `Orbital object data from <a href="${attribution.url}">${attribution.name}</a> <span class="updated">(updated ${updatedDate})</span>`;
+      }
+      attributionElem.classList.remove('hidden');
+    } else {
+      attributionElem.classList.add('hidden');
+    }
+  }
+}
 
 function setLoading (loading: boolean) {
   if (loading) {
@@ -247,6 +269,8 @@ function onSatDataLoaded () {
   if (loaderElement) {
     loaderElement.classList.add('hidden');
   }
+
+  showAttribution(true);
 }
 
 function getSupportedEvents () {
