@@ -6,6 +6,9 @@ const config = {
   propergateInterval: 1000, // milliseconds
   pushHistory: false,
   logLevel: 'debug',
+  satWorker: {
+    runOnce: true
+  },
   satelliteGroups: [
     {
       id: 'GPSGroup',

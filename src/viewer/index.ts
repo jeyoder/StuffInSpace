@@ -92,7 +92,7 @@ class Viewer {
     }
 
     // adjust this to control the number of point candidates
-    this.raycaster.params.Points.threshold = 2;
+    this.raycaster.params.Points.threshold = 1; // 0.07;
 
     const bounds = canvas.getBoundingClientRect();
     const mouse: Vector2 = new Vector2();
@@ -112,81 +112,85 @@ class Viewer {
     const intersects = this.raycaster.intersectObjects(this.scene.children, true);
 
     if (intersects.length > 0) {
-      console.log('XXXXX insersects', intersects);
+      this.satellites?.setSelectedSatellites(
+        intersects
+          .map((entry: Record<string, any>) => entry.index as number)
+          .filter((idx: number) => idx !== undefined)
+      );
     }
   }
 
   async init () {
-    this.scene = new SatelliteOrbitScene();
-    this.camera = new PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.1, 1000 );
+    try {
+      this.scene = new SatelliteOrbitScene();
+      this.camera = new PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.1, 1000 );
 
-    this.renderer = new WebGLRenderer({ antialias: false });
-    this.renderer.setPixelRatio(window.devicePixelRatio);
-    this.renderer.setSize(window.innerWidth, window.innerHeight);
-    document
-      .querySelector(this.config.canvasSelector)
-      ?.appendChild(this.renderer.domElement);
+      this.renderer = new WebGLRenderer({ antialias: false });
+      this.renderer.setPixelRatio(window.devicePixelRatio);
+      this.renderer.setSize(window.innerWidth, window.innerHeight);
+      document
+        .querySelector(this.config.canvasSelector)
+        ?.appendChild(this.renderer.domElement);
 
-    this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-    this.controls.zoomSpeed = 0.1;
-    this.camera.position.set( 15, 0, -100 );
-    this.controls.update();
+      this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+      this.camera.position.set( 15, 0, -100 );
+      this.controls.update();
 
-    this.camera.position.y = 5;
-    this.camera.zoom = 5;
+      this.camera.position.y = 5;
+      this.camera.zoom = 5;
 
-    this.raycaster = new Raycaster();
+      this.raycaster = new Raycaster();
 
-    this.satelliteStore = new SatelliteStore(this.config);
+      this.satelliteStore = new SatelliteStore(this.config);
 
-    this.satelliteGroups = new SatelliteGroups(
-      this.config.satelliteGroups,
-      this.satelliteStore
-    );
+      this.satelliteGroups = new SatelliteGroups(
+        this.config.satelliteGroups,
+        this.satelliteStore
+      );
 
-    this.shaderStore = new ShaderStore(this.config.baseUrl);
-    logger.debug('loading shaders');
-    await this.shaderStore.load();
+      this.shaderStore = new ShaderStore(this.config.baseUrl);
+      logger.debug('loading shaders');
+      await this.shaderStore.load();
 
-    this.context.satelliteGroups = this.satelliteGroups;
-    this.context.config = this.config;
-    this.context.satelliteStore = this.satelliteStore;
-    this.context.shaderStore = this.shaderStore;
+      this.context.satelliteGroups = this.satelliteGroups;
+      this.context.config = this.config;
+      this.context.satelliteStore = this.satelliteStore;
+      this.context.shaderStore = this.shaderStore;
 
-    this.satelliteStore.addEventListener('satdataloaded', this.onSatDataLoaded.bind(this));
+      this.satelliteStore.addEventListener('satdataloaded', this.onSatDataLoaded.bind(this));
 
-    this.earth = new Earth();
-    // await this.registerSceneComponent('earth', this.earth);
-    // await this.registerSceneComponent('sun', new Sun());
-    // await this.registerSceneComponent('universe', new Universe());
-    this.satellites = new Satellites();
-    await this.registerSceneComponent('satellites', this.satellites);
-    this.orbits = new Orbits();
-    // await this.registerSceneComponent('orbits', this.orbits);
+      this.earth = new Earth();
+      await this.registerSceneComponent('earth', this.earth);
+      await this.registerSceneComponent('sun', new Sun());
+      await this.registerSceneComponent('universe', new Universe());
+      this.satellites = new Satellites();
+      await this.registerSceneComponent('satellites', this.satellites);
+      this.orbits = new Orbits();
+      await this.registerSceneComponent('orbits', this.orbits);
 
-    const centrePoint = this.getCenterPoint(this.earth.getMesh() as Mesh);
-    if (centrePoint) {
-      this.controls.target = centrePoint;
+      const centrePoint = this.getCenterPoint(this.earth.getMesh() as Mesh);
+      if (centrePoint) {
+        this.controls.target = centrePoint;
+      }
+
+      this.camera.position.y = 42;
+      this.controls.minDistance = 4;
+      this.controls.maxDistance = 100;
+      this.controls.enablePan = false;
+      this.controls.zoomSpeed = 0.5;
+      // this.controls.enableDamping = true;
+      // this.controls.autoRotate = true;
+      // this.controls.autoRotateSpeed = 0.5;
+
+      this.camera.updateProjectionMatrix();
+
+      window.addEventListener('resize', this.onWindowResize.bind(this));
+
+      const canvasElement = this.renderer.domElement;
+      canvasElement.addEventListener('click', this.onClick.bind(this));
+    } catch (error) {
+      logger.error('Error while initialising scene', error);
     }
-
-    this.camera.position.y = 42;
-    this.controls.minDistance = 4;
-    this.controls.maxDistance = 100;
-    this.controls.enablePan = false;
-    this.controls.enableDamping = true;
-    // this.controls.autoRotate = true;
-    // this.controls.autoRotateSpeed = 0.5;
-
-    this.camera.updateProjectionMatrix();
-
-    // let arrowHelper = new ArrowHelper(this.raycaster.ray.direction, this.raycaster.ray.origin, 300, 0xff0000) ;
-    // this.scene.add(arrowHelper);
-
-
-    window.addEventListener('resize', this.onWindowResize.bind(this));
-
-    const canvasElement = this.renderer.domElement;
-    canvasElement.addEventListener('click', this.onClick.bind(this));
   }
 
   animate () {

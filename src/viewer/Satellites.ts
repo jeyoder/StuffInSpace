@@ -18,6 +18,7 @@ import ColorScheme from './color-schemes/ColorScheme';
 import DefaultColorScheme from './color-schemes/DefaultColorScheme';
 import SelectableSatellite from './interfaces/SelectableSatellite';
 import ShaderStore from './ShaderStore';
+import allPointCoords from '../AllPoints';
 
 // type Mesh = Mesh;
 class Satellites implements SceneComponent, SelectableSatellite {
@@ -29,43 +30,100 @@ class Satellites implements SceneComponent, SelectableSatellite {
   satPos: Float32Array = new Float32Array();
   satVel: Float32Array = new Float32Array();
   satAlt: Float32Array = new Float32Array();
+  satelliteColors: number[] = [];
   cruncherReady = false;
   scene?: SatelliteOrbitScene;
   particles?: Points;
   geometry?: BufferGeometry;
   satelliteStore?: SatelliteStore;
   shaderStore?: ShaderStore;
-  selectedSatelliteIdx = -1;
+  selectedSatelliteIndexes: number[] = [];
+
   hoverSatelliteIdx = -1;
 
   setColorScheme (colorScheme: ColorScheme) {
     this.currentColorScheme = colorScheme;
   }
 
+
+  debugRaycastSelection () {
+    if (!this.satelliteStore) {
+      return;
+    }
+
+    if (this.satelliteColors.length === 0 && this.satelliteStore.satData.length > 0) {
+      this.satelliteColors = new Array(this.satelliteStore.satData.length * 4);
+      this.satelliteColors.fill(1, 0, this.satelliteColors.length);
+      if (this.geometry) {
+        this.geometry.setAttribute('color', new Float32BufferAttribute(this.satelliteColors as any, 4 ) );
+      }
+    }
+
+    if (this.selectedSatelliteIndexes.length  > 0 && this.geometry) {
+      for (let i = 0; i < this.selectedSatelliteIndexes.length; i++) {
+        const idx = this.selectedSatelliteIndexes[i] * 4;
+        this.satelliteColors[idx] = 1;
+        this.satelliteColors[idx + 1] = 0;
+        this.satelliteColors[idx + 2] = 0;
+        this.satelliteColors[idx + 3] = 1;
+      }
+
+      this.geometry.setAttribute('color', new Float32BufferAttribute(this.satelliteColors as any, 4 ) );
+    }
+
+    if (this.geometry) {
+      console.log('this.satPos', this.satPos.length);
+      if (this.satPos && this.satPos.length > 0) {
+        if (this.geometry.attributes.position) {
+          this.geometry.setAttribute('position', new Float32BufferAttribute(this.satPos, 3 ));
+        }
+      }
+    }
+  }
+
   updateSatellites () {
+    if (!this.satelliteStore) {
+      return;
+    }
+
     if (this.satPos && this.satPos.length > 0) {
       if (this.geometry && this.geometry.attributes) {
+        if (!this.satelliteStore) {
+          return;
+        }
+
+        // const satPos = allPointCoords as number[];
+        const satPos = this.satPos;
+        const satellites = this.satelliteStore.satData;
+        const satCount = satellites.length;
+
         // update satellite positions
         if (this.geometry.attributes.position) {
-          this.geometry.setAttribute('position', new Float32BufferAttribute( this.satPos, 3 ) );
+          this.geometry.setAttribute('position', new Float32BufferAttribute(satPos, 3 ) );
         }
 
         // update point colours
         if (this.geometry.attributes.color && this.currentColorScheme) {
-          const colors: number[] = [];
-          if (!this.satelliteStore) {
-            return;
+          // Adjust if the satellite count adjusts
+          if (this.satelliteColors.length === 0 || (satCount * 4 !== this.satelliteColors.length)) {
+            this.satelliteColors = new Array(this.satelliteStore.satData.length * 4);
+            this.satelliteColors.fill(1, 0, this.satelliteColors.length);
           }
-          const satellites = this.satelliteStore.satData;
+
           for (let i = 0; i < satellites.length; i++) {
             const color = this.currentColorScheme?.getSatelliteColor(satellites[i])?.color || [0, 0, 0];
-            // colors.push(color[0], color[1], color[2]);
-            colors.push(color[0], color[1], color[2], color[3]);
+            const idx = i * 4;
+            this.satelliteColors[idx] = color[0];
+            this.satelliteColors[idx + 1] = color[1];
+            this.satelliteColors[idx + 2] = color[2];
+            this.satelliteColors[idx + 3] = color[3];
           }
-          this.geometry.setAttribute('color', new Float32BufferAttribute( colors, 4 ) );
+          this.geometry.setAttribute('color', new Float32BufferAttribute(this.satelliteColors, 4));
         }
       }
     }
+
+    this.debugRaycastSelection();
   }
 
   onMessage (message: any) {
@@ -117,7 +175,7 @@ class Satellites implements SceneComponent, SelectableSatellite {
       this.satVel = new Float32Array(message.data.satVel);
       this.satAlt = new Float32Array(message.data.satAlt);
 
-      // console.log(JSON.stringify(this.satPos));
+      console.log('got coords', this.satPos.length);
       this.satelliteStore.setPositionalData(
         this.satVel, this.satPos, this.satAlt
       );
@@ -151,11 +209,18 @@ class Satellites implements SceneComponent, SelectableSatellite {
   }
 
   setSelectedSatellite (satelliteIdx: number) {
-    this.selectedSatelliteIdx = satelliteIdx;
+    this.selectedSatelliteIndexes = [satelliteIdx];
+    this.updateSatellites();
+  }
+
+  setSelectedSatellites (satelliteIndexes: number[]) {
+    this.selectedSatelliteIndexes = satelliteIndexes;
+    this.updateSatellites();
   }
 
   setHoverSatellite (satelliteIdx: number) {
     this.hoverSatelliteIdx = satelliteIdx;
+    this.updateSatellites();
   }
 
   private initGeometry () {
@@ -191,6 +256,7 @@ class Satellites implements SceneComponent, SelectableSatellite {
       blending: AdditiveBlending,
       depthTest: true
     });
+
     // const material = new ShaderMaterial({
     //   uniforms: {
     //     color: { value: new Color( 0xffffff ) },
@@ -212,17 +278,70 @@ class Satellites implements SceneComponent, SelectableSatellite {
     }
   }
 
+  initGeometry2 () {
+    const geometry = new BufferGeometry();
+    const vertices: Float32Array = new Float32Array(allPointCoords as number[]);
+    const sizes: Float32Array = new Float32Array();
+
+    const pointCount = allPointCoords.length / 3;
+
+    const colors = Array.from({ length: pointCount * 3 });
+    vertices.fill(0, 0, pointCount);
+    colors.fill(1, 0, pointCount * 3);
+    sizes.fill(10, 0, pointCount);
+
+    // for (let i = 0; i < pointCount; i++) {
+    //   const idx = i * 3;
+    //   this.colors[idx] = 1;
+    //   this.colors[idx + 1] = 1;
+    //   this.colors[idx + 2] = 1;
+    // }
+
+    geometry.setAttribute('position', new Float32BufferAttribute(vertices, 3));
+    geometry.setAttribute('color', new Float32BufferAttribute(colors, 3));
+    geometry.setAttribute('size', new Float32BufferAttribute(sizes, 1));
+
+    const material = new PointsMaterial ({
+      color: 'grey',
+      size: 3,
+      sizeAttenuation: false,
+      vertexColors: true,
+      blending: AdditiveBlending,
+      depthTest: true
+    });
+
+    this.geometry = geometry;
+    this.particles = new Points( geometry, material );
+    if (this.scene) {
+      this.scene.add(this.particles);
+    }
+  }
+
   getObject3D (): Object3D | undefined {
     return this.particles;
+  }
+
+  initSatWorker (config: Record<string, any> = {}) {
+    logger.info('Kicking off sat-cruncher-worker');
+    this.worker = new SatCruncherWorker();
+    this.worker.onmessage = this.onMessage.bind(this);
+    this.worker.postMessage(JSON.stringify({
+      config
+    }));
   }
 
   async init (scene: SatelliteOrbitScene, context: Record<string, any>) {
     this.satelliteStore = context.satelliteStore;
     this.shaderStore = context.shaderStore;
     this.scene = scene;
-    logger.info('Kicking off sat-cruncher-worker');
-    this.worker = new SatCruncherWorker();
-    this.worker.onmessage = this.onMessage.bind(this);
+
+    const config = context.config || {};
+    let satWorkerConfig: Record<string, any> = {};
+    if (config.satWorker) {
+      satWorkerConfig = config.satWorker;
+    }
+
+    this.initSatWorker(satWorkerConfig);
 
     if (context?.config) {
       this.baseUrl = context.config.baseUrl;

@@ -6,7 +6,8 @@ import constants from '../../config';
 
 const satCache: SatRec[] = [];
 const propergateInterval = constants.propergateInterval || 500;
-const runOnce = false;
+let runOnce = false;
+let config: Record<string, any> = {};
 let satPos: Float32Array;
 let satVel: Float32Array;
 let satAlt: Float32Array;
@@ -88,6 +89,17 @@ onmessage = function (message) {
     const start = Date.now();
 
     const satData = JSON.parse(message.data);
+
+    if (!Array.isArray(satData)) {
+      if (satData.config) {
+        config = satData.config;
+        if (config.runOnce) {
+          runOnce = config.runOnce;
+        }
+      }
+      return;
+    }
+
     const len = satData.length;
 
     const extraData = [];
