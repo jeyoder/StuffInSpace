@@ -199,14 +199,14 @@ class Satellites implements SceneComponent, SelectableSatellite {
     }
   }
 
-  setSelectedSatellite (satelliteIdx: number) {
-    this.selectedSatelliteIndexes = [satelliteIdx];
+  setSelectedSatellites (satelliteIndexes: number[]) {
+    logger.debug('Updated selected satellite count')
+    this.selectedSatelliteIndexes = satelliteIndexes;
     this.updateSatellites();
   }
 
-  setSelectedSatellites (satelliteIndexes: number[]) {
-    this.selectedSatelliteIndexes = satelliteIndexes;
-    this.updateSatellites();
+  setSelectedSatellite (satelliteIdx: number) {
+    this.setSelectedSatellites([satelliteIdx]);
   }
 
   setHoverSatellite (satelliteIdx: number) {
@@ -226,7 +226,7 @@ class Satellites implements SceneComponent, SelectableSatellite {
     const geometry = new BufferGeometry();
     const vertices: Float32Array = new Float32Array();
     const sizes: Float32Array = new Float32Array();
-    const colors: number[] = [];
+    const colors: number[] = new Array(this.satelliteStore.satData.length * 4);
 
     vertices.fill(0, 0, this.satelliteStore.satData.length * 3);
     colors.fill(0, 0, this.satelliteStore.satData.length * 3);
