@@ -70,15 +70,6 @@ class Satellites implements SceneComponent, SelectableSatellite {
 
       this.geometry.setAttribute('color', new Float32BufferAttribute(this.satelliteColors as any, 4 ) );
     }
-
-    if (this.geometry) {
-      console.log('this.satPos', this.satPos.length);
-      if (this.satPos && this.satPos.length > 0) {
-        if (this.geometry.attributes.position) {
-          this.geometry.setAttribute('position', new Float32BufferAttribute(this.satPos, 3 ));
-        }
-      }
-    }
   }
 
   updateSatellites () {
