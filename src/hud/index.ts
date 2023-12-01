@@ -67,17 +67,16 @@ function setHtml (selector: string, html: string) {
   }
 }
 
-function onSelectedSatChange (event: any) {
-  const { satellite } = event;
+function onSelectedSatChange (satellite: Record<string, any>) {
   if (satellite) {
     document.querySelector('#sat-infobox')?.classList.add('visible');
     setHtml('#sat-info-title', satellite.OBJECT_NAME);
     setHtml('#sat-intl-des', satellite.intlDes);
     setHtml('#sat-type', satellite.OBJECT_TYPE);
-    setHtml('#sat-apogee', `${satellite.apogee.toFixed(0)} km`);
-    setHtml('#sat-perigee', `${satellite.perigee.toFixed(0)} km`);
+    setHtml('#sat-apogee', `${satellite.apogee?.toFixed(0)} km`);
+    setHtml('#sat-perigee', `${satellite.perigee?.toFixed(0)} km`);
     setHtml('#sat-inclination', `${(satellite.inclination * R2D).toFixed(2)}°`);
-    setHtml('#sat-period', `${satellite.period.toFixed(2)} min`);
+    setHtml('#sat-period', `${satellite.period?.toFixed(2)} min`);
   } else {
     document.querySelector('#sat-infobox')?.classList.remove('visible');
   }
@@ -218,7 +217,7 @@ function initEventListeners () {
 
   satelliteGroups?.reloadGroups();
 
-  // app.addEventListener(Events.selectedSatChange, onSelectedSatChange);
+  viewer.addEventListener(Events.selectedSatChange, onSelectedSatChange);
 
   // app.addEventListener(Events.satHover, onSatHover);
 

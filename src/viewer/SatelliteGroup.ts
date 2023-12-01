@@ -32,7 +32,11 @@ class SatelliteGroup {
         });
       }
     } else if (this.groupType === 'nameRegex') {
-      const satIdList = this.satelliteStore.searchNameRegex(this.data);
+      let regex = this.data;
+      if (typeof regex === 'string') {
+        regex = new RegExp(regex);
+      }
+      const satIdList = this.satelliteStore.searchNameRegex(regex);
       for (let i = 0; i < satIdList.length; i++) {
         this.sats.push({
           satId: satIdList[i],

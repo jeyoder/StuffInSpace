@@ -118,6 +118,9 @@ class Earth implements SceneComponent {
     }
 
     scene.add(this.group);
+
+    this.sphere.geometry.computeBoundingBox();
+    this.sphere.geometry.computeBoundingSphere();
   }
 
   update (): void {

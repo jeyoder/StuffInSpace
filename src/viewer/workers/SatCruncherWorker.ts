@@ -11,6 +11,8 @@ let config: Record<string, any> = {};
 let satPos: Float32Array;
 let satVel: Float32Array;
 let satAlt: Float32Array;
+let running = true;
+let timer: number;
 
 function propagate () {
   const now = new Date();
@@ -74,8 +76,8 @@ function propagate () {
   satAlt = new Float32Array(satCache.length);
   // logger.debug('sat-cruncher propagate: ' + (performance.now() - start) + ' ms');
 
-  if (!runOnce) {
-    setTimeout(
+  if (!runOnce && running) {
+    timer = setTimeout(
       propagate,
       propergateInterval
     );
@@ -95,6 +97,20 @@ onmessage = function (message) {
         config = satData.config;
         if (config.runOnce) {
           runOnce = config.runOnce;
+        }
+        if (config.logLevel) {
+          logger.setLogLevel(config.logLevel);
+        }
+      }
+      if (satData.state) {
+        if (typeof satData.state.running === 'boolean') {
+          running = satData.state.running;
+          logger.debug(`Worker set to running === ${running}`);
+          if (running) {
+            propagate();
+          } else {
+            this.clearTimeout(timer);
+          }
         }
       }
       return;

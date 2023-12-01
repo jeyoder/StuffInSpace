@@ -27,7 +27,6 @@ class SatelliteStore {
   }
 
   async loadSatelliteData () {
-    logger.debug('Loading satellite data');
     try {
       const response = await axios.get(this.tleUrl, {
         params: {
@@ -56,6 +55,7 @@ class SatelliteStore {
           }
           this.satData[i].id = i;
         }
+        this.satData[0].xxxxxx = 123556;
       }
 
       this.eventManager.fireEvent('satdataloaded', this.satData);
@@ -76,6 +76,7 @@ class SatelliteStore {
   setSatelliteData (satData: Record<string, any>[], includesExtraData = false) {
     this.satData = satData;
     this.gotExtraData = includesExtraData;
+
     if (includesExtraData) {
       this.eventManager.fireEvent('satextradataloaded', this.satData);
     }
@@ -160,11 +161,11 @@ class SatelliteStore {
   }
 
   getSatellite (satelliteId: number): Record<string, any> | undefined {
-    if (!satelliteId || satelliteId === -1 || !this.satData) {
+    if (satelliteId === -1 || satelliteId === undefined || !this.satData) {
       return undefined;
     }
 
-    const satellite = this.satData[satelliteId];
+    const satellite = new Proxy(this.satData[satelliteId], {});
 
     if (!satellite) {
       return undefined;

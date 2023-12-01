@@ -9,9 +9,11 @@ import SatelliteGroups from './SatelliteGroups';
 import SelectableSatellite from './interfaces/SelectableSatellite';
 
 class Orbits implements SceneComponent, SelectableSatellite {
+  config: Record<string, any> = {};
   segmentCount = 255;
   orbitWorker?: Worker;
-  selectedSatelliteIdx: number = -1;
+  // selectedSatelliteIdx: number = -1;
+  selectedSatellites: number[] = [];
   hoverSatelliteIdx: number = -1;
   satelliteGroups?: SatelliteGroups;
   satelliteGroup?: SatelliteGroup;
@@ -28,10 +30,10 @@ class Orbits implements SceneComponent, SelectableSatellite {
     satelliteIds = satelliteIds.filter((satelliteIdx: number) => !this.inProgress[satelliteIdx]);
 
     if (this.orbitWorker) {
-      this.orbitWorker.postMessage({
+      this.orbitWorker.postMessage(JSON.stringify({
         isInit: false,
         satId: satelliteIds
-      });
+      }));
     } else {
       logger.error('Orbit worker is undefined');
     }
@@ -48,20 +50,66 @@ class Orbits implements SceneComponent, SelectableSatellite {
     this.orbitTracks = new Array(this.satelliteStore.size());
 
     if (this.orbitWorker) {
-      this.orbitWorker.postMessage({
+      this.orbitWorker.postMessage(JSON.stringify({
         isInit: true,
-        satData: JSON.stringify(this.satelliteStore.satData),
+        satData: this.satelliteStore.satData,
         numSegs: this.segmentCount
-      });
+      }));
     }
   }
 
-  private updateOrbitTrack (satId: number) {
-    if (this.orbitTracks[satId]) {
-      const line = this.orbitTracks[satId] as Line;
+  private isTrackVisible (satId: number) {
+    return (
+      this.selectedSatellites.indexOf(satId) > -1
+      || satId === this.hoverSatelliteIdx
+      || (this.satelliteGroup && this.satelliteGroup.hasSat(satId))
+    );
+  }
+
+  private getTrackColor (satId: number): Color {
+    let color = [1, 1, 0];
+
+    if (this.selectedSatellites.indexOf(satId) > -1) {
+      color = this.selectColor;
+    } else if (satId === this.hoverSatelliteIdx) {
+      color = this.hoverColor;
+    } else if (this.satelliteGroup && this.satelliteGroup.hasSat(satId)) {
+      color = this.groupColor;
+    }
+
+    return new Color(color[0], color[1], color[2]);
+  }
+
+  private addOrbitTrack (satId: number, points: number[]) {
+    const color = this.getTrackColor(satId);
+
+    const material = new LineBasicMaterial({
+      color,
+      linewidth: 10
+    });
+
+    const geometry = new BufferGeometry();
+    geometry.setAttribute( 'position', new Float32BufferAttribute(points, 3));
+    const line = new Line( geometry, material );
+    if (this.satelliteOrbitGroup) {
+      this.satelliteOrbitGroup.add(line);
+    }
+
+    this.orbitTracks[satId] = line;
+  }
+
+  private updateOrbitTrack (satId: number, points?: number[]) {
+    const line = this.orbitTracks[satId] as Line;
+    if (line) {
       const material = line.material as LineBasicMaterial;
       material.color = this.getTrackColor(satId);
       material.needsUpdate = true;
+
+      if (points) {
+        line.geometry.setAttribute( 'position', new Float32BufferAttribute(points, 3));
+        line.geometry.computeBoundingBox();
+        line.geometry.computeBoundingSphere();
+      }
     }
   }
 
@@ -76,75 +124,51 @@ class Orbits implements SceneComponent, SelectableSatellite {
     }
   }
 
-
-  getTrackColor (satId: number): Color {
-    let color = [0, 0, 9];
-
-    if (satId === this.hoverSatelliteIdx) {
-      color = this.hoverColor;
-    } else if (satId === this.selectedSatelliteIdx) {
-      color = this.selectColor;
-    } else if (this.satelliteGroup && this.satelliteGroup.hasSat(satId)) {
-      color = this.groupColor;
-    }
-
-    return new Color(color[0], color[1], color[2]);
-  }
-
   onMessage (message: any) {
     const { satId } = message.data;
 
     if (this.scene) {
       if (this.orbitTracks[satId]) {
-        const line = this.orbitTracks[satId] as Line;
-        line.geometry.setAttribute( 'position', new Float32BufferAttribute( message.data.pointsOut, 3 ) );
-        this.updateOrbitTrack(satId);
-      } else {
-        const color = this.getTrackColor(satId);
-
-        const material = new LineBasicMaterial({
-          color,
-          linewidth: 10
-        });
-
-        const geometry = new BufferGeometry();
-        geometry.setAttribute( 'position', new Float32BufferAttribute( message.data.pointsOut, 3 ) );
-        const line = new Line( geometry, material );
-        if (this.satelliteOrbitGroup) {
-          this.satelliteOrbitGroup.add(line);
-        }
-
-        this.orbitTracks[satId] = line;
+        this.updateOrbitTrack(satId, message.data.pointsOut);
+      } else if (this.isTrackVisible(satId)) {
+        this.addOrbitTrack(satId, message.data.pointsOut);
       }
     }
 
     this.inProgress[satId] = false;
   }
 
-  setSelectedSatellite (satelliteIdx: number) {
-    if (this.selectedSatelliteIdx > -1) {
-      if (this.orbitTracks[this.selectedSatelliteIdx]) {
-        if (!this.satelliteGroup || !this.satelliteGroup.hasSat(this.selectedSatelliteIdx)) {
-          this.removeOrbitTrack(this.selectedSatelliteIdx);
-        } else {
-          this.updateOrbitTrack(this.selectedSatelliteIdx);
+  setSelectedSatellites (selectedSatellites: number[]) {
+    if (this.selectedSatellites.length > 0) {
+      for (let i = 0; i < this.selectedSatellites.length; i++) {
+        const satId = this.selectedSatellites[i];
+        if (this.orbitTracks[satId]) {
+          if (!this.satelliteGroup || !this.satelliteGroup.hasSat(satId)) {
+            this.removeOrbitTrack(satId);
+          } else {
+            this.updateOrbitTrack(satId);
+          }
         }
       }
-      this.selectedSatelliteIdx = -1;
     }
 
-    this.selectedSatelliteIdx = satelliteIdx;
-    this.calculateOrbits([satelliteIdx]);
+    this.selectedSatellites = selectedSatellites;
+    this.calculateOrbits(selectedSatellites);
+  }
+
+  setSelectedSatellite (satelliteIdx: number) {
+    this.setSelectedSatellites([satelliteIdx]);
   }
 
   setHoverSatellite (satelliteIdx: number) {
     if (this.hoverSatelliteIdx !== undefined && this.hoverSatelliteIdx > -1 || satelliteIdx !== this.hoverSatelliteIdx) {
-      if (!this.satelliteGroup || !this.satelliteGroup.hasSat(this.hoverSatelliteIdx) || this.selectedSatelliteIdx !== this.hoverSatelliteIdx) {
+      if (!this.satelliteGroup || !this.satelliteGroup.hasSat(this.hoverSatelliteIdx) || this.selectedSatellites.indexOf(this.hoverSatelliteIdx) < 0) {
         this.removeOrbitTrack(this.hoverSatelliteIdx);
       } else {
         this.updateOrbitTrack(this.hoverSatelliteIdx);
       }
     }
+
     this.hoverSatelliteIdx = satelliteIdx;
     this.calculateOrbits([satelliteIdx]);
   }
@@ -152,8 +176,8 @@ class Orbits implements SceneComponent, SelectableSatellite {
   setSatelliteGroup (group: SatelliteGroup | undefined) {
     // remove current rendered tracks
     if (this.satelliteGroup) {
-      this.selectedSatelliteIdx = -1;
-      this.hoverSatelliteIdx = -1;
+      this.setSelectedSatellites([]);
+      this.setHoverSatellite(-1);
       for (let i = 0; i < this.orbitTracks.length; i++) {
         if (this.orbitTracks[i]) {
           this.removeOrbitTrack(i);
@@ -172,10 +196,17 @@ class Orbits implements SceneComponent, SelectableSatellite {
   }
 
   init (scene: SatelliteOrbitScene, context: Record<string, any>) {
+    this.config = context.config;
     this.scene = scene;
     this.orbitWorker = new OrbitCalculationWorker();
     this.orbitWorker.onmessage = this.onMessage.bind(this);
     this.satelliteStore = context.satelliteStore;
+
+    this.orbitWorker.postMessage(JSON.stringify({
+      config: {
+        logLevel: this.config.logLevel
+      }
+    }));
 
     if (this.satelliteStore) {
       this.satelliteStore.addEventListener('satdataloaded', this.onSatellitesLoaded.bind(this));

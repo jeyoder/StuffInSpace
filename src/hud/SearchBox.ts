@@ -156,7 +156,6 @@ function doSearch (str: string) {
     }
 
     if (satData[i].intlDes && satData[i].intlDes.indexOf(str) !== -1) {
-      console.log(satData[i]);
       results.push({
         isIntlDes: true,
         strIndex: satData[i].intlDes.indexOf(str),

@@ -51,22 +51,30 @@ function processOrbit (satId: number) {
 
 // eslint-disable-next-line func-names, space-before-function-paren
 onmessage = function (message) {
-  logger.debug('WORKER: Orbital calculation worker handling message');
-  if (message.data.isInit) {
+  logger.debug('Orbital calculation worker handling message');
+
+  const data = JSON.parse(message.data);
+  if (data.config) {
+    const config = data.config;
+    if (config.logLevel) {
+      logger.setLogLevel(config.logLevel);
+    }
+    return;
+  } else if (data.isInit) {
     id = Date.now();
     logger.debug('id', id);
     logger.debug('message.data.isInit');
-    const satData = JSON.parse(message.data.satData);
+    const satData = data.satData;
 
     for (let i = 0; i < satData.length; i++) {
       satCache[i] = twoline2satrec(satData[i].TLE_LINE1, satData[i].TLE_LINE2);
     }
 
-    numSegs = message.data.numSegs;
+    numSegs = data.numSegs;
   } else {
     // TODO: figure out how to calculate the orbit points on constant
     // position slices, not timeslices (ugly perigees on HEOs)
-    const { satId } = message.data;
+    const { satId } = data;
     if (Array.isArray(satId)) {
       const satIds = satId as number[];
       for (let i = 0; i < satIds.length; i++) {

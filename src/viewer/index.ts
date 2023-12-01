@@ -84,20 +84,20 @@ class Viewer {
     this.ready = true;
   }
 
-  onClick (event: MouseEvent) {
+  private findSatellitesAtMouse (point: { x: number, y: number }): number[] {
     const canvas = this.renderer?.domElement;
 
     if (!this.raycaster || !this.scene || !this.camera || !canvas) {
-      return;
+      return [];
     }
 
     // adjust this to control the number of point candidates
-    this.raycaster.params.Points.threshold = 1; // 0.07;
+    this.raycaster.params.Points.threshold = 0.1;
 
     const bounds = canvas.getBoundingClientRect();
     const mouse: Vector2 = new Vector2();
-    mouse.x = (((event.clientX - bounds.left) / canvas.clientWidth) * 2) - 1;
-    mouse.y = -(((event.clientY - bounds.top) / canvas.clientHeight) * 2) + 1;
+    mouse.x = (((point.x - bounds.left) / canvas.clientWidth) * 2) - 1;
+    mouse.y = -(((point.y - bounds.top) / canvas.clientHeight) * 2) + 1;
 
     this.raycaster.setFromCamera( mouse, this.camera);
 
@@ -112,11 +112,61 @@ class Viewer {
     const intersects = this.raycaster.intersectObjects(this.scene.children, true);
 
     if (intersects.length > 0) {
-      this.satellites?.setSelectedSatellites(
-        intersects
-          .map((entry: Record<string, any>) => entry.index as number)
-          .filter((idx: number) => idx !== undefined)
-      );
+      return intersects.map(intersect => intersect.index) as number[];
+
+      // intersects.sort((intersectA, intersectB) => intersectA.distance - intersectB.distance);
+      // const intersctZero = intersects[0];
+
+      // const satellite = this.satelliteStore?.getSatellite(intersctZero.index as number);
+      // this.satellites?.setSelectedSatellite(intersctZero.index as number);
+      // this.orbits?.setSelectedSatellite(intersctZero.index as number);
+      // this.eventManager.fireEvent('selectedSatChange', satellite);
+    }
+
+    return [];
+  }
+
+  onClick (event: MouseEvent) {
+    const canvas = this.renderer?.domElement;
+
+    if (!this.raycaster || !this.scene || !this.camera || !canvas) {
+      return;
+    }
+
+    const satelliteIds = this.findSatellitesAtMouse({
+      x: event.clientX,
+      y: event.clientY
+    });
+
+    if (satelliteIds && satelliteIds.length > 0) {
+      const satelliteZero = satelliteIds[0];
+
+      const satellite = this.satelliteStore?.getSatellite(satelliteZero);
+      this.satellites?.setSelectedSatellite(satelliteZero);
+      this.orbits?.setSelectedSatellite(satelliteZero);
+      this.eventManager.fireEvent('selectedSatChange', satellite);
+    }
+  }
+
+  onHover (event: MouseEvent) {
+    const canvas = this.renderer?.domElement;
+
+    if (!this.raycaster || !this.scene || !this.camera || !canvas) {
+      return;
+    }
+
+    const satelliteIds = this.findSatellitesAtMouse({
+      x: event.clientX,
+      y: event.clientY
+    });
+
+    if (satelliteIds && satelliteIds.length > 0) {
+      const satelliteZero = satelliteIds[0];
+
+      const satellite = this.satelliteStore?.getSatellite(satelliteZero);
+      this.satellites?.setHoverSatellite(satelliteZero);
+      this.orbits?.setHoverSatellite(satelliteZero);
+      this.eventManager.fireEvent('sathoverChange', satellite);
     }
   }
 
@@ -188,6 +238,7 @@ class Viewer {
 
       const canvasElement = this.renderer.domElement;
       canvasElement.addEventListener('click', this.onClick.bind(this));
+      canvasElement.addEventListener('mousemove', this.onHover.bind(this));
     } catch (error) {
       logger.error('Error while initialising scene', error);
     }
@@ -234,7 +285,7 @@ class Viewer {
         }
 
         if (this.camera.zoom < targetZoom) {
-          this.camera.zoom += 0.02;
+          this.camera.zoom += 0.08;
           this.camera.updateProjectionMatrix();
           setTimeout(zoomFn, timeout);
         }
@@ -255,7 +306,7 @@ class Viewer {
         }
 
         if (this.camera.zoom > targetZoom) {
-          this.camera.zoom -= 0.02;
+          this.camera.zoom -= 0.08;
           this.camera.updateProjectionMatrix();
           setTimeout(zoomFn, timeout);
         }

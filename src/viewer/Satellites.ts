@@ -7,7 +7,7 @@ import {
   Color,
   ShaderMaterial,
   Object3D,
-  PointsMaterial
+  // PointsMaterial
 } from '../utils/three';
 import SceneComponent from './interfaces/SceneComponent';
 import SatelliteStore from './SatelliteStore';
@@ -18,9 +18,7 @@ import ColorScheme from './color-schemes/ColorScheme';
 import DefaultColorScheme from './color-schemes/DefaultColorScheme';
 import SelectableSatellite from './interfaces/SelectableSatellite';
 import ShaderStore from './ShaderStore';
-import allPointCoords from '../AllPoints';
 
-// type Mesh = Mesh;
 class Satellites implements SceneComponent, SelectableSatellite {
   baseUrl = '';
   worker?: Worker;
@@ -45,7 +43,6 @@ class Satellites implements SceneComponent, SelectableSatellite {
     this.currentColorScheme = colorScheme;
   }
 
-
   debugRaycastSelection () {
     if (!this.satelliteStore) {
       return;
@@ -62,8 +59,8 @@ class Satellites implements SceneComponent, SelectableSatellite {
     if (this.selectedSatelliteIndexes.length  > 0 && this.geometry) {
       for (let i = 0; i < this.selectedSatelliteIndexes.length; i++) {
         const idx = this.selectedSatelliteIndexes[i] * 4;
-        this.satelliteColors[idx] = 1;
-        this.satelliteColors[idx + 1] = 0;
+        this.satelliteColors[idx] = 0;
+        this.satelliteColors[idx + 1] = 1;
         this.satelliteColors[idx + 2] = 0;
         this.satelliteColors[idx + 3] = 1;
       }
@@ -83,14 +80,26 @@ class Satellites implements SceneComponent, SelectableSatellite {
           return;
         }
 
-        // const satPos = allPointCoords as number[];
-        const satPos = this.satPos;
         const satellites = this.satelliteStore.satData;
         const satCount = satellites.length;
 
         // update satellite positions
         if (this.geometry.attributes.position) {
-          this.geometry.setAttribute('position', new Float32BufferAttribute(satPos, 3 ) );
+          const vertices: Float32Array = new Float32Array();
+          vertices.fill(0, 0, this.satelliteStore.satData.length * 3);
+          this.geometry.setAttribute('position', new Float32BufferAttribute(vertices, 3));
+
+          // deal with NaN
+          for (let i = 0; i < this.satPos.length; i++) {
+            if (isNaN(this.satPos[i])) {
+              this.satPos[i] = 0;
+            }
+          }
+
+          this.geometry.setAttribute('position', new Float32BufferAttribute(this.satPos, 3 ) );
+
+          this.geometry.computeBoundingBox();
+          this.geometry.computeBoundingSphere();
         }
 
         // update point colours
@@ -127,6 +136,7 @@ class Satellites implements SceneComponent, SelectableSatellite {
       return;
     }
 
+    const satCount = satData.length;
     let satExtraData: Record<string, any>[];
 
     try {
@@ -140,7 +150,7 @@ class Satellites implements SceneComponent, SelectableSatellite {
             return;
           }
 
-          for (let i = 0; i < this.numSats; i++) {
+          for (let i = 0; i < satCount; i++) {
             satData[i].inclination = satExtraData[i].inclination;
             satData[i].eccentricity = satExtraData[i].eccentricity;
             satData[i].raan = satExtraData[i].raan;
@@ -154,8 +164,6 @@ class Satellites implements SceneComponent, SelectableSatellite {
             satData[i].period = satExtraData[i].period;
           }
 
-          this.satelliteStore.setSatelliteData(satData);
-
           logger.debug(`sat.js copied extra data in ${performance.now() - start} ms`);
           this.satelliteStore.setSatelliteData(satData, true);
           return;
@@ -166,7 +174,6 @@ class Satellites implements SceneComponent, SelectableSatellite {
       this.satVel = new Float32Array(message.data.satVel);
       this.satAlt = new Float32Array(message.data.satAlt);
 
-      console.log('got coords', this.satPos.length);
       this.satelliteStore.setPositionalData(
         this.satVel, this.satPos, this.satAlt
       );
@@ -174,8 +181,6 @@ class Satellites implements SceneComponent, SelectableSatellite {
       if (!this.cruncherReady) {
         document.querySelector('#load-cover')?.classList.add('hidden');
         this.cruncherReady = true;
-
-        // this.eventManager.fireEvent(Events.cruncherReady, { satData: satData });
       }
       this.updateSatellites();
     } catch (error) {
@@ -200,7 +205,7 @@ class Satellites implements SceneComponent, SelectableSatellite {
   }
 
   setSelectedSatellites (satelliteIndexes: number[]) {
-    logger.debug('Updated selected satellite count')
+    logger.debug('Updated selected satellites', satelliteIndexes);
     this.selectedSatelliteIndexes = satelliteIndexes;
     this.updateSatellites();
   }
@@ -239,27 +244,29 @@ class Satellites implements SceneComponent, SelectableSatellite {
     const texture = new TextureLoader().load(`${this.baseUrl}/images/circle.png`);
     const shader = this.shaderStore.getShader('dot2');
 
-    const material = new PointsMaterial ({
-      color: 'grey',
-      size: 3,
-      sizeAttenuation: false,
-      vertexColors: true,
+    // const material = new PointsMaterial ({
+    //   color: 'grey',
+    //   size: 3,
+    //   sizeAttenuation: false,
+    //   vertexColors: true,
+    //   blending: AdditiveBlending,
+    //   depthTest: true
+    // });
+
+    const material = new ShaderMaterial({
+      uniforms: {
+        color: { value: new Color( 0xffffff ) },
+        pointTexture: { value: texture }
+      },
+      clipping: true,
+      vertexShader: shader.vertex,
+      fragmentShader: shader.fragment,
       blending: AdditiveBlending,
-      depthTest: true
+      depthTest: true,
+      transparent: true
     });
 
-    // const material = new ShaderMaterial({
-    //   uniforms: {
-    //     color: { value: new Color( 0xffffff ) },
-    //     pointTexture: { value: texture }
-    //   },
-    //   clipping: true,
-    //   vertexShader: shader.vertex,
-    //   fragmentShader: shader.fragment,
-    //   blending: AdditiveBlending,
-    //   depthTest: true,
-    //   transparent: true
-    // });
+    geometry.center();
 
     this.geometry = geometry;
     this.particles = new Points( geometry, material );
@@ -267,45 +274,16 @@ class Satellites implements SceneComponent, SelectableSatellite {
     if (this.scene) {
       this.scene.add( this.particles );
     }
-  }
 
-  initGeometry2 () {
-    const geometry = new BufferGeometry();
-    const vertices: Float32Array = new Float32Array(allPointCoords as number[]);
-    const sizes: Float32Array = new Float32Array();
-
-    const pointCount = allPointCoords.length / 3;
-
-    const colors = Array.from({ length: pointCount * 3 });
-    vertices.fill(0, 0, pointCount);
-    colors.fill(1, 0, pointCount * 3);
-    sizes.fill(10, 0, pointCount);
-
-    // for (let i = 0; i < pointCount; i++) {
-    //   const idx = i * 3;
-    //   this.colors[idx] = 1;
-    //   this.colors[idx + 1] = 1;
-    //   this.colors[idx + 2] = 1;
-    // }
-
-    geometry.setAttribute('position', new Float32BufferAttribute(vertices, 3));
-    geometry.setAttribute('color', new Float32BufferAttribute(colors, 3));
-    geometry.setAttribute('size', new Float32BufferAttribute(sizes, 1));
-
-    const material = new PointsMaterial ({
-      color: 'grey',
-      size: 3,
-      sizeAttenuation: false,
-      vertexColors: true,
-      blending: AdditiveBlending,
-      depthTest: true
+    // reduce CPU load by stopping the runner if the tab/window
+    // is not visisble
+    window.addEventListener('visibilitychange', () => {
+      this.worker?.postMessage(JSON.stringify({
+        state: {
+          running: document.visibilityState === 'visible'
+        }
+      }));
     });
-
-    this.geometry = geometry;
-    this.particles = new Points( geometry, material );
-    if (this.scene) {
-      this.scene.add(this.particles);
-    }
   }
 
   getObject3D (): Object3D | undefined {
@@ -329,7 +307,7 @@ class Satellites implements SceneComponent, SelectableSatellite {
     const config = context.config || {};
     let satWorkerConfig: Record<string, any> = {};
     if (config.satWorker) {
-      satWorkerConfig = config.satWorker;
+      satWorkerConfig = { ...config.satWorker, logLevel: config.logLevel };
     }
 
     this.initSatWorker(satWorkerConfig);
