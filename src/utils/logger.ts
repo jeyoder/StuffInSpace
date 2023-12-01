@@ -1,10 +1,18 @@
 /* eslint-disable no-console */
-import { all } from 'axios';
-import constants from '../config';
 
+const defaultLogLevel = 'debug';
 const logLevels = ['error', 'warn', 'info', 'debug'];
-const enabledOutputs: Record<string, any>  = {};
+
 let allOutputs: Record<string, any> = {};
+let globalLogger = new Proxy({
+  logLevel: defaultLogLevel,
+  enabledOutputs: {} as Record<string, any>,
+  error: allOutputs.error,
+  warn: allOutputs.warn,
+  info: allOutputs.info,
+  debug: allOutputs.debug,
+  setLogLevel
+}, {});
 
 function log (scope: any, level: string, output: (level: string, ...args: any) => void, ...args: any) {
   if (scope.enabledOutputs[level]) {
@@ -20,34 +28,34 @@ function setLogLevel (level: string) {
   }
 
   for (let i = 0; i < logLevels.length; i++) {
-    enabledOutputs[logLevels[i]] = i <= levelIdx;
+    globalLogger.enabledOutputs[logLevels[i]] = i <= levelIdx;
   }
 }
 
 function getLogger () {
-  return {
-    error: allOutputs.error,
-    warn: allOutputs.warn,
-    info: allOutputs.info,
-    debug: allOutputs.debug,
-    setLogLevel
-  };
+  return globalLogger;
 }
 
-function init (this: any) {
-  allOutputs = {
-    error: log.bind(this, { enabledOutputs }, 'error', console.error),
-    warn: log.bind(this, { enabledOutputs }, 'warn', console.warn),
-    info: log.bind(this, { enabledOutputs }, 'info', console.info),
-    debug: log.bind(this, { enabledOutputs }, 'debug', console.debug)
-  };
+function init () {
+  const scope = globalLogger;
+
+  const enabledOutputs = scope.enabledOutputs;
 
   for (let i = 0; i < logLevels.length; i++) {
     enabledOutputs[logLevels[i]] = true;
   }
+
+  allOutputs = {
+    error: log.bind(scope, { enabledOutputs }, 'error', console.error),
+    warn: log.bind(scope, { enabledOutputs }, 'warn', console.warn),
+    info: log.bind(scope, { enabledOutputs }, 'info', console.info),
+    debug: log.bind(scope, { enabledOutputs }, 'debug', console.debug)
+  };
+
+  globalLogger = new Proxy({ ...globalLogger, ...allOutputs }, {});
 }
 
 init();
-setLogLevel(constants.logLevel);
 
 export default getLogger();
+export { setLogLevel };

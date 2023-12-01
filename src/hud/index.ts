@@ -1,14 +1,39 @@
 /* eslint-disable no-loop-func */
-import { R2D, Events } from '../constants';
-import windowManager from './window-manager';
-import searchBox from './search-box';
+import { R2D, Events } from '@/constants';
+import SatelliteGroup from '@satellite-viewer/SatelliteGroup';
+import { Viewer } from '@satellite-viewer/index';
+import HudWindowManager from './HudWindowManager';
+import searchBox from './SearchBox';
 
 const supporteEvents: string[] = [];
-
-let app: any;
-let groupClicked = false;
-
+const windowManager = new HudWindowManager();
 const draggableElements: any[] = [];
+
+let groupClicked = false;
+let viewer: Viewer;
+
+function showAttribution (visible: true) {
+  let attributionElem = document.querySelector('.attribution');
+  if (!attributionElem) {
+    attributionElem = document.createElement('div');
+    attributionElem.className = 'attribution';
+    document.querySelector('body')?.appendChild(attributionElem);
+  }
+
+  if (attributionElem) {
+    if (visible) {
+      const satelliteStore = viewer.getSatelliteStore();
+      if (satelliteStore && satelliteStore.getAttribution()) {
+        const attribution = satelliteStore.getAttribution() || {};
+        const updatedDate = satelliteStore.getUpdatedDate();
+        attributionElem.innerHTML = `Orbital object data from <a href="${attribution.url}">${attribution.name}</a> <span class="updated">(updated ${updatedDate})</span>`;
+      }
+      attributionElem.classList.remove('hidden');
+    } else {
+      attributionElem.classList.add('hidden');
+    }
+  }
+}
 
 function setLoading (loading: boolean) {
   if (loading) {
@@ -20,12 +45,12 @@ function setLoading (loading: boolean) {
 
 function updateGroupList () {
   const groupDisplay = document.querySelector('#groups-display') as HTMLElement;
+  const satelliteGroups = viewer.getSatelliteGroups();
+  let groups: SatelliteGroup[] = [];
 
-  if (!app.groups) {
-    throw new Error('groups is not defined');
+  if (satelliteGroups) {
+    groups = satelliteGroups.asArray().sort((entryA: SatelliteGroup, entryB: SatelliteGroup) => entryA.name.localeCompare(entryB.name));
   }
-
-  const groups = app.groups.asArray().sort((entryA: Record<string, string>, entryB: Record<string, string>) => entryA.name.localeCompare(entryB.name));
 
   let html = '';
   for (let i = 0; i < groups.length; i++) {
@@ -42,17 +67,16 @@ function setHtml (selector: string, html: string) {
   }
 }
 
-function onSelectedSatChange (event: any) {
-  const { satellite } = event;
+function onSelectedSatChange (satellite: Record<string, any>) {
   if (satellite) {
     document.querySelector('#sat-infobox')?.classList.add('visible');
     setHtml('#sat-info-title', satellite.OBJECT_NAME);
     setHtml('#sat-intl-des', satellite.intlDes);
     setHtml('#sat-type', satellite.OBJECT_TYPE);
-    setHtml('#sat-apogee', `${satellite.apogee.toFixed(0)} km`);
-    setHtml('#sat-perigee', `${satellite.perigee.toFixed(0)} km`);
+    setHtml('#sat-apogee', `${satellite.apogee?.toFixed(0)} km`);
+    setHtml('#sat-perigee', `${satellite.perigee?.toFixed(0)} km`);
     setHtml('#sat-inclination', `${(satellite.inclination * R2D).toFixed(2)}°`);
-    setHtml('#sat-period', `${satellite.period.toFixed(2)} min`);
+    setHtml('#sat-period', `${satellite.period?.toFixed(2)} min`);
   } else {
     document.querySelector('#sat-infobox')?.classList.remove('visible');
   }
@@ -90,13 +114,16 @@ function onSatHover (event: any) {
 }
 
 // eslint-disable-next-line no-shadow
-function initGroupsListeners (app: any) {
+function initGroupsListeners () {
   document.querySelector('#groups-display')?.addEventListener('mouseout', () => {
     if (!groupClicked) {
-      if (searchBox.isResultBoxOpen()) {
-        app.groups.selectGroup(searchBox.getLastResultGroup());
-      } else {
-        app.groups.clearSelect();
+      const satelliteGroups = viewer.getSatelliteGroups();
+      if (satelliteGroups) {
+        if (searchBox.isResultBoxOpen()) {
+          satelliteGroups.selectGroup(searchBox.getLastResultGroup());
+        } else {
+          satelliteGroups.clearSelect();
+        }
       }
     }
   });
@@ -106,24 +133,34 @@ function initGroupsListeners (app: any) {
   for (let i = 0; i < listItems.length; i++) {
     const listItem = listItems[i];
     listItem.addEventListener('mouseover', (event: any) => {
-      app.clicked = false;
-
       const target = event.currentTarget;
       const groupName = target.dataset.group;
 
-      app.groups.selectGroup(app.groups.getGroupById(groupName));
+      const satelliteGroups = viewer.getSatelliteGroups();
+      if (satelliteGroups) {
+        satelliteGroups.selectGroup(
+          satelliteGroups.getGroupById(groupName)
+        );
+      }
     });
 
     listItem.addEventListener('mouseout', () => {
-      const selectedGroup = (document.querySelector('#groups-display>li.selected') as HTMLElement);
-      if (selectedGroup) {
-        app.groups.selectGroup(app.groups.getGroupById(selectedGroup.dataset.group));
-      } else {
-        app.groups.selectGroup(undefined);
+      const satelliteGroups = viewer.getSatelliteGroups();
+      if (satelliteGroups) {
+        const selectedGroup = (document.querySelector('#groups-display>li.selected') as HTMLElement);
+        if (selectedGroup) {
+          satelliteGroups.selectGroup(
+            satelliteGroups.getGroupById(selectedGroup.dataset.group as string)
+          );
+        } else {
+          satelliteGroups.selectGroup(undefined);
+        }
       }
     });
 
     listItem.addEventListener('click', (event: any) => {
+      event.preventDefault();
+
       const target = event.currentTarget;
       groupClicked = true;
 
@@ -133,44 +170,65 @@ function initGroupsListeners (app: any) {
         selectedGroupName = selectedGroup.dataset.group;
       }
 
+      console.dir(event.target);
+
       for (let j = 0; j < listItems.length; j++) {
         listItems[j].classList.remove('selected');
       }
 
+      const satelliteGroups = viewer.getSatelliteGroups();
       const groupName = target.dataset.group;
+      let group = undefined;
       if (groupName === selectedGroupName) {
-        app.groups.clearSelect();
+        if (satelliteGroups) {
+          satelliteGroups.clearSelect();
+        }
         searchBox.clearResults();
         searchBox.hideResults();
       } else {
         event.preventDefault();
         event.stopPropagation();
-        const satelliteGroups = app.viewer.getSatGroups();
-        app.viewer.setSelectedSatellite(-1); // clear selected sat
-        satelliteGroups.selectGroup(satelliteGroups.getGroupById(groupName));
-        searchBox.fillResultBox(satelliteGroups.getGroupById(groupName).sats, '');
-        windowManager.openWindow('search-window');
-        target.classList.add('selected');
+        if (satelliteGroups) {
+          viewer.setSelectedSatellite(-1); // clear selected sat
+          if (satelliteGroups) {
+            group = satelliteGroups.getGroupById(groupName);
+          }
+
+          if (group) {
+            target.classList.add('selected');
+            searchBox.fillResultBox(group.sats, '');
+            windowManager.openWindow('search-window');
+            group.reload();
+          }
+        }
       }
+
+      if (satelliteGroups) {
+        satelliteGroups.selectGroup(group);
+        viewer.setSelectedSatelliteGroup(group);
+      }
+
     });
   }
 }
 
 function initEventListeners () {
-  app.groups.reloadGroups();
+  const satelliteGroups = viewer.getSatelliteGroups();
 
-  app.addEventListener(Events.selectedSatChange, onSelectedSatChange);
+  satelliteGroups?.reloadGroups();
 
-  app.addEventListener(Events.satHover, onSatHover);
+  viewer.addEventListener(Events.selectedSatChange, onSelectedSatChange);
+
+  // app.addEventListener(Events.satHover, onSatHover);
 
   document.querySelector('#zoom-in')?.addEventListener('click', (event: any) => {
     event.preventDefault();
-    app.viewer.zoomIn();
+    viewer.zoomIn();
   });
 
   document.querySelector('#zoom-out')?.addEventListener('click', (event: any) => {
     event.preventDefault();
-    app.viewer.zoomOut();
+    viewer.zoomOut();
   });
 
   window.addEventListener('resize', () => {
@@ -204,7 +262,14 @@ function onSatMovementChange (event: any) {
 function onSatDataLoaded () {
   initEventListeners();
   updateGroupList();
-  setTimeout(() => initGroupsListeners(app), 0);
+  setTimeout(() => initGroupsListeners(), 0);
+
+  const loaderElement = document.querySelector('#load-cover');
+  if (loaderElement) {
+    loaderElement.classList.add('hidden');
+  }
+
+  showAttribution(true);
 }
 
 function getSupportedEvents () {
@@ -229,9 +294,8 @@ function getCurrentSearch () {
   return searchBox.getCurrentSearch();
 }
 
-function init (appContext: any) {
-  app = appContext;
-  app.windowManager = windowManager;
+function init (viewerInstance: Viewer) {
+  viewer = viewerInstance;
 
   windowManager.registerWindow('sat-infobox');
   windowManager.registerWindow('about-window');
@@ -239,12 +303,16 @@ function init (appContext: any) {
   windowManager.registerWindow('groups-window');
   windowManager.registerWindow('search-window');
 
-  searchBox.init(app);
+  searchBox.init(viewer, windowManager);
 
   initMenus();
 
-  app.viewer.addEventListener(Events.satMovementChange, onSatMovementChange);
-  app.addEventListener(Events.satDataLoaded, onSatDataLoaded);
+  viewer.addEventListener(Events.satMovementChange, onSatMovementChange);
+  if (!viewer.ready) {
+    viewer.addEventListener(Events.satDataLoaded, onSatDataLoaded);
+  } else {
+    onSatDataLoaded();
+  }
 }
 
 export default {

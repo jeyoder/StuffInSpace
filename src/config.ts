@@ -1,11 +1,14 @@
 const baseUrl = import.meta.env.BASE_URL;
 
-const constants = {
+const config = {
   appName: 'Stuff in Space',
   baseUrl,
   propergateInterval: 1000, // milliseconds
   pushHistory: false,
-  logLevel: 'info',
+  logLevel: 'debug',
+  satWorker: {
+    runOnce: true
+  },
   satelliteGroups: [
     {
       id: 'GPSGroup',
@@ -78,4 +81,4 @@ const constants = {
   ]
 };
 
-export default constants;
+export default config;
