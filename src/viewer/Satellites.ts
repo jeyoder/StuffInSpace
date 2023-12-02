@@ -8,7 +8,6 @@ import {
   Color,
   ShaderMaterial,
   Object3D,
-  // PointsMaterial
 } from '../utils/three';
 import SceneComponent from './interfaces/SceneComponent';
 import SatelliteStore from './SatelliteStore';
@@ -243,28 +242,30 @@ class Satellites implements SceneComponent, SelectableSatellite {
       throw new Error('sahderStore is not available');
     }
 
+    const satDataLen = (this.satelliteStore.satData || []).length;
     const geometry = new BufferGeometry();
     const vertices: Float32Array = new Float32Array();
     const sizes: Float32Array = new Float32Array();
-    const colors: number[] = new Array(this.satelliteStore.satData.length * 4);
+    const colors: number[] = new Array(satDataLen * 4);
 
-    vertices.fill(0, 0, this.satelliteStore.satData.length * 3);
-    colors.fill(0, 0, this.satelliteStore.satData.length * 3);
-    sizes.fill(10, 0, this.satelliteStore.satData.length);
+    vertices.fill(0, 0, satDataLen * 3);
+    colors.fill(0, 0, satDataLen * 3);
+    sizes.fill(10, 0, satDataLen);
 
     geometry.setAttribute('position', new Float32BufferAttribute( vertices, 3 ) );
     geometry.setAttribute('color', new Float32BufferAttribute( colors, 4 ) );
-    geometry.setAttribute('size', new Float32BufferAttribute( sizes, 1 ) );
+    geometry.setAttribute('size', new Float32BufferAttribute( sizes, 2 ) );
 
     const texture = new TextureLoader().load(`${this.baseUrl}/images/circle.png`);
     const shader = this.shaderStore.getShader('dot2');
 
     // const material = new PointsMaterial ({
     //   color: 'grey',
-    //   size: 3,
+    //   size: 4,
     //   sizeAttenuation: false,
     //   vertexColors: true,
     //   blending: AdditiveBlending,
+    //   transparent: false,
     //   depthTest: true
     // });
 
@@ -278,7 +279,7 @@ class Satellites implements SceneComponent, SelectableSatellite {
       fragmentShader: shader.fragment,
       blending: AdditiveBlending,
       depthTest: true,
-      transparent: true
+      transparent: false
     });
 
     geometry.center();

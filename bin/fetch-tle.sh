@@ -12,17 +12,20 @@ then
   exit
 fi
 
+auth_url="https://www.space-track.org/ajaxauth/login"
 source_url="https://www.space-track.org/basicspacedata/query/class/tle_latest/ORDINAL/1/EPOCH/%3Enow-30/orderby/NORAD_CAT_ID/format/json"
 tle_file="../public/data/TLE.json"
 output_file="../public/data/attributed-TLE.json"
 current_date=`date -u +"%Y-%m-%dT%H:%M:%SZ"`
 cookie_jar="/tmp/$USER-cookiejar"
 
-echo "Downloading TLE data"
-curl -c $cookie_jar -b $cookie_jar https://www.space-track.org/ajaxauth/login \
+echo "Authenticating"
+curl -c $cookie_jar -b $cookie_jar "$auth_url" \
    -d "identity=$identity&password=$password"
 
-curl --limit-rate 100K -cookie $cookie_jar "${source_url}" > $tle_file
+echo "Downloading TLE data"
+
+curl --limit-rate 200K -cookie $cookie_jar -b $cookie_jar  "${source_url}" > $tle_file
 
 echo "Generating Attributed TLE file"
 echo "{
