@@ -279,7 +279,7 @@ class Satellites implements SceneComponent, SelectableSatellite {
       fragmentShader: shader.fragment,
       blending: AdditiveBlending,
       depthTest: true,
-      transparent: false
+      transparent: true
     });
 
     geometry.center();
