@@ -2,8 +2,8 @@ name: Deploy
 
 on:
   push:
-    branches-ignore:
-      - master
+    # branches-ignore:
+    #  - master
 
 env:
   BASE_URL: /StuffInSpace
