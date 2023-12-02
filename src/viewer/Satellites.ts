@@ -1,3 +1,4 @@
+import { SatelliteGroup } from '@satellite-viewer/SatelliteGroup';
 import {
   Points,
   BufferGeometry,
@@ -18,6 +19,7 @@ import ColorScheme from './color-schemes/ColorScheme';
 import DefaultColorScheme from './color-schemes/DefaultColorScheme';
 import SelectableSatellite from './interfaces/SelectableSatellite';
 import ShaderStore from './ShaderStore';
+import GroupColorScheme from './color-schemes/GroupColorScheme';
 
 class Satellites implements SceneComponent, SelectableSatellite {
   baseUrl = '';
@@ -36,7 +38,7 @@ class Satellites implements SceneComponent, SelectableSatellite {
   satelliteStore?: SatelliteStore;
   shaderStore?: ShaderStore;
   selectedSatelliteIndexes: number[] = [];
-
+  satelliteGroup?: SatelliteGroup;
   hoverSatelliteIdx = -1;
 
   setColorScheme (colorScheme: ColorScheme) {
@@ -111,7 +113,11 @@ class Satellites implements SceneComponent, SelectableSatellite {
           }
 
           for (let i = 0; i < satellites.length; i++) {
-            const color = this.currentColorScheme?.getSatelliteColor(satellites[i])?.color || [0, 0, 0];
+            let color = this.currentColorScheme?.getSatelliteColor(satellites[i], this.satelliteGroup)?.color; // || [0, 0, 0];
+            if (!color) {
+              console.log('no color', satellites[i].id);
+              color = [0, 0, 0];
+            }
             const idx = i * 4;
             this.satelliteColors[idx] = color[0];
             this.satelliteColors[idx + 1] = color[1];
@@ -201,6 +207,15 @@ class Satellites implements SceneComponent, SelectableSatellite {
       this.worker.postMessage(satDataString);
     } else {
       logger.error('worker is not available');
+    }
+  }
+
+  setSatelliteGroup (satelliteGroup: SatelliteGroup) {
+    this.satelliteGroup = satelliteGroup;
+    if (this.satelliteGroup) {
+      this.currentColorScheme = new GroupColorScheme();
+    } else {
+      this.currentColorScheme = new DefaultColorScheme();
     }
   }
 

@@ -9,6 +9,7 @@ password=$SPACETRACK_PASSWORD
 if [ -z "$SPACETRACK_IDENTITY" ] || [ -z "$SPACETRACK_PASSWORD" ]
 then
   echo 'ensure both "SPACETRACK_IDENTITY" and "SPACETRACK_PASSWORD" are set'
+  exit
 fi
 
 source_url="https://www.space-track.org/basicspacedata/query/class/tle_latest/ORDINAL/1/EPOCH/%3Enow-30/orderby/NORAD_CAT_ID/format/json"
@@ -21,7 +22,7 @@ echo "Downloading TLE data"
 curl -c $cookie_jar -b $cookie_jar https://www.space-track.org/ajaxauth/login \
    -d "identity=$identity&password=$password"
 
-curl ---limit-rate 100K -cookie $cookie_jar "${source_url}" > $tle_file
+curl --limit-rate 100K -cookie $cookie_jar "${source_url}" > $tle_file
 
 echo "Generating Attributed TLE file"
 echo "{

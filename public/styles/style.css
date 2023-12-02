@@ -6,7 +6,7 @@ body {
 }
 
 a,.link {
-  color: #e66;
+  color: rgb(102, 190, 238);
   text-decoration: underline;
   cursor: pointer;
 }

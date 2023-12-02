@@ -329,6 +329,7 @@ class Viewer {
   setSelectedSatelliteGroup (satelliteGroup: SatelliteGroup | undefined) {
     this.satelliteGroups?.selectGroup(satelliteGroup);
     this.orbits?.setSatelliteGroup(satelliteGroup);
+    this.satellites?.setSatelliteGroup(satelliteGroup);
   }
 
   getSelectedSatellite (): Record<string, any> | undefined {
