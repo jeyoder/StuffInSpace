@@ -55,7 +55,6 @@ class SatelliteStore {
           }
           this.satData[i].id = i;
         }
-        this.satData[0].xxxxxx = 123556;
       }
 
       this.eventManager.fireEvent('satdataloaded', this.satData);
