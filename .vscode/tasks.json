@@ -1,0 +1,17 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "npm",
+			"script": "dev",
+			"problemMatcher": [],
+			"label": "npm: dev",
+			"detail": "vite --host",
+			"isBackground": true,
+			"icon": {
+				"id": "symbol-method",
+				"color": "terminal.ansiBlue"
+			}
+		}
+	]
+}
