@@ -1,13 +1,15 @@
-import { SatelliteGroup } from '@satellite-viewer/SatelliteGroup';
+import SatelliteGroup from '@satellite-viewer/SatelliteGroup';
 import {
   Points,
   BufferGeometry,
   Float32BufferAttribute,
-  AdditiveBlending,
   TextureLoader,
   Color,
   ShaderMaterial,
   Object3D,
+  OneMinusSrcAlphaFactor,
+  SrcAlphaFactor,
+  CustomBlending,
 } from '../utils/three';
 import SceneComponent from './interfaces/SceneComponent';
 import SatelliteStore from './SatelliteStore';
@@ -274,12 +276,16 @@ class Satellites implements SceneComponent, SelectableSatellite {
         color: { value: new Color( 0xffffff ) },
         pointTexture: { value: texture }
       },
-      clipping: true,
+      clipping: false,
       vertexShader: shader.vertex,
       fragmentShader: shader.fragment,
-      blending: AdditiveBlending,
+      blending: CustomBlending,
+      blendSrcAlpha: SrcAlphaFactor,
+      blendDstAlpha: OneMinusSrcAlphaFactor,
+      transparent: true,
+      alphaTest: 0.5,
       depthTest: true,
-      transparent: true
+      depthWrite: false,
     });
 
     geometry.center();
