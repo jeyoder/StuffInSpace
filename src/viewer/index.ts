@@ -175,7 +175,7 @@ class Viewer {
       this.scene = new SatelliteOrbitScene();
       this.camera = new PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.1, 1000 );
 
-      this.renderer = new WebGLRenderer({ antialias: false });
+      this.renderer = new WebGLRenderer({ antialias: true });
       this.renderer.setPixelRatio(window.devicePixelRatio);
       this.renderer.setSize(window.innerWidth, window.innerHeight);
       document
@@ -326,7 +326,9 @@ class Viewer {
     this.orbits?.setSelectedSatellite(satelliteIdx);
   }
 
-  setSelectedSatelliteGroup (satelliteGroup: SatelliteGroup | undefined) {
+  setSelectedSatelliteGroup (satelliteGroup?: SatelliteGroup) {
+    if (!satelliteGroup) return;
+
     this.satelliteGroups?.selectGroup(satelliteGroup);
     this.orbits?.setSatelliteGroup(satelliteGroup);
     this.satellites?.setSatelliteGroup(satelliteGroup);
