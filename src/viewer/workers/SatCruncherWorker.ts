@@ -2,10 +2,9 @@ import {
   jday, twoline2satrec, eciToGeodetic, gstime, sgp4, SatRec
 } from 'satellite.js';
 import logger from '../../utils/logger';
-import constants from '../../config';
 
 const satCache: SatRec[] = [];
-const propergateInterval = constants.propergateInterval || 500;
+let propergateInterval = 500;
 let runOnce = false;
 let config: Record<string, any> = {};
 let satPos: Float32Array;
@@ -100,6 +99,10 @@ onmessage = function (message) {
         }
         if (config.logLevel) {
           logger.setLogLevel(config.logLevel);
+        }
+        if (config.propergateIntervalMs) {
+          propergateInterval = config.propergateIntervalMs;
+          logger.debug(`Adjusting propergateIntervalMs to be ${propergateInterval} ms`);
         }
       }
       if (satData.state) {

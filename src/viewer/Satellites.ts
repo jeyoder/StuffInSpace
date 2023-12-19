@@ -1,4 +1,4 @@
-import { SatelliteGroup } from '@satellite-viewer/SatelliteGroup';
+import SatelliteGroup from '@satellite-viewer/SatelliteGroup';
 import {
   Points,
   BufferGeometry,

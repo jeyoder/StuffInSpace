@@ -3,7 +3,8 @@
   "pushHistory": false,
   "logLevel": "info",
   "satWorker": {
-    "runOnce": false
+    "runOnce": false,
+    "propergateIntervalMs": 16
   },
   "satelliteGroups": [
     {
