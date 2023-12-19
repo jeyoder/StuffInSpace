@@ -326,7 +326,9 @@ class Viewer {
     this.orbits?.setSelectedSatellite(satelliteIdx);
   }
 
-  setSelectedSatelliteGroup (satelliteGroup: SatelliteGroup | undefined) {
+  setSelectedSatelliteGroup (satelliteGroup?: SatelliteGroup) {
+    if (!satelliteGroup) return;
+
     this.satelliteGroups?.selectGroup(satelliteGroup);
     this.orbits?.setSatelliteGroup(satelliteGroup);
     this.satellites?.setSatelliteGroup(satelliteGroup);
