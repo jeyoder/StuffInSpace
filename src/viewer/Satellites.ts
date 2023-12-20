@@ -105,7 +105,6 @@ class Satellites implements SceneComponent, SelectableSatellite {
       for (let i = 0; i < satellites.length; i++) {
         let color = this.currentColorScheme?.getSatelliteColor(satellites[i], this.satelliteGroup)?.color; // || [0, 0, 0];
         if (!color) {
-          console.log('no color', satellites[i].id);
           color = [0, 0, 0];
         }
         const idx = i * 4;
@@ -219,13 +218,17 @@ class Satellites implements SceneComponent, SelectableSatellite {
     }
   }
 
-  setSatelliteGroup (satelliteGroup: SatelliteGroup) {
+  setSatelliteGroup (satelliteGroup?: SatelliteGroup) {
     this.satelliteGroup = satelliteGroup;
     if (this.satelliteGroup) {
       this.currentColorScheme = new GroupColorScheme();
     } else {
       this.currentColorScheme = new DefaultColorScheme();
     }
+  }
+
+  getSatellitegroup (): SatelliteGroup | undefined {
+    return this.satelliteGroup;
   }
 
   setSelectedSatellites (satelliteIndexes: number[]) {

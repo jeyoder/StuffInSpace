@@ -37,7 +37,7 @@ class Viewer {
   eventManager = new EventManager();
   ready = false;
   raycaster?: Raycaster;
-  showRaycastArrow = true;
+  showRaycastArrow = false;
   raycastArrow?: ArrowHelper;
   satellites?: Satellites;
   orbits?: Orbits;
@@ -101,29 +101,45 @@ class Viewer {
 
     this.raycaster.setFromCamera( mouse, this.camera);
 
-    if (this.raycastArrow) {
-      this.scene.remove(this.raycastArrow);
-      this.raycastArrow.dispose();
-      this.raycastArrow = undefined;
+    if (this.showRaycastArrow) {
+      if (this.raycastArrow) {
+        this.scene.remove(this.raycastArrow);
+        this.raycastArrow.dispose();
+        this.raycastArrow = undefined;
+      }
+      this.raycastArrow = new ArrowHelper(this.raycaster.ray.direction, this.raycaster.ray.origin, 300, 0xffff00, undefined, 1) ;
+      this.scene.add(this.raycastArrow);
     }
-    this.raycastArrow = new ArrowHelper(this.raycaster.ray.direction, this.raycaster.ray.origin, 300, 0xffff00, undefined, 1) ;
-    this.scene.add(this.raycastArrow);
 
     const intersects = this.raycaster.intersectObjects(this.scene.children, true);
 
     if (intersects.length > 0) {
-      return intersects.map(intersect => intersect.index) as number[];
+      // TODO deal with lines
+      let satIndexes = intersects.filter(intersect => intersect.object.type === 'Points').map(intersect => intersect.index) as number[];
 
-      // intersects.sort((intersectA, intersectB) => intersectA.distance - intersectB.distance);
-      // const intersctZero = intersects[0];
-
-      // const satellite = this.satelliteStore?.getSatellite(intersctZero.index as number);
-      // this.satellites?.setSelectedSatellite(intersctZero.index as number);
-      // this.orbits?.setSelectedSatellite(intersctZero.index as number);
-      // this.eventManager.fireEvent('selectedSatChange', satellite);
+      if (satIndexes.length > 0) {
+        const filteredSatIndexes: number[] = [];
+        for (let i = 0; i < satIndexes.length; i++) {
+          if (this.isValidTarget(satIndexes[i])) {
+            filteredSatIndexes.push(satIndexes[i]);
+          }
+        }
+        satIndexes = filteredSatIndexes;
+      }
+      return satIndexes;
     }
 
     return [];
+  }
+
+  isValidTarget (satelliteIdx: number): boolean {
+    const satelliteGroup = this.satellites?.getSatellitegroup();
+
+    if (satelliteGroup) {
+      return satelliteGroup.hasSat(satelliteIdx);
+    }
+
+    return true;
   }
 
   onClick (event: MouseEvent) {
@@ -326,8 +342,14 @@ class Viewer {
     this.orbits?.setSelectedSatellite(satelliteIdx);
   }
 
+  /**
+   * Sets the active satellite group, or if `undefined`,
+   * then it unsets the active satellite group.
+   *
+   * @param satelliteGroup
+   */
   setSelectedSatelliteGroup (satelliteGroup?: SatelliteGroup) {
-    if (!satelliteGroup) return;
+    this.setSelectedSatellite(-1);
 
     this.satelliteGroups?.selectGroup(satelliteGroup);
     this.orbits?.setSatelliteGroup(satelliteGroup);
