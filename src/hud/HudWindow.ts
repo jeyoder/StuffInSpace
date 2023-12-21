@@ -29,6 +29,7 @@ class Window {
     this.element.classList.add('visible');
     this.element.classList.remove('hidden');
     this.windowManager.bringWindowToFront(this);
+    this.fireEvent('open', {});
   }
 
   close () {
@@ -39,6 +40,7 @@ class Window {
     this.element.classList.remove('active');
     this.element.classList.remove('visible');
     this.element.classList.add('hidden');
+    this.fireEvent('close', {});
   }
 
   isOpen () {

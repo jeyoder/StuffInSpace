@@ -31,6 +31,15 @@ class WindowManager {
     }
   }
 
+  /**
+   * Retrieves the window with the specified windowId.
+   *
+   * @param windowId - The unique identifier of the window.
+   */
+  getWindow (windowId: string): HudWindow | undefined {
+    return this.windowsById[windowId];
+  }
+
   registerWindow (windowId: string, options: Record<string, any> = {}) {
     const window = new HudWindow(windowId, options);
     window.setWindowManager(this);
@@ -72,8 +81,18 @@ class WindowManager {
       if (firstOpen && topWindow) {
         const location = topWindow.getLocation();
         if (location) {
-          x = location.x + newWindowOffset;
-          y = location.y + newWindowOffset;
+          // If location is on right side of screen, open new window to the left side
+          if (location.x > window.innerWidth / 2) {
+            x = location.x - newWindowOffset - 300;
+          } else {
+            x = location.x + newWindowOffset;
+          }
+          // If location is on bottom half of screen, open new window to the top
+          if (location.y > window.innerHeight / 2) {
+            y = location.y - newWindowOffset - 300;
+          } else {
+            y = location.y + newWindowOffset;
+          }
         }
       }
 

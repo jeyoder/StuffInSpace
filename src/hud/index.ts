@@ -299,6 +299,14 @@ function init (viewerInstance: Viewer) {
   windowManager.registerWindow('help-window');
   windowManager.registerWindow('groups-window');
   windowManager.registerWindow('search-window');
+  windowManager.getWindow('search-window')?.addEventListener('close', () => {
+    viewer.getSatelliteGroups()?.clearSelect();
+    viewer.setSelectedSatelliteGroup();
+    const listItems = document.querySelectorAll('#groups-display>li');
+    for (const item of listItems) {
+      item.classList.remove('selected');
+    }
+  });
 
   searchBox.init(viewer, windowManager);
 

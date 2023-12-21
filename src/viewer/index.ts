@@ -195,10 +195,12 @@ class Viewer {
     let satIdx = -1;
     let satellite;
     if (satelliteIds && satelliteIds.length > 0) {
+      // This is the first possible satellite, it is the closest to the camera
       satIdx = satelliteIds[0];
       satellite = this.satelliteStore?.getSatellite(satIdx);
     }
 
+    this.selectedSatelliteIdx = satIdx;
     this.satellites?.setSelectedSatellite(satIdx);
     this.orbits?.setSelectedSatellite(satIdx);
     this.eventManager.fireEvent('selectedSatChange', satellite);

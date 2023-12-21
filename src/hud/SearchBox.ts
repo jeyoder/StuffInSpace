@@ -184,6 +184,7 @@ function doSearch (str: string) {
   const satelliteGroups = viewer.getSatelliteGroups();
   if (satelliteGroups) {
     satelliteGroups.selectGroup(dispGroup);
+    viewer.setSelectedSatelliteGroup(dispGroup);
   }
 
   fillResultBox(results, str);
