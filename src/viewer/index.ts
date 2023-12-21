@@ -169,7 +169,7 @@ class Viewer {
     }
   }
 
-  onHover (event: MouseEvent) {
+  onMouseMove (event: MouseEvent) {
     const canvas = this.renderer?.domElement;
 
     if (!this.raycaster || !this.scene || !this.camera || !canvas) {
@@ -259,7 +259,7 @@ class Viewer {
 
       const canvasElement = this.renderer.domElement;
       canvasElement.addEventListener('click', this.onClick.bind(this));
-      canvasElement.addEventListener('mousemove', this.onHover.bind(this));
+      canvasElement.addEventListener('mousemove', this.onMouseMove.bind(this));
     } catch (error) {
       logger.error('Error while initialising scene', error);
     }
