@@ -155,12 +155,17 @@ class Viewer {
     });
 
     if (satelliteIds && satelliteIds.length > 0) {
+      // This is the first possible satellite, it is the closest to the camera
       const satelliteZero = satelliteIds[0];
 
       const satellite = this.satelliteStore?.getSatellite(satelliteZero);
+      this.selectedSatelliteIdx = satelliteZero;
       this.satellites?.setSelectedSatellite(satelliteZero);
       this.orbits?.setSelectedSatellite(satelliteZero);
       this.eventManager.fireEvent('selectedSatChange', satellite);
+    } else {
+      this.selectedSatelliteIdx = -1;
+      this.eventManager.fireEvent('selectedSatChange', undefined);
     }
   }
 
