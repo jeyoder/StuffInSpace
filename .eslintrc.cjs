@@ -55,7 +55,7 @@ module.exports = {
     'one-var': 'off',
     'no-void': 'off',
     'multiline-ternary': 'off',
-
+    'curly': 'error',
     'import/first': 'off',
     'import/namespace': 'error',
     'import/default': 'error',
