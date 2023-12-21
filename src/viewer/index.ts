@@ -168,7 +168,7 @@ class Viewer {
     this.eventManager.fireEvent('selectedSatChange', satellite);
   }
 
-  onMouseMove() {
+  onMouseMove () {
     this.mouseMoved = true;
   }
 
@@ -276,7 +276,6 @@ class Viewer {
       window.addEventListener('resize', this.onWindowResize.bind(this));
 
       const canvasElement = this.renderer.domElement;
-      // canvasElement.addEventListener('click', this.onClick.bind(this));
       canvasElement.addEventListener('mousedown', this.onMouseDown.bind(this));
       canvasElement.addEventListener('mouseup', this.onMouseUp.bind(this));
       canvasElement.addEventListener('mousemove', this.onHover.bind(this));
