@@ -68,7 +68,7 @@ class Viewer {
     return undefined;
   }
 
-  onWindowResize () {
+  private onWindowResize () {
     if (this.camera) {
       this.camera.aspect = window.innerWidth / window.innerHeight;
       this.camera.updateProjectionMatrix();
@@ -79,7 +79,7 @@ class Viewer {
     }
   }
 
-  onSatDataLoaded (satData: Record<string, any>) {
+  private onSatDataLoaded (satData: Record<string, any>) {
     this.eventManager.fireEvent('satdataloaded', satData);
     this.ready = true;
   }
@@ -132,7 +132,7 @@ class Viewer {
     return [];
   }
 
-  isValidTarget (satelliteIdx: number): boolean {
+  private isValidTarget (satelliteIdx: number): boolean {
     const satelliteGroup = this.satellites?.getSatellitegroup() as SatelliteGroup;
 
     if (satelliteGroup) {
@@ -142,7 +142,7 @@ class Viewer {
     return true;
   }
 
-  onClick (event: MouseEvent) {
+  private onClick (event: MouseEvent) {
     const canvas = this.renderer?.domElement;
 
     if (!this.raycaster || !this.scene || !this.camera || !canvas) {
@@ -164,7 +164,7 @@ class Viewer {
     }
   }
 
-  onHover (event: MouseEvent) {
+  private onHover (event: MouseEvent) {
     const canvas = this.renderer?.domElement;
 
     if (!this.raycaster || !this.scene || !this.camera || !canvas) {
