@@ -1,5 +1,4 @@
 {
-  "baseUrl": "",
   "tleUrl": "/data/attributed-TLE.json",
   "propergateInterval": 1000,
   "pushHistory": false,
