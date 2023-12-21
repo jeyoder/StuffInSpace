@@ -90,6 +90,7 @@ class Orbits implements SceneComponent, SelectableSatellite {
     const geometry = new BufferGeometry();
     geometry.setAttribute( 'position', new Float32BufferAttribute(points, 3));
     const line = new Line( geometry, material );
+    line.name = `${satId}`;
     if (this.satelliteOrbitGroup) {
       this.satelliteOrbitGroup.add(line);
     }

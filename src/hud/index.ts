@@ -170,8 +170,6 @@ function initGroupsListeners () {
         selectedGroupName = selectedGroup.dataset.group;
       }
 
-      console.dir(event.target);
-
       for (let j = 0; j < listItems.length; j++) {
         listItems[j].classList.remove('selected');
       }
