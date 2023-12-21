@@ -42,6 +42,8 @@ class Viewer {
   satellites?: Satellites;
   orbits?: Orbits;
   earth?: Earth;
+  minZoom = 1;
+  maxZoom = 100;
 
   constructor (config?: Record<string, any>) {
     this.config = { ...config, ...this.config };
@@ -154,14 +156,16 @@ class Viewer {
       y: event.clientY
     });
 
+    let satIdx = -1;
+    let satellite;
     if (satelliteIds && satelliteIds.length > 0) {
-      const satelliteZero = satelliteIds[0];
-
-      const satellite = this.satelliteStore?.getSatellite(satelliteZero);
-      this.satellites?.setSelectedSatellite(satelliteZero);
-      this.orbits?.setSelectedSatellite(satelliteZero);
-      this.eventManager.fireEvent('selectedSatChange', satellite);
+      satIdx = satelliteIds[0];
+      satellite = this.satelliteStore?.getSatellite(satIdx);
     }
+
+    this.satellites?.setSelectedSatellite(satIdx);
+    this.orbits?.setSelectedSatellite(satIdx);
+    this.eventManager.fireEvent('selectedSatChange', satellite);
   }
 
   onHover (event: MouseEvent) {
@@ -176,14 +180,16 @@ class Viewer {
       y: event.clientY
     });
 
+    let satIdx = -1;
+    let satellite;
     if (satelliteIds && satelliteIds.length > 0) {
-      const satelliteZero = satelliteIds[0];
-
-      const satellite = this.satelliteStore?.getSatellite(satelliteZero);
-      this.satellites?.setHoverSatellite(satelliteZero);
-      this.orbits?.setHoverSatellite(satelliteZero);
-      this.eventManager.fireEvent('sathoverChange', satellite);
+      satIdx = satelliteIds[0];
+      satellite = this.satelliteStore?.getSatellite(satIdx);
     }
+
+    this.satellites?.setHoverSatellite(satIdx);
+    this.orbits?.setHoverSatellite(satIdx);
+    this.eventManager.fireEvent('sathoverChange', satellite);
   }
 
   async init () {
@@ -240,8 +246,8 @@ class Viewer {
       }
 
       this.camera.position.y = 42;
-      this.controls.minDistance = 4;
-      this.controls.maxDistance = 100;
+      this.controls.minDistance = this.minZoom;
+      this.controls.maxDistance = this.maxZoom;
       this.controls.enablePan = false;
       this.controls.zoomSpeed = 0.5;
       // this.controls.enableDamping = true;
@@ -287,7 +293,7 @@ class Viewer {
   zoomToSatellite (satelliteId: number) {
     const position = this.satelliteStore?.getSatellitePosition(satelliteId);
     if (position) {
-      // this.controls.zo
+      // TODO
     }
   }
 
@@ -297,6 +303,11 @@ class Viewer {
       const timeout = 20;
       const zoomFn = () => {
         if (!this.camera) {
+          return;
+        }
+
+        // console.log('zoomIn', this.camera.zoom, this.minZoom);
+        if (this.camera.zoom > this.maxZoom) {
           return;
         }
 
@@ -313,16 +324,31 @@ class Viewer {
 
   zoomOut () {
     if (this.camera) {
-      const targetZoom = this.camera.zoom - 1.2;
+      let targetZoom = this.camera.zoom - 1.2;
       const timeout = 20;
+
+      // camera doesn't seem to like negative zoom levels
+      if (targetZoom < 0) {
+        targetZoom = 0;
+      }
 
       const zoomFn = () => {
         if (!this.camera) {
           return;
         }
 
+        // console.log('zoomOut', this.camera.zoom, this.maxZoom);
+        if (this.camera.zoom < this.minZoom) {
+          return;
+        }
+
         if (this.camera.zoom > targetZoom) {
-          this.camera.zoom -= 0.08;
+          this.camera.zoom = this.camera.zoom + -0.08;
+
+          if (this.camera.zoom < 0) {
+            this.camera.zoom = 0;
+          }
+
           this.camera.updateProjectionMatrix();
           setTimeout(zoomFn, timeout);
         }
