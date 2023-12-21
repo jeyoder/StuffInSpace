@@ -119,9 +119,9 @@ class Viewer {
 
       if (satIndexes.length > 0) {
         const filteredSatIndexes: number[] = [];
-        for (let i = 0; i < satIndexes.length; i++) {
-          if (this.isValidTarget(satIndexes[i])) {
-            filteredSatIndexes.push(satIndexes[i]);
+        for (const satIndex of satIndexes) {
+          if (this.isValidTarget(satIndex)) {
+            filteredSatIndexes.push(satIndex);
           }
         }
         satIndexes = filteredSatIndexes;
@@ -263,8 +263,8 @@ class Viewer {
   animate () {
     requestAnimationFrame(this.animate.bind(this));
 
-    for (let i = 0; i < this.sceneComponents.length; i++) {
-      this.sceneComponents[i].update(this.scene);
+    for (const component of this.sceneComponents) {
+      component.update(this.scene);
     }
 
     if (this.controls) {
