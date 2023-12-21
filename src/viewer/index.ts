@@ -17,7 +17,6 @@ import ShaderStore from './ShaderStore';
 import logger from '@/utils/logger';
 import { ArrowHelper, Raycaster, Vector2, Vector3 } from 'three';
 
-
 class Viewer {
   config: Record<string, any> = {
     canvasSelector: '.viewer'
@@ -44,6 +43,7 @@ class Viewer {
   earth?: Earth;
   minZoom = 1;
   maxZoom = 100;
+  mouseMoved = false;
 
   constructor (config?: Record<string, any>) {
     this.config = { ...config, ...this.config };
@@ -168,6 +168,23 @@ class Viewer {
     this.eventManager.fireEvent('selectedSatChange', satellite);
   }
 
+  onMouseMove() {
+    this.mouseMoved = true;
+  }
+
+  onMouseDown () {
+    this.mouseMoved = false;
+    window.addEventListener('mousemove', this.onMouseMove.bind(this));
+  }
+
+  onMouseUp (event: MouseEvent) {
+    if (!this.mouseMoved) {
+      this.onClick(event);
+    }
+    this.mouseMoved = false;
+    window.removeEventListener('mousemove', this.onMouseMove.bind(this));
+  }
+
   onHover (event: MouseEvent) {
     const canvas = this.renderer?.domElement;
 
@@ -259,7 +276,9 @@ class Viewer {
       window.addEventListener('resize', this.onWindowResize.bind(this));
 
       const canvasElement = this.renderer.domElement;
-      canvasElement.addEventListener('click', this.onClick.bind(this));
+      // canvasElement.addEventListener('click', this.onClick.bind(this));
+      canvasElement.addEventListener('mousedown', this.onMouseDown.bind(this));
+      canvasElement.addEventListener('mouseup', this.onMouseUp.bind(this));
       canvasElement.addEventListener('mousemove', this.onHover.bind(this));
     } catch (error) {
       logger.error('Error while initialising scene', error);
