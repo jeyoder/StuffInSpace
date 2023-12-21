@@ -2,12 +2,7 @@ import logger from '@/utils/logger';
 import { Viewer } from '@satellite-viewer/index';
 import SatelliteGroup from '@satellite-viewer/SatelliteGroup';
 import HudWindowManager from './HudWindowManager';
-
-interface SearchResults {
-  type: 'intlDes' | 'name' | 'noradId';
-  strIndex: number;
-  satId: number;
-}
+import { SearchResults } from '../viewer/interfaces/SearchResults';
 
 const SEARCH_LIMIT = 200;
 
