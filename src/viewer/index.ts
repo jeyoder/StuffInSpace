@@ -133,7 +133,7 @@ class Viewer {
   }
 
   isValidTarget (satelliteIdx: number): boolean {
-    const satelliteGroup = this.satellites?.getSatellitegroup();
+    const satelliteGroup = this.satellites?.getSatellitegroup() as SatelliteGroup;
 
     if (satelliteGroup) {
       return satelliteGroup.hasSat(satelliteIdx);
