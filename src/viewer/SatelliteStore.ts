@@ -45,11 +45,11 @@ class SatelliteStore {
 
         for (let i = 0; i < this.satData.length; i++) {
           if (this.satData[i].INTLDES) {
-            let year = this.satData[i].INTLDES.substring(0, 2); // clean up intl des for display
-            const prefix = (year > 50) ? '19' : '20';
-            year = prefix + year;
+            const yearVal = Number(this.satData[i].INTLDES.substring(0, 2)); // convert year to number
+            const prefix = (yearVal > 50) ? '19' : '20';
+            const yearStr = prefix + yearVal.toString();
             const rest = this.satData[i].INTLDES.substring(2);
-            this.satData[i].intlDes = `${year}-${rest}`;
+            this.satData[i].intlDes = `${yearStr}-${rest}`;
           } else {
             this.satData[i].intlDes = 'unknown';
           }
