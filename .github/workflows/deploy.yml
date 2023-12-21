@@ -2,8 +2,8 @@ name: Deploy
 
 on:
   push:
-    # branches-ignore:
-    #  - master
+    branches:
+    # - master
 
 env:
   BASE_URL: /StuffInSpace
@@ -20,7 +20,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v3
         with:
-          node-version: '16.20'
+          node-version: '18'
 
       - name: Install dependencies
         uses: bahmutov/npm-install@v1
@@ -38,7 +38,7 @@ jobs:
     name: Deploy
     needs: build
     runs-on: ubuntu-latest
-    # if: github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/master'
 
     steps:
       - name: Download artifact

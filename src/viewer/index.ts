@@ -17,7 +17,6 @@ import ShaderStore from './ShaderStore';
 import logger from '@/utils/logger';
 import { ArrowHelper, Raycaster, Vector2, Vector3 } from 'three';
 
-
 class Viewer {
   config: Record<string, any> = {
     canvasSelector: '.viewer'
@@ -113,7 +112,7 @@ class Viewer {
     }
 
     // adjust this to control the number of point candidates
-    this.raycaster.params.Points.threshold = 0.1;
+    this.raycaster.params.Points.threshold = 0.05;
 
     const bounds = canvas.getBoundingClientRect();
     const mouse: Vector2 = new Vector2();
@@ -136,7 +135,24 @@ class Viewer {
 
     if (intersects.length > 0) {
       // TODO deal with lines
-      let satIndexes = intersects.filter(intersect => intersect.object.type === 'Points').map(intersect => intersect.index) as number[];
+      // let satIndexes = intersects.filter(intersect => intersect.object.type === 'Points').map(intersect => intersect.index) as number[];
+      intersects.sort((intersectA, intersectB) => {
+        if (intersectA.object.type === 'Line' && intersectB.object.type === 'Points') {
+          return 1;
+        } else if (intersectA.object.type === 'Points' && intersectB.object.type === 'Line') {
+          return -1;
+        }
+        return 0;
+      });
+
+      let satIndexes = intersects.map(intersect => {
+        if (intersect.object.type === 'Points') {
+          return intersect.index;
+        } else if (intersect.object.type === 'Line') {
+          return parseInt(intersect.object.name);
+        }
+        return -1;
+      }).filter(satIdx => satIdx !== -1) as number[];
 
       if (satIndexes.length > 0) {
         const filteredSatIndexes: number[] = [];
@@ -175,14 +191,33 @@ class Viewer {
       y: event.clientY
     });
 
+    let satIdx = -1;
+    let satellite;
     if (satelliteIds && satelliteIds.length > 0) {
-      const satelliteZero = satelliteIds[0];
-
-      const satellite = this.satelliteStore?.getSatellite(satelliteZero);
-      this.satellites?.setSelectedSatellite(satelliteZero);
-      this.orbits?.setSelectedSatellite(satelliteZero);
-      this.eventManager.fireEvent('selectedSatChange', satellite);
+      satIdx = satelliteIds[0];
+      satellite = this.satelliteStore?.getSatellite(satIdx);
     }
+
+    this.satellites?.setSelectedSatellite(satIdx);
+    this.orbits?.setSelectedSatellite(satIdx);
+    this.eventManager.fireEvent('selectedSatChange', satellite);
+  }
+
+  onMouseMove () {
+    this.mouseMoved = true;
+  }
+
+  onMouseDown () {
+    this.mouseMoved = false;
+    window.addEventListener('mousemove', this.onMouseMove.bind(this));
+  }
+
+  onMouseUp (event: MouseEvent) {
+    if (!this.mouseMoved) {
+      this.onClick(event);
+    }
+    this.mouseMoved = false;
+    window.removeEventListener('mousemove', this.onMouseMove.bind(this));
   }
 
   onHover (event: MouseEvent) {
@@ -197,14 +232,17 @@ class Viewer {
       y: event.clientY
     });
 
+    let satIdx = -1;
+    let satellite;
     if (satelliteIds && satelliteIds.length > 0) {
-      const satelliteZero = satelliteIds[0];
-
-      const satellite = this.satelliteStore?.getSatellite(satelliteZero);
-      this.satellites?.setHoverSatellite(satelliteZero);
-      this.orbits?.setHoverSatellite(satelliteZero);
-      this.eventManager.fireEvent('sathoverChange', satellite);
+      satIdx = satelliteIds[0];
+      satellite = this.satelliteStore?.getSatellite(satIdx);
     }
+
+    this.satellites?.setHoverSatellite(satIdx);
+    this.orbits?.setHoverSatellite(satIdx);
+    this.eventManager.fireEvent('sathoverChange', satellite);
+    this.mouseMoved = true;
   }
 
   async init () {
@@ -273,7 +311,8 @@ class Viewer {
       window.addEventListener('wheel', this.onWheel.bind(this));
 
       const canvasElement = this.renderer.domElement;
-      canvasElement.addEventListener('click', this.onClick.bind(this));
+      canvasElement.addEventListener('mousedown', this.onMouseDown.bind(this));
+      canvasElement.addEventListener('mouseup', this.onMouseUp.bind(this));
       canvasElement.addEventListener('mousemove', this.onHover.bind(this));
     } catch (error) {
       logger.error('Error while initialising scene', error);
@@ -329,7 +368,7 @@ class Viewer {
   zoomToSatellite (satelliteId: number) {
     const position = this.satelliteStore?.getSatellitePosition(satelliteId);
     if (position) {
-      // this.controls.zo
+      // TODO
     }
   }
 
