@@ -216,8 +216,7 @@ function initEventListeners () {
   satelliteGroups?.reloadGroups();
 
   viewer.addEventListener(Events.selectedSatChange, onSelectedSatChange);
-
-  // app.addEventListener(Events.satHover, onSatHover);
+  viewer.addEventListener(Events.satHover, onSatHover);
 
   document.querySelector('#zoom-in')?.addEventListener('click', (event: any) => {
     event.preventDefault();
