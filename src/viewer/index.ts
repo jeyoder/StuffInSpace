@@ -41,6 +41,7 @@ class Viewer {
   satellites?: Satellites;
   orbits?: Orbits;
   earth?: Earth;
+  mouseMoved = false;
   targetZoom = 5;
 
   /** The maximum zoom level for the viewer. This controls how close the camera can get to the earth. */
