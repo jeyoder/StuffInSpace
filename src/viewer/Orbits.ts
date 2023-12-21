@@ -12,7 +12,6 @@ class Orbits implements SceneComponent, SelectableSatellite {
   config: Record<string, any> = {};
   segmentCount = 255;
   orbitWorker?: Worker;
-  // selectedSatelliteIdx: number = -1;
   selectedSatellites: number[] = [];
   hoverSatelliteIdx: number = -1;
   satelliteGroups?: SatelliteGroups;
@@ -20,7 +19,7 @@ class Orbits implements SceneComponent, SelectableSatellite {
   inProgress: boolean[] = [];
   scene?: SatelliteOrbitScene;
   selectColor = [0.0, 1.0, 0.0, 1.0];
-  hoverColor = [0.5, 0.5, 1.0, 1.0];
+  hoverColor = [1.0, 0.92, 0.23, 1.0];
   groupColor = [0.3, 0.5, 1.0, 0.4];
   orbitTracks: (Line | undefined)[] = [];
   satelliteStore?: SatelliteStore;
@@ -69,10 +68,10 @@ class Orbits implements SceneComponent, SelectableSatellite {
   private getTrackColor (satId: number): Color {
     let color = [1, 1, 0];
 
-    if (this.selectedSatellites.indexOf(satId) > -1) {
-      color = this.selectColor;
-    } else if (satId === this.hoverSatelliteIdx) {
+    if (satId === this.hoverSatelliteIdx) {
       color = this.hoverColor;
+    } else if (this.selectedSatellites.indexOf(satId) > -1) {
+      color = this.selectColor;
     } else if (this.satelliteGroup && this.satelliteGroup.hasSat(satId)) {
       color = this.groupColor;
     }
@@ -138,6 +137,27 @@ class Orbits implements SceneComponent, SelectableSatellite {
     this.inProgress[satId] = false;
   }
 
+  isHoverSatellite (satelliteIdx: number): boolean {
+    return this.hoverSatelliteIdx !== undefined && satelliteIdx !== -1 && this.hoverSatelliteIdx === satelliteIdx;
+  }
+
+  isSelectedSatellite (satelliteIdx: number): boolean {
+    if (this.selectedSatellites.length > 0) {
+      return this.selectedSatellites.indexOf(satelliteIdx) > -1;
+    }
+
+    return false;
+  }
+
+  refreshOrbits () {
+    if (this.satelliteGroup) {
+      const sats = this.satelliteGroup.sats;
+      for (let i = 0; i < sats.length; i++) {
+        this.updateOrbitTrack(sats[i].satId);
+      }
+    }
+  }
+
   setSelectedSatellites (selectedSatellites: number[]) {
     if (this.selectedSatellites.length > 0) {
       for (let i = 0; i < this.selectedSatellites.length; i++) {
@@ -154,6 +174,7 @@ class Orbits implements SceneComponent, SelectableSatellite {
 
     this.selectedSatellites = selectedSatellites;
     this.calculateOrbits(selectedSatellites);
+    this.refreshOrbits();
   }
 
   setSelectedSatellite (satelliteIdx: number) {
@@ -161,16 +182,25 @@ class Orbits implements SceneComponent, SelectableSatellite {
   }
 
   setHoverSatellite (satelliteIdx: number) {
-    if (this.hoverSatelliteIdx !== undefined && this.hoverSatelliteIdx > -1 || satelliteIdx !== this.hoverSatelliteIdx) {
-      if (!this.satelliteGroup || !this.satelliteGroup.hasSat(this.hoverSatelliteIdx) || this.selectedSatellites.indexOf(this.hoverSatelliteIdx) < 0) {
-        this.removeOrbitTrack(this.hoverSatelliteIdx);
-      } else {
-        this.updateOrbitTrack(this.hoverSatelliteIdx);
-      }
+    // deal wth removing hover satellite, in such a away it doesn't remove
+    // groups satellite tracks or selected satellite tracks
+    let remove = false;
+    const previousHoverSatelliteIdx = this.hoverSatelliteIdx || -1;
+    if (this.hoverSatelliteIdx && this.hoverSatelliteIdx > -1) {
+      remove = this.selectedSatellites.indexOf(this.hoverSatelliteIdx) < 0;
+      remove = remove && (!this.satelliteGroup || !this.satelliteGroup.hasSat(this.hoverSatelliteIdx));
     }
 
     this.hoverSatelliteIdx = satelliteIdx;
+
+    if (remove) {
+      this.removeOrbitTrack(previousHoverSatelliteIdx);
+    } else {
+      this.updateOrbitTrack(previousHoverSatelliteIdx);
+    }
+
     this.calculateOrbits([satelliteIdx]);
+    this.refreshOrbits();
   }
 
   setSatelliteGroup (group: SatelliteGroup | undefined) {
