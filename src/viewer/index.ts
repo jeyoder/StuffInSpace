@@ -41,9 +41,16 @@ class Viewer {
   satellites?: Satellites;
   orbits?: Orbits;
   earth?: Earth;
-  minZoom = 1;
-  maxZoom = 100;
-  mouseMoved = false;
+  targetZoom = 5;
+
+  /** The maximum zoom level for the viewer. This controls how close the camera can get to the earth. */
+  private readonly maxZoomLevel = 60;
+  /** The minimum zoom level for the viewer. This controls how far the camera can get from the earth. */
+  private readonly minZoomLevel = 2;
+  /** The ideal number of frames to take to zoom in or out. Higher number slows down the zoom animation. */
+  private readonly framesPerZoomUpdate = 25;
+  /** The allowable margin for zooming in or out. If within this margin, the zoom level is set directly to the target zoom. */
+  private readonly zoomAllowableMargin = 0.01;
 
   constructor (config?: Record<string, any>) {
     this.config = { ...config, ...this.config };
@@ -78,6 +85,17 @@ class Viewer {
 
     if (this.renderer) {
       this.renderer.setSize( window.innerWidth, window.innerHeight );
+    }
+  }
+
+  /**
+   * Handles the scroll wheel event.
+   */
+  onWheel (event: WheelEvent) {
+    if (event.deltaY > 0) {
+      this.zoomOut();
+    } else {
+      this.zoomIn();
     }
   }
 
@@ -281,10 +299,8 @@ class Viewer {
       }
 
       this.camera.position.y = 42;
-      this.controls.minDistance = this.minZoom;
-      this.controls.maxDistance = this.maxZoom;
       this.controls.enablePan = false;
-      this.controls.zoomSpeed = 0.5;
+      this.controls.enableZoom = false;
       // this.controls.enableDamping = true;
       // this.controls.autoRotate = true;
       // this.controls.autoRotateSpeed = 0.5;
@@ -292,6 +308,7 @@ class Viewer {
       this.camera.updateProjectionMatrix();
 
       window.addEventListener('resize', this.onWindowResize.bind(this));
+      window.addEventListener('wheel', this.onWheel.bind(this));
 
       const canvasElement = this.renderer.domElement;
       canvasElement.addEventListener('mousedown', this.onMouseDown.bind(this));
@@ -305,6 +322,8 @@ class Viewer {
   animate () {
     requestAnimationFrame(this.animate.bind(this));
 
+    this.updateCamera();
+
     for (let i = 0; i < this.sceneComponents.length; i++) {
       this.sceneComponents[i].update(this.scene);
     }
@@ -315,6 +334,26 @@ class Viewer {
 
     if (this.renderer) {
       this.renderer.render(this.scene as SatelliteOrbitScene, this.camera as Camera);
+    }
+  }
+
+  /**
+   * Updates the camera zoom based on the target zoom value.
+   * If the zoom target is different from the current zoom, it gradually zooms towards the target.
+   * If the zoom target is within a margin of 0.1 from the current zoom, it directly sets the zoom to the target.
+   * After updating the zoom, it clamps the zoom value and updates the camera's projection matrix.
+   */
+  private updateCamera () {
+    if (this.camera) {
+      if (Math.abs(this.camera.zoom - this.targetZoom) > this.zoomAllowableMargin) {
+        this.camera.zoom += (this.targetZoom - this.camera.zoom) / this.framesPerZoomUpdate;
+        this.clampZoom();
+        this.camera.updateProjectionMatrix();
+      } else if (this.camera.zoom !== this.targetZoom) {
+        this.camera.zoom = this.targetZoom;
+        this.clampZoom();
+        this.camera.updateProjectionMatrix();
+      }
     }
   }
 
@@ -333,64 +372,42 @@ class Viewer {
     }
   }
 
-  zoomIn () {
+  /**
+   * Clamps the zoom level of the camera to ensure it stays within a certain range.
+   * The targetZoom is adjusted to be no more than 5 times the current zoom level
+   * and no less than 1/5th of the current zoom level. The camera's zoom level is then
+   * clamped to the specified minimum and maximum zoom levels.
+   */
+  private clampZoom () {
     if (this.camera) {
-      const targetZoom = this.camera.zoom + 1.2;
-      const timeout = 20;
-      const zoomFn = () => {
-        if (!this.camera) {
-          return;
-        }
+      if (this.targetZoom > this.camera.zoom * 5) {
+        this.targetZoom = this.camera.zoom * 5;
+      } else if (this.targetZoom < this.camera.zoom / 5) {
+        this.targetZoom = this.camera.zoom / 5;
+      }
 
-        // console.log('zoomIn', this.camera.zoom, this.minZoom);
-        if (this.camera.zoom > this.maxZoom) {
-          return;
-        }
-
-        if (this.camera.zoom < targetZoom) {
-          this.camera.zoom += 0.08;
-          this.camera.updateProjectionMatrix();
-          setTimeout(zoomFn, timeout);
-        }
-      };
-
-      setTimeout(zoomFn, timeout);
+      this.camera.zoom = Math.min(Math.max(this.camera.zoom, this.minZoomLevel), this.maxZoomLevel);
+      this.targetZoom = Math.min(Math.max(this.targetZoom, this.minZoomLevel), this.maxZoomLevel);
     }
   }
 
-  zoomOut () {
+  /**
+   * Zooms in the camera. Fired when the user scrolls up or presses the zoom in button.
+   */
+  zoomIn ():void {
     if (this.camera) {
-      let targetZoom = this.camera.zoom - 1.2;
-      const timeout = 20;
+      this.targetZoom += (this.camera.zoom / 4);
+      this.clampZoom();
+    }
+  }
 
-      // camera doesn't seem to like negative zoom levels
-      if (targetZoom < 0) {
-        targetZoom = 0;
-      }
-
-      const zoomFn = () => {
-        if (!this.camera) {
-          return;
-        }
-
-        // console.log('zoomOut', this.camera.zoom, this.maxZoom);
-        if (this.camera.zoom < this.minZoom) {
-          return;
-        }
-
-        if (this.camera.zoom > targetZoom) {
-          this.camera.zoom = this.camera.zoom + -0.08;
-
-          if (this.camera.zoom < 0) {
-            this.camera.zoom = 0;
-          }
-
-          this.camera.updateProjectionMatrix();
-          setTimeout(zoomFn, timeout);
-        }
-      };
-
-      setTimeout(zoomFn, timeout);
+  /**
+   * Zooms out the camera. Fired when the user scrolls down or presses the zoom out button.
+   */
+  zoomOut ():void {
+    if (this.camera) {
+      this.targetZoom -= (this.camera.zoom / 6);
+      this.clampZoom();
     }
   }
 
