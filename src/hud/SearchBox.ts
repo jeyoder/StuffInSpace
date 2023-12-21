@@ -3,6 +3,12 @@ import { Viewer } from '@satellite-viewer/index';
 import SatelliteGroup from '@satellite-viewer/SatelliteGroup';
 import HudWindowManager from './HudWindowManager';
 
+interface SearchResults {
+  type: 'intlDes' | 'name' | 'noradId';
+  strIndex: number;
+  satId: number;
+}
+
 const SEARCH_LIMIT = 200;
 
 let viewer: Viewer;
@@ -73,7 +79,7 @@ function hideResults () {
   }
 }
 
-function fillResultBox (results: any, searchStr: string) {
+function fillResultBox (results: SearchResults[], searchStr: string) {
   const resultBox = document.querySelector('#search-results') as HTMLElement;
   const satelliteStore = viewer.getSatelliteStore();
   if (!satelliteStore) {
@@ -82,34 +88,44 @@ function fillResultBox (results: any, searchStr: string) {
 
   let html = '';
 
-  for (let i = 0; i < results.length; i++) {
-    if (results[i].satId === undefined) {
+  for (const result of results) {
+    if (result.satId === undefined) {
       continue;
     }
 
-    const satellite = satelliteStore.getSatellite(results[i].satId);
+    const satellite = satelliteStore.getSatellite(result.satId);
     if (!satellite) {
-      logger.warn('satellite not found', results[i].satId);
+      logger.warn('satellite not found', result.satId);
       continue;
     }
 
     html += `<div class="search-result" data-sat-id="${satellite.id}">`;
-    if (results[i].isIntlDes) {
+    if (result.type !== 'name') {
       html += satellite.OBJECT_NAME;
     } else {
-      html += satellite.OBJECT_NAME.substring(0, results[i].strIndex);
-      html += '<span class="search-hilight">';
-      html += satellite.OBJECT_NAME.substring(results[i].strIndex, results[i].strIndex + searchStr.length);
-      html += '</span>';
-      html += satellite.OBJECT_NAME.substring(results[i].strIndex + searchStr.length);
+      html += `
+      ${satellite.OBJECT_NAME.substring(0, result.strIndex)}
+      <span class="search-hilight">
+        ${satellite.OBJECT_NAME.substring(result.strIndex, result.strIndex + searchStr.length)}
+      </span>
+      ${satellite.OBJECT_NAME.substring(result.strIndex + searchStr.length)}`;
     }
+
     html += '<div class="search-result-intldes">';
-    if (results[i].isIntlDes) {
-      html += satellite.intlDes.substring(0, results[i].strIndex);
-      html += '<span class="search-hilight">';
-      html += satellite.intlDes.substring(results[i].strIndex, results[i].strIndex + searchStr.length);
-      html += '</span>';
-      html += satellite.intlDes.substring(results[i].strIndex + searchStr.length);
+    if (result.type === 'intlDes') {
+      html += `
+      ${satellite.intlDes.substring(0, result.strIndex)}
+      <span class="search-hilight">
+        ${satellite.intlDes.substring(result.strIndex, result.strIndex + searchStr.length)}
+      </span>
+      ${satellite.intlDes.substring(result.strIndex + searchStr.length)}`;
+    } else if (result.type === 'noradId') {
+      html += `
+      ${satellite.NORAD_CAT_ID.substring(0, result.strIndex)}
+      <span class="search-hilight">
+        ${satellite.NORAD_CAT_ID.substring(result.strIndex, result.strIndex + searchStr.length)}
+      </span>
+      ${satellite.NORAD_CAT_ID.substring(result.strIndex + searchStr.length)}`;
     } else {
       html += satellite.intlDes;
     }
@@ -145,11 +161,19 @@ function doSearch (str: string) {
 
   str = str.toUpperCase();
 
-  const results = [];
+  const results: SearchResults[] = [];
   for (let i = 0; i < satData.length; i++) {
+    if (satData[i]?.NORAD_CAT_ID?.indexOf(str) !== -1) {
+      results.push({
+        type: 'noradId',
+        strIndex: satData[i].NORAD_CAT_ID.indexOf(str),
+        satId: i
+      });
+    }
+
     if (satData[i]?.OBJECT_NAME.indexOf(str) !== -1) {
       results.push({
-        isIntlDes: false,
+        type: 'name',
         strIndex: satData[i].OBJECT_NAME.indexOf(str),
         satId: i
       });
@@ -157,7 +181,7 @@ function doSearch (str: string) {
 
     if (satData[i].intlDes && satData[i].intlDes.indexOf(str) !== -1) {
       results.push({
-        isIntlDes: true,
+        type: 'intlDes',
         strIndex: satData[i].intlDes.indexOf(str),
         satId: i
       });
@@ -170,8 +194,8 @@ function doSearch (str: string) {
 
   // make a group to hilight results
   const idList = [];
-  for (let i = 0; i < results.length; i++) {
-    idList.push(results[i].satId);
+  for (const result of results) {
+    idList.push(result.satId);
   }
 
   const dispGroup = new SatelliteGroup(
