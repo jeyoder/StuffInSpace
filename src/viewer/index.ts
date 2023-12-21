@@ -94,7 +94,7 @@ class Viewer {
     }
 
     // adjust this to control the number of point candidates
-    this.raycaster.params.Points.threshold = 0.1;
+    this.raycaster.params.Points.threshold = 0.05;
 
     const bounds = canvas.getBoundingClientRect();
     const mouse: Vector2 = new Vector2();
@@ -117,7 +117,24 @@ class Viewer {
 
     if (intersects.length > 0) {
       // TODO deal with lines
-      let satIndexes = intersects.filter(intersect => intersect.object.type === 'Points').map(intersect => intersect.index) as number[];
+      // let satIndexes = intersects.filter(intersect => intersect.object.type === 'Points').map(intersect => intersect.index) as number[];
+      intersects.sort((intersectA, intersectB) => {
+        if (intersectA.object.type === 'Line' && intersectB.object.type === 'Points') {
+          return 1;
+        } else if (intersectA.object.type === 'Points' && intersectB.object.type === 'Line') {
+          return -1;
+        }
+        return 0;
+      });
+
+      let satIndexes = intersects.map(intersect => {
+        if (intersect.object.type === 'Points') {
+          return intersect.index;
+        } else if (intersect.object.type === 'Line') {
+          return parseInt(intersect.object.name);
+        }
+        return -1;
+      }).filter(satIdx => satIdx !== -1) as number[];
 
       if (satIndexes.length > 0) {
         const filteredSatIndexes: number[] = [];
@@ -207,6 +224,7 @@ class Viewer {
     this.satellites?.setHoverSatellite(satIdx);
     this.orbits?.setHoverSatellite(satIdx);
     this.eventManager.fireEvent('sathoverChange', satellite);
+    this.mouseMoved = true;
   }
 
   async init () {
