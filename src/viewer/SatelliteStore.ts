@@ -1,6 +1,7 @@
 import axios from 'axios';
 import EventManager from '../utils/event-manager';
 import logger from '../utils/logger';
+import { SatelliteObject } from './interfaces/SatelliteObject';
 
 const config = {
   baseUrl: import.meta.env.BASE_URL
@@ -9,7 +10,7 @@ const config = {
 class SatelliteStore {
   tleUrl = `${config.baseUrl}/data/attributed-TLE.json`;
   eventManager: EventManager;
-  satData: Record<string, any>[] = [];
+  satData: SatelliteObject[] = [];
   attribution?: Record<string, any>;
   updateDate?: Date;
   satelliteVelocities: Float32Array = new Float32Array();
@@ -45,11 +46,11 @@ class SatelliteStore {
 
         for (let i = 0; i < this.satData.length; i++) {
           if (this.satData[i].INTLDES) {
-            let year = this.satData[i].INTLDES.substring(0, 2); // clean up intl des for display
-            const prefix = (year > 50) ? '19' : '20';
-            year = prefix + year;
+            const yearVal = Number(this.satData[i].INTLDES.substring(0, 2)); // convert year to number
+            const prefix = (yearVal > 50) ? '19' : '20';
+            const yearStr = prefix + yearVal.toString();
             const rest = this.satData[i].INTLDES.substring(2);
-            this.satData[i].intlDes = `${year}-${rest}`;
+            this.satData[i].intlDes = `${yearStr}-${rest}`;
           } else {
             this.satData[i].intlDes = 'unknown';
           }
@@ -72,7 +73,7 @@ class SatelliteStore {
     return this.updateDate;
   }
 
-  setSatelliteData (satData: Record<string, any>[], includesExtraData = false) {
+  setSatelliteData (satData: SatelliteObject[], includesExtraData = false) {
     this.satData = satData;
     this.gotExtraData = includesExtraData;
 
@@ -100,7 +101,7 @@ class SatelliteStore {
     return undefined;
   }
 
-  getSatData (): Record<string, any>[] {
+  getSatData (): SatelliteObject[] {
     return this.satData || [];
   }
 
@@ -130,12 +131,11 @@ class SatelliteStore {
     return res;
   }
 
-  search (query: Record<string, any>): any[] {
-    const keys = Object.keys(query);
-    let data = Object.assign([], this.satData);
-    for (let i = 0; i < keys.length; i++) {
-      const key = keys[i];
-      data = data.filter((entry: Record<string, any>) => entry[key] === query[key]);
+  search (query: Partial<SatelliteObject>): SatelliteObject[] {
+    const keys = Object.keys(query) as (keyof SatelliteObject)[];
+    let data = Object.assign([] as SatelliteObject[], this.satData);
+    for (const key of keys) {
+      data = data.filter((sat: SatelliteObject) => sat[key] === query[key]);
     }
     return data;
   }
@@ -159,7 +159,7 @@ class SatelliteStore {
     return null;
   }
 
-  getSatellite (satelliteId: number): Record<string, any> | undefined {
+  getSatellite (satelliteId: number): SatelliteObject | undefined {
     if (satelliteId === -1 || satelliteId === undefined || !this.satData) {
       return undefined;
     }

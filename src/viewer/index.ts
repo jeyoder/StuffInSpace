@@ -78,7 +78,7 @@ class Viewer {
     return undefined;
   }
 
-  onWindowResize () {
+  private onWindowResize () {
     if (this.camera) {
       this.camera.aspect = window.innerWidth / window.innerHeight;
       this.camera.updateProjectionMatrix();
@@ -100,7 +100,7 @@ class Viewer {
     }
   }
 
-  onSatDataLoaded (satData: Record<string, any>) {
+  private onSatDataLoaded (satData: Record<string, any>) {
     this.eventManager.fireEvent('satdataloaded', satData);
     this.ready = true;
   }
@@ -157,9 +157,9 @@ class Viewer {
 
       if (satIndexes.length > 0) {
         const filteredSatIndexes: number[] = [];
-        for (let i = 0; i < satIndexes.length; i++) {
-          if (this.isValidTarget(satIndexes[i])) {
-            filteredSatIndexes.push(satIndexes[i]);
+        for (const satIndex of satIndexes) {
+          if (this.isValidTarget(satIndex)) {
+            filteredSatIndexes.push(satIndex);
           }
         }
         satIndexes = filteredSatIndexes;
@@ -170,8 +170,8 @@ class Viewer {
     return [];
   }
 
-  isValidTarget (satelliteIdx: number): boolean {
-    const satelliteGroup = this.satellites?.getSatellitegroup();
+  private isValidTarget (satelliteIdx: number): boolean {
+    const satelliteGroup = this.satellites?.getSatellitegroup() as SatelliteGroup;
 
     if (satelliteGroup) {
       return satelliteGroup.hasSat(satelliteIdx);
@@ -180,7 +180,7 @@ class Viewer {
     return true;
   }
 
-  onClick (event: MouseEvent) {
+  private onClick (event: MouseEvent) {
     const canvas = this.renderer?.domElement;
 
     if (!this.raycaster || !this.scene || !this.camera || !canvas) {
@@ -223,7 +223,7 @@ class Viewer {
     window.removeEventListener('mousemove', this.onMouseMove.bind(this));
   }
 
-  onHover (event: MouseEvent) {
+  private onHover (event: MouseEvent) {
     const canvas = this.renderer?.domElement;
 
     if (!this.raycaster || !this.scene || !this.camera || !canvas) {
@@ -325,11 +325,11 @@ class Viewer {
   animate () {
     requestAnimationFrame(this.animate.bind(this));
 
-    this.updateCamera();
-
-    for (let i = 0; i < this.sceneComponents.length; i++) {
-      this.sceneComponents[i].update(this.scene);
+    for (const component of this.sceneComponents) {
+      component.update(this.scene);
     }
+
+    this.updateCamera();
 
     if (this.controls) {
       this.controls.update();
