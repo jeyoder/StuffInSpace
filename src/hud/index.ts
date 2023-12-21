@@ -170,8 +170,6 @@ function initGroupsListeners () {
         selectedGroupName = selectedGroup.dataset.group;
       }
 
-      console.dir(event.target);
-
       for (let j = 0; j < listItems.length; j++) {
         listItems[j].classList.remove('selected');
       }
@@ -218,8 +216,7 @@ function initEventListeners () {
   satelliteGroups?.reloadGroups();
 
   viewer.addEventListener(Events.selectedSatChange, onSelectedSatChange);
-
-  // app.addEventListener(Events.satHover, onSatHover);
+  viewer.addEventListener(Events.satHover, onSatHover);
 
   document.querySelector('#zoom-in')?.addEventListener('click', (event: any) => {
     event.preventDefault();

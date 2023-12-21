@@ -65,11 +65,11 @@ class SatelliteGroup {
     }
   }
 
-  getSat (satId: number) {
+  getSat (satId: number): Record<string, any> | undefined {
     return this.satelliteStore.satData.find((satellite) => satellite.id === satId);
   }
 
-  hasSat (satId: number) {
+  hasSat (satId: number): boolean {
     const len = this.sats.length;
     for (let i = 0; i < len; i++) {
       if (this.sats[i].satId === satId) {
