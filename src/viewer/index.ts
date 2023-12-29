@@ -44,15 +44,6 @@ class Viewer {
   mouseMoved = false;
   targetZoom = 5;
 
-  /** The maximum zoom level for the viewer. This controls how close the camera can get to the earth. */
-  private readonly maxZoomLevel = 60;
-  /** The minimum zoom level for the viewer. This controls how far the camera can get from the earth. */
-  private readonly minZoomLevel = 2;
-  /** The ideal number of frames to take to zoom in or out. Higher number slows down the zoom animation. */
-  private readonly framesPerZoomUpdate = 25;
-  /** The allowable margin for zooming in or out. If within this margin, the zoom level is set directly to the target zoom. */
-  private readonly zoomAllowableMargin = 0.01;
-
   constructor (config?: Record<string, any>) {
     this.config = { ...config, ...this.config };
   }
@@ -93,11 +84,7 @@ class Viewer {
    * Handles the scroll wheel event.
    */
   onWheel (event: WheelEvent) {
-    if (event.deltaY > 0) {
-      this.zoomOut();
-    } else {
-      this.zoomIn();
-    }
+    // Do Nothing
   }
 
   private onSatDataLoaded (satData: Record<string, any>) {
@@ -212,6 +199,9 @@ class Viewer {
 
   onMouseDown () {
     this.mouseMoved = false;
+    if (this.controls) {
+      this.controls.autoRotate = false;
+    }
     window.addEventListener('mousemove', this.onMouseMove.bind(this));
   }
 
@@ -252,6 +242,8 @@ class Viewer {
     try {
       this.scene = new SatelliteOrbitScene();
       this.camera = new PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.1, 1000 );
+      this.camera.position.z = 15;
+      this.camera.zoom = 1;
 
       this.renderer = new WebGLRenderer({ antialias: true });
       this.renderer.setPixelRatio(window.devicePixelRatio);
@@ -261,11 +253,19 @@ class Viewer {
         ?.appendChild(this.renderer.domElement);
 
       this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-      this.camera.position.set( 15, 0, -100 );
+      this.controls.rotateSpeed = 0.33;
+      this.controls.enablePan = false;
+      this.controls.enableZoom = true;
+      this.controls.enableDamping = true;
+      this.controls.dampingFactor = 0.05;
+      this.controls.zoomSpeed = 3;
+      this.controls.maxZoom = 10;
+      this.controls.minZoom = 3;
+      this.controls.autoRotate = true;
+      this.controls.autoRotateSpeed = 0.5;
+      this.controls.maxDistance = 50;
+      this.controls.minDistance = 3;
       this.controls.update();
-
-      this.camera.position.y = 5;
-      this.camera.zoom = 5;
 
       this.raycaster = new Raycaster();
 
@@ -301,13 +301,6 @@ class Viewer {
         this.controls.target = centrePoint;
       }
 
-      this.camera.position.y = 42;
-      this.controls.enablePan = false;
-      this.controls.enableZoom = false;
-      // this.controls.enableDamping = true;
-      // this.controls.autoRotate = true;
-      // this.controls.autoRotateSpeed = 0.5;
-
       this.camera.updateProjectionMatrix();
 
       window.addEventListener('resize', this.onWindowResize.bind(this));
@@ -329,34 +322,12 @@ class Viewer {
       component.update(this.scene);
     }
 
-    this.updateCamera();
-
     if (this.controls) {
       this.controls.update();
     }
 
     if (this.renderer) {
       this.renderer.render(this.scene as SatelliteOrbitScene, this.camera as Camera);
-    }
-  }
-
-  /**
-   * Updates the camera zoom based on the target zoom value.
-   * If the zoom target is different from the current zoom, it gradually zooms towards the target.
-   * If the zoom target is within a margin of 0.1 from the current zoom, it directly sets the zoom to the target.
-   * After updating the zoom, it clamps the zoom value and updates the camera's projection matrix.
-   */
-  private updateCamera () {
-    if (this.camera) {
-      if (Math.abs(this.camera.zoom - this.targetZoom) > this.zoomAllowableMargin) {
-        this.camera.zoom += (this.targetZoom - this.camera.zoom) / this.framesPerZoomUpdate;
-        this.clampZoom();
-        this.camera.updateProjectionMatrix();
-      } else if (this.camera.zoom !== this.targetZoom) {
-        this.camera.zoom = this.targetZoom;
-        this.clampZoom();
-        this.camera.updateProjectionMatrix();
-      }
     }
   }
 
