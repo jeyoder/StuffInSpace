@@ -80,13 +80,6 @@ class Viewer {
     }
   }
 
-  /**
-   * Handles the scroll wheel event.
-   */
-  onWheel (event: WheelEvent) {
-    // Do Nothing
-  }
-
   private onSatDataLoaded (satData: Record<string, any>) {
     this.eventManager.fireEvent('satdataloaded', satData);
     this.ready = true;
@@ -304,7 +297,6 @@ class Viewer {
       this.camera.updateProjectionMatrix();
 
       window.addEventListener('resize', this.onWindowResize.bind(this));
-      window.addEventListener('wheel', this.onWheel.bind(this));
 
       const canvasElement = this.renderer.domElement;
       canvasElement.addEventListener('mousedown', this.onMouseDown.bind(this));
