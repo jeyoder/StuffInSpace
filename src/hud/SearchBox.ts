@@ -215,12 +215,19 @@ function registerListeners () {
   if (!searchResultsElem) {
     return;
   }
-  searchResultsElem.addEventListener('click', (event: any) => {
-    const target = event.target;
-    const satId = target.dataset.satId;
+  searchResultsElem.addEventListener('click', (event: Event) => {
+    let target = event.target as HTMLElement;
+    if (target.className !== 'search-result') {
+      target = target.closest('.search-result') as HTMLElement;
+    }
+    if (!target) {
+      return;
+    }
+
+    const satId = target?.dataset.satId as string;
     clearHover();
 
-    viewer.setSelectedSatellite(satId);
+    viewer.setSelectedSatellite(parseInt(satId));
   });
 
   document.querySelector('#search')?.addEventListener('input', () => {
