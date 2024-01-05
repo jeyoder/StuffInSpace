@@ -86,7 +86,7 @@ class Earth implements SceneComponent {
 
     this.group = new Group();
 
-    const basePath = `${this.baseUrl}/images`;
+    const basePath = `${this.baseUrl}images`;
     const dayTexture = new TextureLoader().load(`${basePath}/earth-blue-marble.jpg`);
     const nightTexture = new TextureLoader().load(`${basePath}/nightearth-4096.png`);
     const bumpTexture = new TextureLoader().load(`${basePath}/8081_earthbump4k.jpg`);

@@ -3,8 +3,9 @@ import SceneComponent from './interfaces/SceneComponent';
 import SatelliteOrbitScene from './SatelliteOrbitScene';
 
 class Universe implements SceneComponent {
-  init (scene: SatelliteOrbitScene) {
-    const texture = new TextureLoader().load('textures/example_render.jpg');
+  init (scene: SatelliteOrbitScene, context: Record<string, any>) {
+    const baseUrl = context.config.baseUrl;
+    const texture = new TextureLoader().load(`${baseUrl}textures/example_render.jpg`);
 
     scene.background = texture;
   }

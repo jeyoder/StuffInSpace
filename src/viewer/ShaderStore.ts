@@ -2,7 +2,7 @@ import logger from '@/utils/logger';
 import axios from 'axios';
 
 class ShaderStore {
-  baseUrl = '/shaders';
+  baseUrl = 'shaders/';
   shaders = [
     'earth-fragment',
     'earth-vertex',
@@ -22,7 +22,7 @@ class ShaderStore {
   }
 
   private async loadShader (shaderFile: string): Promise<string> {
-    const path = `${this.baseUrl}/${shaderFile}.glsl`;
+    const path = `${this.baseUrl}${shaderFile}.glsl`;
     logger.debug(`loading shader from ${path}`);
 
     const response = await axios.get(path);

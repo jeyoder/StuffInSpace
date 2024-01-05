@@ -67,6 +67,8 @@ module.exports = {
     'space-before-function-paren': 'error',
     semi: [2, 'always'],
     indent: ['error', 2],
+    // causes issues in Typescript when enabled
+    'no-unused-vars': 'off',
 
     // TypeScript
     quotes: ['warn', 'single', { avoidEscape: true }],
@@ -80,7 +82,7 @@ module.exports = {
     '@typescript-eslint/restrict-template-expressions': 'off',
     '@typescript-eslint/no-misused-promises': 'off',
     '@typescript-eslint/no-unsafe-argument': 'off',
-
+    '@typescript-eslint/no-unused-vars': [2, { args: 'none' }],
 
     // allow debugger during development only
     'no-debugger': process.env.NODE_ENV === 'production' ? 'error' : 'off'
