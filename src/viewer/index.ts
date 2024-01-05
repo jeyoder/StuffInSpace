@@ -244,6 +244,7 @@ class Viewer {
       document
         .querySelector(this.config.canvasSelector)
         ?.appendChild(this.renderer.domElement);
+      logger.debug(`Using WebGL 2: ${this.renderer.capabilities.isWebGL2}`);
 
       this.controls = new OrbitControls(this.camera, this.renderer.domElement);
       this.controls.rotateSpeed = 0.33;

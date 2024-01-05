@@ -85,7 +85,7 @@ function onSelectedSatChange (satellite: Record<string, any>) {
 function onSatHover (event: any) {
   const {
     satId, satX, satY, satellite
-  } = event;
+  } = event || {};
 
   if (!satId || satId === -1) {
     setHtml('#sat-hoverbox', '(none)');
