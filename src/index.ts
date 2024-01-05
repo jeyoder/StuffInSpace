@@ -6,7 +6,8 @@ import { setLogLevel } from './utils/logger';
 import hud from './hud';
 
 async function loadConfig () {
-  const response = await axios.get('config.json');
+  const baseUrl = './';
+  const response = await axios.get(`${baseUrl}/config.json`);
   let config = defaultConfig;
   if (response.data) {
     config = { ...defaultConfig, ...response.data };

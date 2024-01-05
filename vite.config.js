@@ -4,8 +4,10 @@ import { visualizer } from 'rollup-plugin-visualizer';
 import { threeMinifier } from '@yushijinhun/three-minifier-rollup';
 import path from 'path';
 
+
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
+
   return {
     // vite config
     define: {
@@ -16,7 +18,7 @@ export default defineConfig(({ mode }) => {
     build: {
       outDir: 'dist'
     },
-    base: env.BASE_URL || '/',
+    base: env.BASE_URL || './',
     resolve: {
       alias: {
         '@': path.resolve(__dirname, './src'),
