@@ -34,6 +34,7 @@ elif [ -n "$CI_COMMIT_REF_NAME" ]; then
     method="gitlab-ref"
 elif command -v git &> /dev/null; then
     #version=`git describe --tags --abbrev=0`
+    version=`git rev-parse --short HEAD`
     git_hash=`git rev-parse HEAD`
     git_branch=`git branch --show-current`
     mode="cmd"
