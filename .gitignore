@@ -14,3 +14,5 @@ old
 dist
 tmp
 
+# VSCode Local Settings
+.vscode/settings.json
