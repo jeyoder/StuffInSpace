@@ -1,17 +1,18 @@
 import axios from 'axios';
 import { createViewer } from './viewer/index';
 import defaultConfig from './config';
-import { setLogLevel } from './utils/logger';
+import logger, { setLogLevel } from './utils/logger';
 
 import hud from './hud';
 
 async function loadConfig () {
   const baseUrl = './';
-  const response = await axios.get(`${baseUrl}/config.json`);
+  const response = await axios.get(`${baseUrl}config.json`);
   let config = defaultConfig;
   if (response.data) {
     config = { ...defaultConfig, ...response.data };
   }
+  logger.info(`.... ${config.baseUrl}`);
   return config;
 }
 

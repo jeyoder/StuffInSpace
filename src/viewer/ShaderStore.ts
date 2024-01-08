@@ -2,7 +2,8 @@ import logger from '@/utils/logger';
 import axios from 'axios';
 
 class ShaderStore {
-  baseUrl = 'shaders/';
+  basePath = 'shaders/';
+  baseUrl = `./${this.basePath}`;
   shaders = [
     'earth-fragment',
     'earth-vertex',
@@ -18,7 +19,7 @@ class ShaderStore {
   shaderData: Record<string, string> = {};
 
   constructor (appBaseUrl = '') {
-    this.baseUrl = `${appBaseUrl}${this.baseUrl}`;
+    this.baseUrl = `${appBaseUrl}${this.basePath}`;
   }
 
   private async loadShader (shaderFile: string): Promise<string> {

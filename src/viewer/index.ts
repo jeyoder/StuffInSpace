@@ -43,9 +43,11 @@ class Viewer {
   earth?: Earth;
   mouseMoved = false;
   targetZoom = 5;
+  minZoomLevel = 1;
+  maxZoomLevel = 10;
 
   constructor (config?: Record<string, any>) {
-    this.config = { ...config, ...this.config };
+    this.config = { ...this.config, ...config };
   }
 
   async registerSceneComponent (name: string, sceneComponent: SceneComponent) {
