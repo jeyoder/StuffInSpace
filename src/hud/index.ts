@@ -291,7 +291,7 @@ function getCurrentSearch () {
   return searchBox.getCurrentSearch();
 }
 
-function init (viewerInstance: Viewer) {
+function init (viewerInstance: Viewer, appConfig: Record<string, any> = {}) {
   viewer = viewerInstance;
 
   windowManager.registerWindow('sat-infobox');
@@ -310,6 +310,11 @@ function init (viewerInstance: Viewer) {
   } else {
     onSatDataLoaded();
   }
+
+  console.log('xoooo', appConfig);
+  setHtml('.app-version', appConfig.appInfo.version);
+  setHtml('.build-date', appConfig.appInfo.buildDate);
+  setHtml('.release-date', appConfig.appInfo.buildDate);
 }
 
 export default {

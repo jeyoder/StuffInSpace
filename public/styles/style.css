@@ -559,3 +559,14 @@ canvas {
     background: black;
 }
 }
+
+.app-info {
+  font-size: 12px;
+}
+
+.release-date-holder {
+  position: absolute;
+  bottom: 13px;
+  right: 13px;
+  font-size: 12px;
+}

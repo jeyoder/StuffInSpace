@@ -28,6 +28,7 @@ jobs:
       - name: Build project
         run: |
           bin/generate-appinfo.sh public/appinfo.json
+          cp public/appinfo.json src/appinfo.json
           npm run build
 
       - name: Upload production-ready build files

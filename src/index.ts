@@ -2,6 +2,7 @@ import axios from 'axios';
 import { createViewer } from './viewer/index';
 import defaultConfig from './config';
 import logger, { setLogLevel } from './utils/logger';
+import appinfo from './appinfo.json';
 
 import hud from './hud';
 
@@ -10,7 +11,7 @@ async function loadConfig () {
   const response = await axios.get(`${baseUrl}config.json`);
   let config = defaultConfig;
   if (response.data) {
-    config = { ...defaultConfig, ...response.data };
+    config = { ...defaultConfig, ...response.data, appInfo: appinfo };
   }
   logger.info(`.... ${config.baseUrl}`);
   return config;
@@ -24,7 +25,7 @@ async function main () {
   await viewer.init();
   viewer.animate();
 
-  hud.init(viewer);
+  hud.init(viewer, config);
 }
 
 document.addEventListener('DOMContentLoaded', () => {

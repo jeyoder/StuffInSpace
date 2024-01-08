@@ -50,7 +50,7 @@ json=$(cat <<EOF
     "buildDate": "$build_date",
     "version": "$version",
     "gitHash": "$git_hash",
-    "gitBranch": "$git_branch"
+    "gitBranch": "$git_branch",
     "mode": "$mode"
 }
 EOF
