@@ -6,7 +6,7 @@ on:
     # - master
 
 env:
-  BASE_URL: /StuffInSpace
+  BASE_URL: /StuffInSpace/
 
 jobs:
   build:
