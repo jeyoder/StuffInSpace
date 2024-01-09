@@ -7,9 +7,8 @@ import appinfo from './appinfo.json';
 import hud from './hud';
 
 async function loadConfig () {
-  const baseUrl = './';
-  const response = await axios.get(`${baseUrl}config.json`);
   let config = defaultConfig;
+  const response = await axios.get(`${config.baseUrl}config.json`);
   if (response.data) {
     config = { ...defaultConfig, ...response.data, appInfo: appinfo };
   }
