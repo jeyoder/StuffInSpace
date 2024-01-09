@@ -41,8 +41,8 @@ function init () {
 
   const enabledOutputs = scope.enabledOutputs;
 
-  for (let i = 0; i < logLevels.length; i++) {
-    enabledOutputs[logLevels[i]] = true;
+  for (const logLevel of logLevels) {
+    enabledOutputs[logLevel] = true;
   }
 
   allOutputs = {
