@@ -11,7 +11,10 @@ class SatelliteStore {
   tleUrl = `${config.baseUrl}/data/attributed-TLE.json`;
   eventManager: EventManager;
   satData: SatelliteObject[] = [];
-  attribution?: Record<string, any>;
+  attribution?: {
+    name: string;
+    url: string;
+  };
   updateDate?: Date;
   satelliteVelocities: Float32Array = new Float32Array();
   satellitePositions: Float32Array = new Float32Array();
@@ -65,7 +68,10 @@ class SatelliteStore {
     }
   }
 
-  getAttribution (): Record<string, any> | undefined {
+  getAttribution (): {
+    name: string;
+    url: string;
+  } | undefined {
     return this.attribution;
   }
 
