@@ -17,13 +17,7 @@ import ShaderStore from './ShaderStore';
 import logger from '@/utils/logger';
 import { ArrowHelper, Raycaster, Vector2, Vector3 } from 'three';
 import { SatelliteObject } from './interfaces/SatelliteObject';
-
-export interface ViewerContext {
-  satelliteGroups: SatelliteGroups;
-  config: Record<string, any>;
-  satelliteStore: SatelliteStore;
-  shaderStore: ShaderStore;
-}
+import { ViewerContext } from './interfaces/ViewerContext';
 
 class Viewer {
   config: Record<string, any> = {

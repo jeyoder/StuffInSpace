@@ -22,7 +22,7 @@ import SelectableSatellite from './interfaces/SelectableSatellite';
 import ShaderStore from './ShaderStore';
 import GroupColorScheme from './color-schemes/GroupColorScheme';
 import { SatelliteObject } from './interfaces/SatelliteObject';
-import { ViewerContext } from '.';
+import { ViewerContext } from './interfaces/ViewerContext';
 
 class Satellites implements SceneComponent, SelectableSatellite {
   baseUrl = '';

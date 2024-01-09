@@ -2,7 +2,7 @@ import { ShaderMaterial, UniformsUtils, Texture } from 'three';
 import { Color, TextureLoader, MeshPhongMaterial, SphereGeometry, Mesh, Group, BackSide, AdditiveBlending } from '../utils/three';
 import SceneComponent from './interfaces/SceneComponent';
 import SatelliteOrbitScene from './SatelliteOrbitScene';
-import { ViewerContext } from '.';
+import { ViewerContext } from './interfaces/ViewerContext';
 
 class Earth implements SceneComponent {
   baseUrl = '';

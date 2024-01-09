@@ -7,7 +7,7 @@ import SatelliteOrbitScene from './SatelliteOrbitScene';
 import logger from '../utils/logger';
 import SatelliteGroups from './SatelliteGroups';
 import SelectableSatellite from './interfaces/SelectableSatellite';
-import { ViewerContext } from '.';
+import { ViewerContext } from './interfaces/ViewerContext';
 
 class Orbits implements SceneComponent, SelectableSatellite {
   config: Record<string, any> = {};

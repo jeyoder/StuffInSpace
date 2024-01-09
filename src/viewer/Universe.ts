@@ -1,4 +1,4 @@
-import { ViewerContext } from '.';
+import { ViewerContext } from './interfaces/ViewerContext';
 import { TextureLoader } from '../utils/three';
 import SceneComponent from './interfaces/SceneComponent';
 import SatelliteOrbitScene from './SatelliteOrbitScene';

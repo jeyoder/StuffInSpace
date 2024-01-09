@@ -1,4 +1,4 @@
-import { ViewerContext } from '..';
+import { ViewerContext } from './ViewerContext';
 import SatelliteOrbitScene from '../SatelliteOrbitScene';
 
 interface SceneComponent {
