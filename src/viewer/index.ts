@@ -16,6 +16,8 @@ import SatelliteGroup from './SatelliteGroup';
 import ShaderStore from './ShaderStore';
 import logger from '@/utils/logger';
 import { ArrowHelper, Raycaster, Vector2, Vector3 } from 'three';
+import { SatelliteObject } from './interfaces/SatelliteObject';
+import { ViewerContext } from './interfaces/ViewerContext';
 
 class Viewer {
   config: Record<string, any> = {
@@ -28,7 +30,12 @@ class Viewer {
   camera?: PerspectiveCamera;
   controls?: OrbitControls;
   renderer?: WebGLRenderer;
-  context: Record<string, any> = {};
+  context: ViewerContext = {
+    satelliteGroups: null as unknown as SatelliteGroups,
+    config: null as unknown as Record<string, any>,
+    satelliteStore: null as unknown as SatelliteStore,
+    shaderStore: null as unknown as ShaderStore
+  };
   satelliteGroups?: SatelliteGroups;
   satelliteStore?: SatelliteStore;
   shaderStore?: ShaderStore;
@@ -82,7 +89,7 @@ class Viewer {
     }
   }
 
-  private onSatDataLoaded (satData: Record<string, any>) {
+  private onSatDataLoaded (satData: SatelliteObject[]) {
     this.eventManager.fireEvent('satdataloaded', satData);
     this.ready = true;
   }
@@ -404,7 +411,7 @@ class Viewer {
     this.satellites?.setSatelliteGroup(satelliteGroup);
   }
 
-  getSelectedSatellite (): Record<string, any> | undefined {
+  getSelectedSatellite (): SatelliteObject | undefined {
     if (this.satelliteStore) {
       return this.satelliteStore.getSatellite(this.selectedSatelliteIdx);
     }

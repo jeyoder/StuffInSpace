@@ -21,6 +21,8 @@ import DefaultColorScheme from './color-schemes/DefaultColorScheme';
 import SelectableSatellite from './interfaces/SelectableSatellite';
 import ShaderStore from './ShaderStore';
 import GroupColorScheme from './color-schemes/GroupColorScheme';
+import { SatelliteObject } from './interfaces/SatelliteObject';
+import { ViewerContext } from './interfaces/ViewerContext';
 
 class Satellites implements SceneComponent, SelectableSatellite {
   baseUrl = '';
@@ -94,7 +96,7 @@ class Satellites implements SceneComponent, SelectableSatellite {
   /**
    * update point colours
    */
-  private updateSatellitesMaterial (satCount: number, satellites: Record<string, any>[]) {
+  private updateSatellitesMaterial (satCount: number, satellites: SatelliteObject[]) {
     if (this.geometry?.attributes.color && this.currentColorScheme && this.satelliteStore) {
       // Adjust if the satellite count adjusts
       if (this.satelliteColors.length === 0 || (satCount * 4 !== this.satelliteColors.length)) {
@@ -332,7 +334,7 @@ class Satellites implements SceneComponent, SelectableSatellite {
     }));
   }
 
-  async init (scene: SatelliteOrbitScene, context: Record<string, any>) {
+  async init (scene: SatelliteOrbitScene, context: ViewerContext) {
     this.satelliteStore = context.satelliteStore;
     this.shaderStore = context.shaderStore;
     this.scene = scene;

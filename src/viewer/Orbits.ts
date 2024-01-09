@@ -7,6 +7,7 @@ import SatelliteOrbitScene from './SatelliteOrbitScene';
 import logger from '../utils/logger';
 import SatelliteGroups from './SatelliteGroups';
 import SelectableSatellite from './interfaces/SelectableSatellite';
+import { ViewerContext } from './interfaces/ViewerContext';
 
 class Orbits implements SceneComponent, SelectableSatellite {
   config: Record<string, any> = {};
@@ -221,12 +222,12 @@ class Orbits implements SceneComponent, SelectableSatellite {
     // calculate tracks
     if (this.satelliteGroup) {
       const satellites = this.satelliteGroup.sats;
-      const satelliteIds = satellites.map((entry: Record<string, any>) => entry.satId as number);
+      const satelliteIds = satellites.map((entry) => entry.satId as number);
       this.calculateOrbits(satelliteIds);
     }
   }
 
-  init (scene: SatelliteOrbitScene, context: Record<string, any>) {
+  init (scene: SatelliteOrbitScene, context: ViewerContext) {
     this.config = context.config;
     this.scene = scene;
     this.orbitWorker = new OrbitCalculationWorker();

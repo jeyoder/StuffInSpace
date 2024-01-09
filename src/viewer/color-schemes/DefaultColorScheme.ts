@@ -1,8 +1,9 @@
+import { SatelliteObject } from '../interfaces/SatelliteObject';
 import ColorScheme from './ColorScheme';
 
 class DefaultColorScheme extends ColorScheme {
   constructor () {
-    super ('Default color scheme', (satellite: Record<string, any>) => {
+    super ('Default color scheme', (satellite: SatelliteObject) => {
       let color = [1.0, 1.0, 0.0, 1.0];
       let pickable = false;
 

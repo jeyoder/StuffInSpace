@@ -2,6 +2,7 @@ import { ShaderMaterial, UniformsUtils, Texture } from 'three';
 import { Color, TextureLoader, MeshPhongMaterial, SphereGeometry, Mesh, Group, BackSide, AdditiveBlending } from '../utils/three';
 import SceneComponent from './interfaces/SceneComponent';
 import SatelliteOrbitScene from './SatelliteOrbitScene';
+import { ViewerContext } from './interfaces/ViewerContext';
 
 class Earth implements SceneComponent {
   baseUrl = '';
@@ -91,7 +92,7 @@ class Earth implements SceneComponent {
     group.add(mesh);
   }
 
-  async init (scene: SatelliteOrbitScene, context: Record<string, any>) {
+  async init (scene: SatelliteOrbitScene, context: ViewerContext) {
     if (context.config) {
       this.baseUrl = context.config.baseUrl;
     }
@@ -122,7 +123,9 @@ class Earth implements SceneComponent {
     this.group.add(this.sphere);
 
     if (this.addClouds) {
-      this.initClouds(scene, this.group);
+      this.initClouds(scene, this.group).catch(error => {
+        console.error('Error loading clouds', error);
+      });
     }
 
     if (this.addAtmosphere) {

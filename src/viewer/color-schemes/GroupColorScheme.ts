@@ -1,11 +1,12 @@
 import SatelliteGroup from '@satellite-viewer/SatelliteGroup';
 import ColorScheme from './ColorScheme';
+import { SatelliteObject } from '../interfaces/SatelliteObject';
 
 class GroupColorScheme extends ColorScheme {
   constructor () {
-    super ('Group color scheme', (satellite: Record<string, any>, group?: SatelliteGroup) => {
+    super ('Group color scheme', (satellite: SatelliteObject, group?: SatelliteGroup) => {
       if (satellite) {
-        if (group && group.hasSat(satellite.id)) {
+        if (group?.hasSat(satellite.id)) {
           return {
             color: [1.0, 0.2, 0.0, 1.0],
             pickable: true
