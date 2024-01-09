@@ -94,15 +94,16 @@ class Earth implements SceneComponent {
   async init (scene: SatelliteOrbitScene, context: Record<string, any>) {
     if (context.config) {
       this.baseUrl = context.config.baseUrl;
+      this.baseUrl = this.baseUrl.endsWith('/') ? this.baseUrl : `${this.baseUrl}/`;
     }
 
     this.group = new Group();
 
-    const basePath = `${this.baseUrl}images`;
-    const dayTexture = await this.loadTexture(`${basePath}/earth-blue-marble.jpg`);
-    const nightTexture = await this.loadTexture(`${basePath}/nightearth-4096.png`);
-    const bumpTexture = await this.loadTexture(`${basePath}/8081_earthbump4k.jpg`);
-    const earthSpecularMap = await this.loadTexture(`${basePath}/earth-water.png`);
+    this.basePath = `${this.baseUrl}images`;
+    const dayTexture = await this.loadTexture(`${this.basePath}/earth-blue-marble.jpg`);
+    const nightTexture = await this.loadTexture(`${this.basePath}/nightearth-4096.png`);
+    const bumpTexture = await this.loadTexture(`${this.basePath}/8081_earthbump4k.jpg`);
+    const earthSpecularMap = await this.loadTexture(`${this.basePath}/earth-water.png`);
 
     const dayMaterial = new MeshPhongMaterial({
       map: dayTexture,

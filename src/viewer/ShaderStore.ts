@@ -19,6 +19,7 @@ class ShaderStore {
   shaderData: Record<string, string> = {};
 
   constructor (appBaseUrl = '') {
+    appBaseUrl = appBaseUrl.endsWith('/') ? appBaseUrl : `${appBaseUrl}/`;
     this.baseUrl = `${appBaseUrl}${this.basePath}`;
   }
 
