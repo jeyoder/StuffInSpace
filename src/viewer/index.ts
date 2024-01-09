@@ -45,8 +45,8 @@ class Viewer {
   targetZoom = 5;
   minZoomLevel = 1;
   maxZoomLevel = 10;
-  frameCount = 0;
-  raycastFrameInterval = 16;
+  private frameCount = 0;
+  private raycastFrameInterval = 16;
 
   constructor (config?: Record<string, any>) {
     this.config = { ...this.config, ...config };
@@ -332,6 +332,10 @@ class Viewer {
     }
 
     this.frameCount++;
+
+    if (this.frameCount >= this.raycastFrameInterval) {
+      this.frameCount = 0;
+    }
   }
 
   getSatelliteStore () {
