@@ -333,7 +333,7 @@ class Viewer {
 
     this.frameCount++;
 
-    if (this.frameCount >= this.raycastFrameInterval) {
+    if (this.frameCount > this.raycastFrameInterval) {
       this.frameCount = 0;
     }
   }
