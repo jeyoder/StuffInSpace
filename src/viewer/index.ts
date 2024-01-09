@@ -52,6 +52,8 @@ class Viewer {
   targetZoom = 5;
   minZoomLevel = 1;
   maxZoomLevel = 10;
+  private frameCount = 0;
+  private raycastFrameInterval = 16;
 
   constructor (config?: Record<string, any>) {
     this.config = { ...this.config, ...config };
@@ -222,6 +224,10 @@ class Viewer {
       return;
     }
 
+    if (this.frameCount % this.raycastFrameInterval !== 0) {
+      return;
+    }
+
     const satelliteIds = this.findSatellitesAtMouse({
       x: event.clientX,
       y: event.clientY
@@ -330,6 +336,12 @@ class Viewer {
 
     if (this.renderer) {
       this.renderer.render(this.scene as SatelliteOrbitScene, this.camera as Camera);
+    }
+
+    this.frameCount++;
+
+    if (this.frameCount > this.raycastFrameInterval) {
+      this.frameCount = 0;
     }
   }
 
