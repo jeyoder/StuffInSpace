@@ -28,7 +28,7 @@ function showAttribution (visible: true) {
         const updatedDate = satelliteStore.getUpdatedDate();
 
         if (attribution) {
-        attributionElem.innerHTML = `Orbital object data from <a href="${attribution.url}">${attribution.name}</a> <span class="updated">(updated ${updatedDate})</span>`;
+          attributionElem.innerHTML = `Orbital object data from <a href="${attribution.url}">${attribution.name}</a> <span class="updated">(updated ${updatedDate})</span>`;
           attributionElem.classList.remove('hidden');
         }
       }
@@ -277,12 +277,12 @@ function getSupportedEvents () {
 }
 
 function initMenus () {
-  const elements = document.querySelectorAll('.menu-item');
-  for (let i = 0; i < elements.length; i++) {
-    const element = elements[i] as HTMLElement;
+  const elements = Array.from(document.querySelectorAll('.menu-item'));
+
+  for (const element of elements) {
     element.addEventListener('click', () => {
-      const action = element.dataset.action;
-      if (action && action.startsWith('open:')) {
+      const action = (element as HTMLElement).dataset.action;
+      if (action?.startsWith('open:')) {
         const parts = action.split(':');
         windowManager.openWindow(parts[1]);
       }
