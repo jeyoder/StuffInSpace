@@ -27,13 +27,12 @@ class SatelliteGroups {
     this.selectedGroup = group;
     if (!group) {
       this.clearSelect();
-      return;
     }
   }
 
   forEach (callback: (satId: number) => void) {
-    for (let i = 0; i < this.sats.length; i++) {
-      callback(this.sats[i].satId);
+    for (const sat of this.sats) {
+      callback(sat.satId);
     }
   }
 
@@ -55,21 +54,21 @@ class SatelliteGroups {
 
   reloadGroups () {
     const keys = Object.keys(this.groups);
-    for (let i = 0; i < keys.length; i++) {
-      this.groups[keys[i]].reload();
+    for (const key of keys) {
+      this.groups[key].reload();
     }
   }
 
   resetConfig (satelliteGroups: SatelliteGroup[]) {
     const groupConfigs = satelliteGroups;
-    for (let i = 0; i < groupConfigs.length; i++) {
-      logger.debug(`registering satellite group ${groupConfigs[i].name} (id: ${groupConfigs[i].id})`);
-      this.groups[groupConfigs[i].id.toLowerCase()] = new SatGroup(
-        groupConfigs[i].id.toLowerCase(),
-        groupConfigs[i].name,
-        groupConfigs[i].groupType,
-        groupConfigs[i].data,
-        this.satelliteStore as SatelliteStore
+    for (const groupConfig of groupConfigs) {
+      logger.debug(`registering satellite group ${groupConfig.name} (id: ${groupConfig.id})`);
+      this.groups[groupConfig.id.toLowerCase()] = new SatGroup(
+        groupConfig.id.toLowerCase(),
+        groupConfig.name,
+        groupConfig.groupType,
+        groupConfig.data,
+        this.satelliteStore
       );
     }
   }
