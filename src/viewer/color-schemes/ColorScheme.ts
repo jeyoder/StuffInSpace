@@ -1,15 +1,16 @@
 import SatelliteGroup from '../SatelliteGroup';
+import { SatelliteObject } from '../interfaces/SatelliteObject';
 
 class ColorScheme {
   name: string;
-  colorizer: (satellite: Record<string, any>, group?: SatelliteGroup) => { color: number[], pickable: boolean };
+  colorizer: (satellite: SatelliteObject, group?: SatelliteGroup) => { color: number[], pickable: boolean };
 
-  constructor (name: string, colorizer: (satellite: Record<string, any>) => { color: number[], pickable: boolean }) {
+  constructor (name: string, colorizer: (satellite: SatelliteObject) => { color: number[], pickable: boolean }) {
     this.name = name;
     this.colorizer = colorizer;
   }
 
-  getSatelliteColor (satellite: Record<string, any>, group?: SatelliteGroup): { color: number[], pickable: boolean } {
+  getSatelliteColor (satellite: SatelliteObject, group?: SatelliteGroup): { color: number[], pickable: boolean } {
     return this.colorizer(satellite, group);
   }
 }

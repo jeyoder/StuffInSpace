@@ -82,7 +82,7 @@ class Viewer {
     }
   }
 
-  private onSatDataLoaded (satData: Record<string, any>) {
+  private onSatDataLoaded (satData: SatelliteObject[]) {
     this.eventManager.fireEvent('satdataloaded', satData);
     this.ready = true;
   }
@@ -404,7 +404,7 @@ class Viewer {
     this.satellites?.setSatelliteGroup(satelliteGroup);
   }
 
-  getSelectedSatellite (): Record<string, any> | undefined {
+  getSelectedSatellite (): SatelliteObject | undefined {
     if (this.satelliteStore) {
       return this.satelliteStore.getSatellite(this.selectedSatelliteIdx);
     }
