@@ -3,7 +3,12 @@
 const defaultLogLevel = 'debug';
 const logLevels = ['error', 'warn', 'info', 'debug'];
 
-let allOutputs: Record<string, any> = {};
+let allOutputs = {
+  error: (..._args: any) => {},
+  warn: (..._args: any) => {},
+  info: (..._args: any) => {},
+  debug: (..._args: any) => {}
+};
 let globalLogger = new Proxy({
   logLevel: defaultLogLevel,
   enabledOutputs: {} as Record<string, any>,
