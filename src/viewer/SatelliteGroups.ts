@@ -1,6 +1,7 @@
 import SatGroup from './SatelliteGroup';
 import logger from '../utils/logger';
 import SatelliteStore from './SatelliteStore';
+import type SatelliteGroup from './SatelliteGroup';
 
 class SatelliteGroups {
   groups: Record<string, SatGroup> = {};
@@ -8,7 +9,7 @@ class SatelliteGroups {
   sats: any[] = [];
   satelliteStore: SatelliteStore;
 
-  constructor (satelliteGroups: Record<string, any>[], satelliteStore: SatelliteStore) {
+  constructor (satelliteGroups: SatelliteGroup[], satelliteStore: SatelliteStore) {
     if (!satelliteStore) {
       throw new Error('satelliteStore is required');
     }
@@ -59,7 +60,7 @@ class SatelliteGroups {
     }
   }
 
-  resetConfig (satelliteGroups: Record<string, any>[]) {
+  resetConfig (satelliteGroups: SatelliteGroup[]) {
     const groupConfigs = satelliteGroups;
     for (let i = 0; i < groupConfigs.length; i++) {
       logger.debug(`registering satellite group ${groupConfigs[i].name} (id: ${groupConfigs[i].id})`);
