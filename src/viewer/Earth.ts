@@ -122,7 +122,9 @@ class Earth implements SceneComponent {
     this.group.add(this.sphere);
 
     if (this.addClouds) {
-      this.initClouds(scene, this.group);
+      this.initClouds(scene, this.group).catch(error => {
+        console.error('Error loading clouds', error);
+      });
     }
 
     if (this.addAtmosphere) {
