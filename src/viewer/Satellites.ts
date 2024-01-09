@@ -22,6 +22,7 @@ import SelectableSatellite from './interfaces/SelectableSatellite';
 import ShaderStore from './ShaderStore';
 import GroupColorScheme from './color-schemes/GroupColorScheme';
 import { SatelliteObject } from './interfaces/SatelliteObject';
+import { ViewerContext } from '.';
 
 class Satellites implements SceneComponent, SelectableSatellite {
   baseUrl = '';
@@ -333,7 +334,7 @@ class Satellites implements SceneComponent, SelectableSatellite {
     }));
   }
 
-  async init (scene: SatelliteOrbitScene, context: Record<string, any>) {
+  async init (scene: SatelliteOrbitScene, context: ViewerContext) {
     this.satelliteStore = context.satelliteStore;
     this.shaderStore = context.shaderStore;
     this.scene = scene;

@@ -16,6 +16,14 @@ import SatelliteGroup from './SatelliteGroup';
 import ShaderStore from './ShaderStore';
 import logger from '@/utils/logger';
 import { ArrowHelper, Raycaster, Vector2, Vector3 } from 'three';
+import { SatelliteObject } from './interfaces/SatelliteObject';
+
+export interface ViewerContext {
+  satelliteGroups: SatelliteGroups;
+  config: Record<string, any>;
+  satelliteStore: SatelliteStore;
+  shaderStore: ShaderStore;
+}
 
 class Viewer {
   config: Record<string, any> = {
@@ -28,7 +36,12 @@ class Viewer {
   camera?: PerspectiveCamera;
   controls?: OrbitControls;
   renderer?: WebGLRenderer;
-  context: Record<string, any> = {};
+  context: ViewerContext = {
+    satelliteGroups: null as unknown as SatelliteGroups,
+    config: null as unknown as Record<string, any>,
+    satelliteStore: null as unknown as SatelliteStore,
+    shaderStore: null as unknown as ShaderStore
+  };
   satelliteGroups?: SatelliteGroups;
   satelliteStore?: SatelliteStore;
   shaderStore?: ShaderStore;
