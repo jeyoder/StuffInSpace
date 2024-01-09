@@ -23,12 +23,15 @@ function showAttribution (visible: true) {
   if (attributionElem) {
     if (visible) {
       const satelliteStore = viewer.getSatelliteStore();
-      if (satelliteStore && satelliteStore.getAttribution()) {
-        const attribution = satelliteStore.getAttribution() || {};
+      if (satelliteStore?.getAttribution()) {
+        const attribution = satelliteStore.getAttribution();
         const updatedDate = satelliteStore.getUpdatedDate();
+
+        if (attribution) {
         attributionElem.innerHTML = `Orbital object data from <a href="${attribution.url}">${attribution.name}</a> <span class="updated">(updated ${updatedDate})</span>`;
+          attributionElem.classList.remove('hidden');
+        }
       }
-      attributionElem.classList.remove('hidden');
     } else {
       attributionElem.classList.add('hidden');
     }
